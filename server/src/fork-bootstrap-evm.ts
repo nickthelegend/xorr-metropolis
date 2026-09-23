@@ -1,14 +1,16 @@
 /**
- * Stand up a demo-ready fork of Arbitrum One or Robinhood Chain (XORR_CHAIN=arbitrum-fork | robinhood-fork) in one command (PLAN.md P3.3, 2026-09-19).
+ * Stand up a demo-ready fork of Monad, Arbitrum One or Robinhood Chain (XORR_CHAIN=monad-fork | arbitrum-fork |
+ * robinhood-fork) in one command (PLAN.md P0.5).
  *
- * A fork of Arbitrum One is the only environment where every piece of this product is real at once with no real
- * money: Circle's USDC, Uniswap, GMX V2 and the pools they trade in all exist there with their real state.
- * But a fresh fork has none of OUR contracts and no spendable balance, so this:
+ * A fork of a mainnet is the only environment where every piece of this product is real at once with no real money:
+ * Circle's USDC and the venues and pools it trades in all exist there with their real state. But a fresh fork has none
+ * of OUR contracts and no spendable balance, so this:
  *
- *   1. checks the node is anvil forking Arbitrum One (chain 42161),
- *   2. deploys `XorrDelegation` (settlement token = Circle's native USDC) and `XorrAuditAnchor` from a fresh key,
- *   3. gives the delegate key ETH for gas,
- *   4. funds the wallet to demo with — `argv[2]` or `OWNER_ADDRESS` — with 25,000 USDC and ETH for gas,
+ *   1. checks the node is anvil forking the chain XORR_CHAIN names (143 for Monad),
+ *   2. deploys `XorrDelegation` (settlement token = the chain's USDC, or USDG on Robinhood) and `XorrAuditAnchor`
+ *      from a fresh key,
+ *   3. gives the delegate key the chain's gas token (MON on Monad, ETH elsewhere),
+ *   4. funds the wallet to demo with — `argv[2]` or `OWNER_ADDRESS` — with 25,000 USDC and gas,
  *   5. writes the addresses to `.env.fork` (or `FORK_ENV_FILE`).
  *
  * The USDC is Circle's own token, sent in an ordinary transfer from a fork-only reserve whose balance is written to the
@@ -16,8 +18,8 @@
  * demo trades against. Nothing is mocked.
  *
  * Run:  cd server && npx tsx src/fork-bootstrap-evm.ts [walletAddressToFund]
- * Needs: `forge build` first (it deploys from contracts/out), and anvil forking Arbitrum One:
- *        anvil --fork-url <arbitrum or robinhood rpc> --chain-id <42161 | 4663>
+ * Needs: `forge build` first (it deploys from contracts/out), and anvil forking the chain:
+ *        anvil --fork-url https://rpc.monad.xyz --chain-id 143      (or infra/monad-fork/entrypoint.sh)
  */
 import 'dotenv/config';
 import fs from 'node:fs/promises';
@@ -45,15 +47,17 @@ const RPC = process.env.FORK_RPC ?? 'http://127.0.0.1:8545';
  * The settlement token of the fork named by XORR_CHAIN: Circle's native USDC on an Arbitrum fork, Paxos USDG on a
  * Robinhood Chain fork. Read from the registry so the contract, the executor and this script cannot disagree.
  */
-if (!CHAIN_KEY.endsWith('-fork')) throw new Error(`XORR_CHAIN=${CHAIN_KEY} is not a fork key (arbitrum-fork, robinhood-fork).`);
+if (!CHAIN_KEY.endsWith('-fork')) throw new Error(`XORR_CHAIN=${CHAIN_KEY} is not a fork key (monad-fork, arbitrum-fork, robinhood-fork).`);
 const USDC: Address = ADDRESSES.usdcBase;
 const DEMO_USDC = parseUnits('25000', 6);
 const GAS_ETH = parseEther('10');
+/** The gas token by name: MON on Monad, ETH on the others. Read from viem's chain so it cannot drift. */
+const GAS = registryChain.nativeCurrency.symbol;
 
 const chain = { ...registryChain, rpcUrls: { default: { http: [RPC] }, public: { http: [RPC] } } };
 const pub = createPublicClient({ chain, transport: http(RPC) });
 /**
- * A fork pulls state from Arbitrum's public RPC the first time a transaction touches it, and that RPC rate-limits: a
+ * A fork pulls state from the chain's public RPC the first time a transaction touches it, and that RPC rate-limits: a
  * deploy can wait on its upstream for minutes. Anvil mines on arrival, so a slow receipt is a slow upstream, not a lost
  * transaction — wait for it rather than failing at viem's default.
  */
@@ -133,7 +137,7 @@ async function main() {
     }
     await anvil(RPC, 'anvil_setBalance', [fundTarget, toHex(GAS_ETH)]);
     const bal = await pub.readContract({ address: USDC, abi: erc20Abi, functionName: 'balanceOf', args: [fundTarget] });
-    console.log(`\nfunded ${fundTarget}\n  ${formatUnits(bal, 6)} ${SETTLEMENT_SYMBOL} + ${formatUnits(GAS_ETH, 18)} ETH for gas`);
+    console.log(`\nfunded ${fundTarget}\n  ${formatUnits(bal, 6)} ${SETTLEMENT_SYMBOL} + ${formatUnits(GAS_ETH, 18)} ${GAS} for gas`);
   }
 
   const envPath = path.resolve(process.cwd(), process.env.FORK_ENV_FILE ?? '.env.fork');
