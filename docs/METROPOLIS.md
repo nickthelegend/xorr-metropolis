@@ -102,12 +102,15 @@ https://github.com/frankolien/desk/blob/main/docs/00-prd.md
 | AUSD (Agora) | `0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a` | 6 dp; testnet `0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC` |
 | WMON / WETH / WBTC / USDT0 | `0x3bd3…433A` / `0xEE8c…1242` / `0x0555…2B9c` / `0xe7cd…C82D` | symbols and decimals answered |
 | Uniswap v3 | factory `0x204f…0498`, QuoterV2 `0x661e…f08d`, SwapRouter02 `0xfe31…b900` | $10,000 USDC → 412,238 WMON on the 0.3% pool |
-| Kuru | MON/USDC book `0x065C…C394`, MON/AUSD `0x131a…0da9`, router `0xd651…95CC` | MON/USDC 4–7 bps wide; MON/AUSD empty |
+| Kuru | MON/USDC book `0x065C…C394`, MON/AUSD `0x131a…0da9`, router `0xd651…95CC` | MON/USDC 4–7 bps wide; MON/AUSD has no resting orders on-chain (Kuru's API quotes it from vault liquidity, ~14% below MON/USDC) |
 | Chainlink | MON/USD `0xBcD7…22fb`, ETH/USD `0x1B14…0A04`, AUSD/USD `0xE207…9e13` | MON $0.0241, seconds old |
 | Perpl | Exchange `0x34B6…2a6F`, API app.perpl.xyz/api | BTC, MON, ETH, SOL, HYPE, ZEC, LIT, VVV, PUMP; **no stock perps**; geo-blocks US, GB and others |
 
-**No tokenized stocks on Monad.** The official 114-token mainnet list has none (no xStocks, Ondo, Backed, Dinari). So
-this build trades MON and the majors spot, and perps on Perpl; the Stock Token screens of the Arbitrum build are hidden.
+**Tokenized stocks on Monad: unresolved.** The official 114-token mainnet list has none (no xStocks, Ondo, Backed,
+Dinari), but Chainlink runs live "Calculated" feeds for wrapped xStocks on Monad (wNVDAx, wTSLAx, wSPYx, wQQQx — read
+on chain 143 on 2026-09-24), so the tokens likely exist there; their contracts were not located. Until they are, this
+build trades MON and the majors spot, and perps on Perpl; the Stock Token screens of the Arbitrum build are hidden.
+See `docs/SPONSOR-AUDIT.md`.
 
 Sources: https://docs.monad.xyz/developer-essentials/network-information ·
 https://docs.monad.xyz/developer-essentials/differences ·
