@@ -51,6 +51,9 @@ export const PUBLIC_PATHS: readonly string[] = [
   // GMX markets and the council's seats: public on the server (feat/gmx, the council), so a signed-out screen reads them.
   '/gmx/markets',
   '/council/seats',
+  // Monad market facts: MON priced three ways, and Perpl's public markets (server/src/monad/routes.ts).
+  '/monad/crosscheck',
+  '/monad/perpl',
   '/deposit/moonpay/config',
   '/deposit/moonpay/webhook',
 ];
