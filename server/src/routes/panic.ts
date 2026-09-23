@@ -740,7 +740,19 @@ export async function closeHolding(params: {
     };
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
-    return { status: 502, body: { status: 'failed', symbol, error: humanFailure(error) } };
+    /*
+     * The cause, kept where a failed buy keeps its own (`executor/run.ts`): in the trail, beside the words a person reads.
+     * It was dropped here, so a close that failed once on the Monad fork (PLAN.md P1.2) left nothing to say why.
+     */
+    await append({
+      walletId: w.id,
+      agent: actor,
+      action: `Could not sell ${symbol}`,
+      detail: humanFailure(error),
+      kind: 'block',
+      payload: { symbol, fraction, raw: error },
+    }).catch(() => undefined);
+    return { status: 502, body: { status: 'failed', symbol, error: humanFailure(error), raw: error } };
   }
 }
 

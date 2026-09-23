@@ -79,7 +79,8 @@ Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED*
   close with the cause swallowed and did not recur.
 - P1.3 **NOT STARTED** Kuru fill path: route MON/USDC through Kuru's router (or KuruFlow) from `spend()`; add the router
   to the grant's venues; best of Uniswap vs Kuru per trade. (Kuru bounty.)
-- P1.4 **NOT STARTED** `closeHolding` records the raw error in the audit row, as `placeOrder` does (the swallowed cause in P1.2).
+- P1.4 **DONE** `closeHolding` records the raw error in an audit row and its response, as a failed buy does, so a failed
+  close says why (the swallowed cause in P1.2). Evidence: server unit tests 1,481 pass.
 
 ### P2 — Price truth
 - P2.1 **DONE** `server/src/monad/`: Chainlink feeds, Kuru top of book, Perpl markets, `crosscheckMon`; public
