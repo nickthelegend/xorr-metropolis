@@ -11,7 +11,7 @@
  * are genuine EVM execution against genuine pool state — the only thing that is not real is that
  * the chain is a local copy.
  */
-import { arbitrum, arbitrumSepolia, base, baseSepolia, foundry, robinhood, robinhoodTestnet } from 'viem/chains';
+import { arbitrum, arbitrumSepolia, base, baseSepolia, foundry, monad, monadTestnet, robinhood, robinhoodTestnet } from 'viem/chains';
 import type { Chain } from 'viem';
 import 'dotenv/config';
 import { KNOWN_CHAINS, isKnownChain, moneyOn, networkName, type KnownChain } from './money.js';
@@ -56,6 +56,9 @@ const RPCS: Record<ChainKey, string> = {
   robinhood: process.env.ROBINHOOD_RPC ?? 'https://rpc.mainnet.chain.robinhood.com',
   'robinhood-testnet': process.env.ROBINHOOD_TESTNET_RPC ?? 'https://rpc.testnet.chain.robinhood.com',
   'robinhood-fork': process.env.FORK_RPC ?? 'http://127.0.0.1:8545',
+  monad: process.env.MONAD_RPC ?? 'https://rpc.monad.xyz',
+  'monad-testnet': process.env.MONAD_TESTNET_RPC ?? 'https://testnet-rpc.monad.xyz',
+  'monad-fork': process.env.FORK_RPC ?? 'http://127.0.0.1:8545',
 };
 
 const CHAINS: Record<ChainKey, Chain> = {
@@ -78,6 +81,10 @@ const CHAINS: Record<ChainKey, Chain> = {
   robinhood,
   'robinhood-testnet': robinhoodTestnet,
   'robinhood-fork': { ...robinhood, name: 'Robinhood Chain (fork)' },
+  monad,
+  'monad-testnet': monadTestnet,
+  // The fork IS Monad mainnet (chain 143, Multicall3 and all); only the node differs.
+  'monad-fork': { ...monad, name: 'Monad (fork)' },
 };
 
 export const chain = CHAINS[CHAIN_KEY];
@@ -89,6 +96,9 @@ export const IS_ARBITRUM = CHAIN_KEY === 'arbitrum' || CHAIN_KEY === 'arbitrum-f
 /** True on Robinhood Chain, its fork and its testnet: where the Stock Tokens live, settled in USDG. */
 export const IS_ROBINHOOD = CHAIN_KEY === 'robinhood' || CHAIN_KEY === 'robinhood-fork' || CHAIN_KEY === 'robinhood-testnet';
 
+/** True on Monad mainnet, its fork and Monad testnet. Gas is MON; the settlement token is Circle's native USDC. */
+export const IS_MONAD = CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-fork' || CHAIN_KEY === 'monad-testnet';
+
 /**
  * What the settlement token is called where a person reads it. USDG (Paxos) on Robinhood Chain, where the Stock Token
  * pools are quoted in it; USDC everywhere else.
@@ -99,7 +109,7 @@ export const SETTLEMENT_SYMBOL: 'USDC' | 'USDG' = IS_ROBINHOOD ? 'USDG' : 'USDC'
  * The chain id 1inch is asked about. A local fork of Base Sepolia still quotes against Base; every Arbitrum key quotes
  * against Arbitrum One, because 1inch has no Sepolia deployment.
  */
-export const ONEINCH_CHAIN_ID = IS_ARBITRUM ? 42161 : IS_ROBINHOOD ? 4663 : 8453;
+export const ONEINCH_CHAIN_ID = IS_ARBITRUM ? 42161 : IS_ROBINHOOD ? 4663 : IS_MONAD ? 143 : 8453;
 
 /**
  * Canonical addresses, per chain.
@@ -170,6 +180,37 @@ const ROBINHOOD_ADDRESSES = {
 } as const;
 
 /**
+ * Monad mainnet. Circle's native USDC settles; the ETH slot is WETH and the BTC slot WBTC, both bridged ERC-20s — gas is
+ * MON, which is not an ERC-20 until it is wrapped (WMON, in `venues/tokens.ts`). Each address answered its symbol and
+ * decimals on chain 143 on 2026-09-24.
+ */
+const MONAD_ADDRESSES = {
+  oneInchRouter: '0x111111125421cA6dc452d289314280a0f8842A65',
+  usdcBase: '0x754704Bc059F8C67012fEd69BC8A327a5aafb603',
+  wethBase: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242',
+  cbbtcBase: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c',
+  nativeEth: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+} as const;
+
+/**
+ * Monad testnet has been reset since mainnet launched, and the USDC addresses published for it before then have no code
+ * (checked 2026-09-24). So, as on Robinhood Chain testnet, the settlement token is the one xorr deploys there
+ * (`contracts/deploy-testnet.sh` deploys `TestUSDC`), named by MONAD_TESTNET_SETTLEMENT. Unset, the executor refuses to
+ * start on this key rather than guess.
+ */
+const MONAD_TESTNET_SETTLEMENT = process.env.MONAD_TESTNET_SETTLEMENT as `0x${string}` | undefined;
+if (CHAIN_KEY === 'monad-testnet' && !(MONAD_TESTNET_SETTLEMENT && /^0x[0-9a-fA-F]{40}$/.test(MONAD_TESTNET_SETTLEMENT))) {
+  throw new Error('XORR_CHAIN=monad-testnet needs MONAD_TESTNET_SETTLEMENT: the test settlement token xorr deployed there.');
+}
+const MONAD_TESTNET_ADDRESSES = {
+  oneInchRouter: '0x111111125421cA6dc452d289314280a0f8842A65',
+  usdcBase: MONAD_TESTNET_SETTLEMENT ?? '0x0000000000000000000000000000000000000000',
+  wethBase: '0x0000000000000000000000000000000000000000',
+  cbbtcBase: '0x0000000000000000000000000000000000000000',
+  nativeEth: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+} as const;
+
+/**
  * Robinhood Chain testnet has no canonical USDG (its explorer lists a dozen unofficial "USDG"/"USDC" tokens), so the
  * settlement token is the one xorr deployed there, named by ROBINHOOD_TESTNET_SETTLEMENT. Unset, the executor refuses to
  * start on this key rather than guess.
@@ -212,6 +253,9 @@ const ADDRESSES_BY_CHAIN: Record<ChainKey, ChainAddresses> = {
   robinhood: ROBINHOOD_ADDRESSES,
   'robinhood-fork': ROBINHOOD_ADDRESSES,
   'robinhood-testnet': ROBINHOOD_TESTNET_ADDRESSES,
+  monad: MONAD_ADDRESSES,
+  'monad-fork': MONAD_ADDRESSES,
+  'monad-testnet': MONAD_TESTNET_ADDRESSES,
 };
 
 export const ADDRESSES = ADDRESSES_BY_CHAIN[CHAIN_KEY];
@@ -225,7 +269,9 @@ export const ADDRESSES = ADDRESSES_BY_CHAIN[CHAIN_KEY];
 export const APPROVABLE_TOKENS: readonly { symbol: string; address: `0x${string}` }[] = [
   { symbol: SETTLEMENT_SYMBOL, address: ADDRESSES.usdcBase },
   { symbol: 'WETH', address: ADDRESSES.wethBase },
-  ...(CHAIN_KEY === 'arbitrum-sepolia' || IS_ROBINHOOD ? [] : [{ symbol: IS_ARBITRUM ? 'WBTC' : 'CBBTC', address: ADDRESSES.cbbtcBase }]),
+  ...(CHAIN_KEY === 'arbitrum-sepolia' || IS_ROBINHOOD || CHAIN_KEY === 'monad-testnet'
+    ? []
+    : [{ symbol: IS_ARBITRUM || IS_MONAD ? 'WBTC' : 'CBBTC', address: ADDRESSES.cbbtcBase }]),
 ];
 
 /**
@@ -243,7 +289,9 @@ export const QUOTE_ADDRESSES: ChainAddresses = IS_ARBITRUM
   ? ARBITRUM_ADDRESSES
   : IS_ROBINHOOD
     ? ROBINHOOD_ADDRESSES
-    : BASE_MAINNET_ADDRESSES;
+    : IS_MONAD
+      ? MONAD_ADDRESSES
+      : BASE_MAINNET_ADDRESSES;
 
 /** True where the tokenized equities and Aqua actually exist. */
 export const IS_BASE_MAINNET_STATE = CHAIN_KEY === 'base' || CHAIN_KEY === 'base-fork';
@@ -291,6 +339,9 @@ const UNISWAP_BY_CHAIN: Record<ChainKey, UniswapV3 | null> = {
   robinhood: UNISWAP_ROBINHOOD,
   'robinhood-fork': UNISWAP_ROBINHOOD,
   'robinhood-testnet': null,
+  monad: null,
+  'monad-fork': null,
+  'monad-testnet': null,
 };
 
 /** Uniswap v3 on the chain the executor SETTLES on, or null where nothing settles through it. */
@@ -309,10 +360,10 @@ export const UNISWAP_QUOTE_CHAIN: { uniswap: UniswapV3; rpc: string; chain: Chai
       : { uniswap: UNISWAP_BASE, rpc: process.env.BASE_RPC ?? 'https://mainnet.base.org', chain: base };
 
 /**
- * Whether 1inch is a venue on this chain at all: never on Robinhood Chain (it has no deployment there), and elsewhere
+ * Whether 1inch is a venue on this chain at all: never on Robinhood Chain or Monad (it has no deployment on either), and elsewhere
  * only when this deployment holds an API key. It is an optional second quote next to Uniswap, not a dependency.
  */
-export const ONEINCH_ENABLED = !IS_ROBINHOOD && Boolean(process.env.ONEINCH_API_KEY);
+export const ONEINCH_ENABLED = !IS_ROBINHOOD && !IS_MONAD && Boolean(process.env.ONEINCH_API_KEY);
 
 /**
  * Every contract the delegation is allowed to call, for this chain.
@@ -349,6 +400,9 @@ const EXPLORER_TX: Record<ChainKey, (hash: string) => string> = {
   robinhood: (hash) => `https://robinhoodchain.blockscout.com/tx/${hash}`,
   'robinhood-testnet': (hash) => `https://explorer.testnet.chain.robinhood.com/tx/${hash}`,
   'robinhood-fork': (hash) => `fork:${hash}`,
+  monad: (hash) => `https://monadscan.com/tx/${hash}`,
+  'monad-testnet': (hash) => `https://testnet.monadexplorer.com/tx/${hash}`,
+  'monad-fork': (hash) => `fork:${hash}`,
 };
 
 export function explorerTx(hash: string): string {

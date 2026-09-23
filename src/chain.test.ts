@@ -83,6 +83,33 @@ describe('the chain a build signs on', () => {
     expect(c.depositQrNote).toBe('Send only USDC on Arbitrum.');
   });
 
+  it('on the Monad fork, is a copy of 143: named a fork, no deposit code, the wallet only signs, USDC settles', async () => {
+    const c = await buildFor('monad-fork');
+    expect(facts(c)).toEqual({
+      id: 143,
+      label: 'Monad fork',
+      test: true,
+      chip: 'Monad fork',
+      code: false,
+      signsOnly: true,
+    });
+    expect(settlement(c)).toBe('USDC');
+    expect(c.depositQrNote).toBe('Monad fork. Test funds only.');
+  });
+
+  it('on Monad mainnet, is real money with an EIP-681 deposit code for chain 143, and offers Monad testnet next to it', async () => {
+    const c = await buildFor('monad');
+    expect(facts(c)).toMatchObject({ id: 143, test: false, code: true, signsOnly: false });
+    expect(c.depositUri('0x95A0b368588713011a15f4b1041423f31B08e615')).toBe('ethereum:0x95A0b368588713011a15f4b1041423f31B08e615@143');
+    expect(c.depositQrNote).toBe('Send only USDC on Monad.');
+    expect(c.supportedChains.map((x) => x.id)).toEqual([143, 10143]);
+  });
+
+  it('on Monad testnet, is test funds on chain 10143', async () => {
+    const c = await buildFor('monad-testnet');
+    expect(facts(c)).toMatchObject({ id: 10143, label: 'Monad testnet', test: true, code: true, signsOnly: false });
+  });
+
   it('refuses a Solana cluster: this app signs on EVM chains', async () => {
     await expect(buildFor('solana-fork')).rejects.toThrow('is a Solana cluster');
   });

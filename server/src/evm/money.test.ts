@@ -17,6 +17,9 @@ describe('what money on a chain is', () => {
     expect(moneyOn('robinhood')).toBe('real');
     expect(moneyOn('robinhood-testnet')).toBe('test');
     expect(moneyOn('robinhood-fork')).toBe('copy');
+    expect(moneyOn('monad')).toBe('real');
+    expect(moneyOn('monad-testnet')).toBe('test');
+    expect(moneyOn('monad-fork')).toBe('copy');
     expect([...KNOWN_CHAINS].sort()).toEqual([
       'arbitrum',
       'arbitrum-fork',
@@ -25,6 +28,9 @@ describe('what money on a chain is', () => {
       'base-fork',
       'base-sepolia',
       'localnet',
+      'monad',
+      'monad-fork',
+      'monad-testnet',
       'robinhood',
       'robinhood-fork',
       'robinhood-testnet',
@@ -43,6 +49,7 @@ describe('what money on a chain is', () => {
     expect(networkName('base-fork')).toBe('a fork of Base mainnet');
     expect(networkName('arbitrum')).toBe('Arbitrum One');
     expect(networkName('robinhood-fork')).toBe('a fork of Robinhood Chain');
+    expect(networkName('monad-fork')).toBe('a fork of Monad mainnet');
     expect(networkName('optimism')).toBe('optimism');
   });
 });

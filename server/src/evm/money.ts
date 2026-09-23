@@ -25,6 +25,9 @@ const FACTS = {
   robinhood: { money: 'real', name: 'Robinhood Chain' },
   'robinhood-testnet': { money: 'test', name: 'Robinhood Chain testnet' },
   'robinhood-fork': { money: 'copy', name: 'a fork of Robinhood Chain' },
+  monad: { money: 'real', name: 'Monad mainnet' },
+  'monad-testnet': { money: 'test', name: 'Monad testnet' },
+  'monad-fork': { money: 'copy', name: 'a fork of Monad mainnet' },
 } as const satisfies Record<string, { money: Money; name: string }>;
 
 /** Every chain this executor knows. */

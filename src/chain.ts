@@ -18,7 +18,7 @@
  * about which chain they are on, and the only way to be sure is for both to read it from the same
  * name in the same `.env`.
  */
-import { arbitrum, arbitrumSepolia, base, baseSepolia, robinhood, robinhoodTestnet } from 'viem/chains';
+import { arbitrum, arbitrumSepolia, base, baseSepolia, monad, monadTestnet, robinhood, robinhoodTestnet } from 'viem/chains';
 import { isAddress, type Address, type Chain } from 'viem';
 
 export type ChainKey =
@@ -32,6 +32,9 @@ export type ChainKey =
   | 'robinhood'
   | 'robinhood-testnet'
   | 'robinhood-fork'
+  | 'monad'
+  | 'monad-testnet'
+  | 'monad-fork'
   | 'solana-fork'
   | 'solana-devnet'
   | 'solana-localnet'
@@ -53,13 +56,16 @@ const MONEY: Record<ChainKey, 'real' | 'test' | 'copy'> = {
   robinhood: 'real',
   'robinhood-testnet': 'test',
   'robinhood-fork': 'copy',
+  monad: 'real',
+  'monad-testnet': 'test',
+  'monad-fork': 'copy',
   'solana-fork': 'copy',
   'solana-devnet': 'test',
   'solana-localnet': 'copy',
   'solana-mainnet': 'real',
 };
 
-const ASKED = process.env.EXPO_PUBLIC_XORR_CHAIN ?? 'arbitrum-fork';
+const ASKED = process.env.EXPO_PUBLIC_XORR_CHAIN ?? 'monad-fork';
 
 /*
  * A chain this app does not know is refused where the app is built. It was an unchecked cast, and an unknown key signed on
@@ -79,7 +85,7 @@ if (!Object.prototype.hasOwnProperty.call(MONEY, ASKED)) {
  */
 if (ASKED.startsWith('solana-')) {
   throw new Error(
-    `EXPO_PUBLIC_XORR_CHAIN=${ASKED} is a Solana cluster. This app signs on EVM chains (Robinhood Chain, Arbitrum); ` +
+    `EXPO_PUBLIC_XORR_CHAIN=${ASKED} is a Solana cluster. This app signs on EVM chains (Monad, Robinhood Chain, Arbitrum); ` +
       'build it for one of those.',
   );
 }
@@ -128,6 +134,9 @@ const SENTENCE_NAMES: Record<ChainKey, string> = {
   robinhood: 'Robinhood Chain',
   'robinhood-testnet': 'Robinhood Chain testnet',
   'robinhood-fork': 'a fork of Robinhood Chain',
+  monad: 'Monad mainnet',
+  'monad-testnet': 'Monad testnet',
+  'monad-fork': 'a fork of Monad mainnet',
   'solana-fork': 'Solana Mainnet Fork',
   'solana-devnet': 'Solana Devnet',
   'solana-localnet': 'Solana Localnet',
@@ -165,6 +174,9 @@ const CHAINS: Record<ChainKey, () => Chain> = {
   robinhood: () => withRpc(robinhood, RPC),
   'robinhood-testnet': () => withRpc(robinhoodTestnet, RPC),
   'robinhood-fork': () => withRpc({ ...robinhood, name: 'Robinhood Chain fork' }, RPC ?? 'http://127.0.0.1:8545'),
+  monad: () => withRpc(monad, RPC),
+  'monad-testnet': () => withRpc(monadTestnet, RPC),
+  'monad-fork': () => withRpc({ ...monad, name: 'Monad fork' }, RPC ?? 'http://127.0.0.1:8545'),
   'solana-fork': () => withRpc({ ...base, name: 'Solana fork' }, RPC ?? 'http://127.0.0.1:8899'),
   'solana-devnet': () => withRpc({ ...baseSepolia, name: 'Solana Devnet' }, RPC ?? 'https://api.devnet.solana.com'),
   'solana-localnet': () => withRpc({ ...base, name: 'Solana Localnet' }, RPC ?? 'http://127.0.0.1:8899'),
@@ -180,7 +192,11 @@ export const activeChain: Chain = CHAINS[CHAIN_KEY]();
  * Base mainnet stays available so a wallet funded there is still readable.
  */
 export const supportedChains: Chain[] =
-  activeChain.id === robinhood.id
+  activeChain.id === monad.id
+    ? [activeChain, monadTestnet]
+    : activeChain.id === monadTestnet.id
+      ? [activeChain, monad]
+      : activeChain.id === robinhood.id
     ? [activeChain, arbitrum]
     : activeChain.id === robinhoodTestnet.id
       ? [activeChain, arbitrumSepolia]
@@ -203,6 +219,9 @@ const LABELS: Record<ChainKey, string> = {
   robinhood: 'Robinhood Chain',
   'robinhood-testnet': 'Robinhood Chain testnet',
   'robinhood-fork': 'Robinhood Chain fork',
+  monad: 'Monad',
+  'monad-testnet': 'Monad testnet',
+  'monad-fork': 'Monad fork',
   'solana-fork': 'Solana fork',
   'solana-devnet': 'Solana Devnet',
   'solana-localnet': 'Solana Localnet',

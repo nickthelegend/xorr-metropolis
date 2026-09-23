@@ -50,8 +50,26 @@ describe('the chain this executor starts on', () => {
   it('is refused when the executor does not know it, naming the chains it does', async () => {
     vi.stubEnv('XORR_CHAIN', 'optimism');
     await expect(import('./chains.js')).rejects.toThrow(
-      'XORR_CHAIN=optimism is not a chain this executor knows (base, base-sepolia, base-fork, localnet, arbitrum, arbitrum-sepolia, arbitrum-fork, robinhood, robinhood-testnet, robinhood-fork).',
+      'XORR_CHAIN=optimism is not a chain this executor knows (base, base-sepolia, base-fork, localnet, arbitrum, arbitrum-sepolia, arbitrum-fork, robinhood, robinhood-testnet, robinhood-fork, monad, monad-testnet, monad-fork).',
     );
+  });
+
+  it('is refused on Monad testnet until it names the test settlement token xorr deployed there', async () => {
+    vi.stubEnv('XORR_CHAIN', 'monad-testnet');
+    vi.stubEnv('MONAD_TESTNET_SETTLEMENT', '');
+    await expect(import('./chains.js')).rejects.toThrow('XORR_CHAIN=monad-testnet needs MONAD_TESTNET_SETTLEMENT');
+  });
+
+  it('on a Monad fork, is chain 143 settling in Circle\'s USDC, with no 1inch whatever the environment says', async () => {
+    vi.stubEnv('XORR_CHAIN', 'monad-fork');
+    vi.stubEnv('ONEINCH_API_KEY', 'a-key');
+    const c = await import('./chains.js');
+    expect(c.chain.id).toBe(143);
+    expect(c.SETTLEMENT_SYMBOL).toBe('USDC');
+    expect(c.ADDRESSES.usdcBase).toBe('0x754704Bc059F8C67012fEd69BC8A327a5aafb603');
+    expect(c.ONEINCH_ENABLED).toBe(false);
+    expect(c.SETTLEMENT_VENUES.map((v) => v.toLowerCase())).not.toContain('0x111111125421ca6dc452d289314280a0f8842a65');
+    expect(c.explorerTx('0xabc')).toBe('fork:0xabc');
   });
 
   it('is refused where its money is real, unless ALLOW_MAINNET=yes says that was decided', async () => {
