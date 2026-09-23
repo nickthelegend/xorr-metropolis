@@ -1,0 +1,26 @@
+{
+ "quotes": [
+  {
+   "tokenSymbol": "TSLA",
+   "deployments": [
+    {
+     "contractAddress": "0x322F0929c4625eD5bAd873c95208D54E1c003b2d",
+     "chainId": 4663,
+     "networkName": "Robinhood Chain",
+     "itnEnabled": false,
+     "atomicEnabled": false
+    }
+   ],
+   "bid": "379.02",
+   "ask": "379.11",
+   "currency": "USD",
+   "dailyTradingVolume": "28229904",
+   "isTradingHalt": false,
+   "generatedAt": "2026-09-23T04:29:00.376730544Z",
+   "dailyHigh": "379.2",
+   "dailyLow": "378.12",
+   "mintBurnTokenVolume": "794.17211",
+   "mintBurnUsdVolume": "301042.85087715"
+  }
+ ]
+}

@@ -1,0 +1,134 @@
+{
+ "corpActions": [
+  {
+   "id": "0x00000000000000000000000000000000eefd305f8fd04bdb882b158b0b30d776",
+   "type": "CORPORATE_ACTION_TYPE_CASH_DIVIDEND",
+   "status": "CORPORATE_ACTION_STATUS_IN_PROGRESS",
+   "processDate": {
+    "year": 2026,
+    "month": 9,
+    "day": 25
+   },
+   "tokenSymbol": "SPMO",
+   "deployments": [
+    {
+     "contractAddress": "0xAd622320e520de39e72d41EF07438C3Fd3354875",
+     "chainId": 4663,
+     "networkName": "Robinhood Chain",
+     "itnEnabled": false,
+     "atomicEnabled": false
+    }
+   ],
+   "details": {
+    "cashDividend": {
+     "underlyingSymbol": "SPMO",
+     "rate": "0.24322"
+    }
+   }
+  },
+  {
+   "id": "0x000000000000000000000000000000002470b933c52d47ccad017ed9ee80c9ed",
+   "type": "CORPORATE_ACTION_TYPE_CASH_DIVIDEND",
+   "status": "CORPORATE_ACTION_STATUS_IN_PROGRESS",
+   "processDate": {
+    "year": 2026,
+    "month": 10,
+    "day": 8
+   },
+   "tokenSymbol": "QQQ",
+   "deployments": [
+    {
+     "contractAddress": "0xD5f3879160bc7c32ebb4dC785F8a4F505888de68",
+     "chainId": 4663,
+     "networkName": "Robinhood Chain",
+     "itnEnabled": false,
+     "atomicEnabled": false
+    }
+   ],
+   "details": {
+    "cashDividend": {
+     "underlyingSymbol": "QQQ",
+     "rate": "0.75143"
+    }
+   }
+  },
+  {
+   "id": "0x00000000000000000000000000000000343e7beca03644bcba2e50b8236784f5",
+   "type": "CORPORATE_ACTION_TYPE_CASH_DIVIDEND",
+   "status": "CORPORATE_ACTION_STATUS_IN_PROGRESS",
+   "processDate": {
+    "year": 2026,
+    "month": 9,
+    "day": 28
+   },
+   "tokenSymbol": "META",
+   "deployments": [
+    {
+     "contractAddress": "0xc0D6457C16Cc70d6790Dd43521C899C87ce02f35",
+     "chainId": 4663,
+     "networkName": "Robinhood Chain",
+     "itnEnabled": false,
+     "atomicEnabled": false
+    }
+   ],
+   "details": {
+    "cashDividend": {
+     "underlyingSymbol": "META",
+     "rate": "0.525"
+    }
+   }
+  },
+  {
+   "id": "0x00000000000000000000000000000000413cbb2a5e924576a297ccb67c272298",
+   "type": "CORPORATE_ACTION_TYPE_CASH_DIVIDEND",
+   "status": "CORPORATE_ACTION_STATUS_COMPLETED",
+   "processDate": {
+    "year": 2026,
+    "month": 9,
+    "day": 3
+   },
+   "tokenSymbol": "UPS",
+   "deployments": [
+    {
+     "contractAddress": "0xf23250dac154D05Bb671CB0d0eBEf3c635c79CE2",
+     "chainId": 4663,
+     "networkName": "Robinhood Chain",
+     "itnEnabled": false,
+     "atomicEnabled": false
+    }
+   ],
+   "details": {
+    "cashDividend": {
+     "underlyingSymbol": "UPS",
+     "rate": "1.64"
+    }
+   }
+  },
+  {
+   "id": "0x000000000000000000000000000000001cf204e4aa464340bf2e68461ff6d8d3",
+   "type": "CORPORATE_ACTION_TYPE_CASH_DIVIDEND",
+   "status": "CORPORATE_ACTION_STATUS_COMPLETED",
+   "processDate": {
+    "year": 2026,
+    "month": 8,
+    "day": 28
+   },
+   "tokenSymbol": "CCL",
+   "deployments": [
+    {
+     "contractAddress": "0x9651342CeA770aE9a2969Ba2A52611523146aef9",
+     "chainId": 4663,
+     "networkName": "Robinhood Chain",
+     "itnEnabled": false,
+     "atomicEnabled": false
+    }
+   ],
+   "details": {
+    "cashDividend": {
+     "underlyingSymbol": "CCL",
+     "rate": "0.15"
+    }
+   }
+  }
+ ]
+}

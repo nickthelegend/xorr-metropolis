@@ -1,0 +1,466 @@
+[
+{
+"name": "Robinhood SGOV-USD",
+"path": "rhsgov-usd-shared-svr",
+"proxyAddress": "0xa0DF4ee0fFf975306345875E3548Fcc519577A11",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood EWY / USD",
+"path": "robinhood-ewy-usd-shared-svr",
+"proxyAddress": "0xEFdf54610B62A7753Ec30bDc380847c12D32e1D1",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood GOOGL / USD",
+"path": "robinhood-googl-usd-shared-svr",
+"proxyAddress": "0xF6f373a037c30F0e5010d854385cA89185AE638b",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "BTC.B / USD",
+"path": "btc.b-usd-shared-svr",
+"proxyAddress": "0x5BB5e6a17a477d5B6Fec77b4322daD4A66bFb732",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood QQQ / USD",
+"path": "robinhood-qqq-usd-shared-svr",
+"proxyAddress": "0x80901d846d5D7B030F26B480776EE3b29374C2ae",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood TSM / USD",
+"path": "robinhood-tsm-usd-shared-svr",
+"proxyAddress": "0x874cF94aa8eC88Fd9560094dD065f2fB3E41Fc2F",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "WEETH / USD",
+"path": "weeth-usd-shared-svr",
+"proxyAddress": "0xf882e1D50352aecB0Ac85378378918BCf40511e7",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood COIN / USD",
+"path": "robinhood-coin-usd-shared-svr",
+"proxyAddress": "0xA3a468A452940B7D6b69991207B508c609a98Ef2",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood PLTR / USD",
+"path": "robinhood-pltr-usd-shared-svr",
+"proxyAddress": "0x820ABedFF239034956B7A9d2F0a331f9F075eB4c",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "LINK / USD",
+"path": "link-usd-shared-svr",
+"proxyAddress": "0xe86e3422Aa9B5e8ee9f3E41a63975bC387A8bce9",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood RGTI / USD",
+"path": "robinhood-rgti-usd-shared-svr",
+"proxyAddress": "0x2A045cF1C49c61c166C036d2f06FA2D2d984f765",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "USDS / USD",
+"path": "usds-usd-shared-svr",
+"proxyAddress": "0x2D88D75b625633dCcd65d9d53BfDD3Aea2d8e84f",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood ORCL / USD",
+"path": "robinhood-orcl-usd-shared-svr",
+"proxyAddress": "0x0e6a64a2B58A6693a531E6c555f3A5d042eEA844",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood MSTR / USD",
+"path": "robinhood-mstr-usd-shared-svr",
+"proxyAddress": "0x396118bdFB181e6240E74D243F266B061c0edc3D",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "USDT / USD",
+"path": "usdt-usd-shared-svr",
+"proxyAddress": "0xbf3550B6fAe1671da7C238Af12e03Ac586BEf3B1",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood RKLB / USD",
+"path": "robinhood-rklb-usd-shared-svr",
+"proxyAddress": "0x045477BF65Aef6f4F2386ad0164579e48381CC74",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood SPCX / USD",
+"path": "robinhood-spcx-usd-shared-svr",
+"proxyAddress": "0xB265810950ba6c5C0Ff821c9963014a56fD8Bffb",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "ETH / USD",
+"path": "eth-usd-shared-svr",
+"proxyAddress": "0x78F3556b67E17Df817D51Ef5a990cDaF09E8d3A9",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "SYRUPUSDC / USDC Exchange Rate",
+"path": "syrupusdc-usdc-exchange-rate",
+"proxyAddress": "0x6317f016FA3e312C4625dee51d32b43a223011f8",
+"heartbeat": 86400,
+"decimals": 18,
+"threshold": 0.05
+},
+{
+"name": "EURC / USD",
+"path": "eurc-usd-shared-svr",
+"proxyAddress": "0xfF2B10c1973eD10c841434f98e456d8f3a0D7DD8",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood USAR-USD",
+"path": "rhusar-usd-shared-svr",
+"proxyAddress": "0xA994d3684e8400A6c8078226925779FdeE682DD9",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood SPY / USD",
+"path": "robinhood-spy-usd-shared-svr",
+"proxyAddress": "0x319724394D3A0e3669269846abE664Cd621f9f6A",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood TSLA / USD",
+"path": "robinhood-tsla-usd-shared-svr",
+"proxyAddress": "0x4A1166a659A55625345e9515b32adECea5547C38",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood SNDK / USD",
+"path": "robinhood-sndk-usd-shared-svr",
+"proxyAddress": "0xfb133Fa4B7b385802B693a293606682Df47109A3",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "ENA / USD",
+"path": "ena-usd-shared-svr",
+"proxyAddress": "0x2A291496b3aa19d8948e442Ef28Ee952f3Ee97E8",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood IONQ / USD",
+"path": "robinhood-ionq-usd-shared-svr",
+"proxyAddress": "0x22EfeC4919baf55F360E0EDee4AbEB26DE4971eb",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "USDG / USD",
+"path": "usdg-usd-shared-svr",
+"proxyAddress": "0x61B7e5650328764B076A108EFF5fa7282a1B9aD2",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood CRCL / USD",
+"path": "robinhood-crcl-usd-shared-svr",
+"proxyAddress": "0x6652eDf64bA3731C4F2D3ce821A0Fb1f1f6b482a",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood AMZN / USD",
+"path": "robinhood-amzn-usd-shared-svr",
+"proxyAddress": "0xD5a1508ceD74c084eBf3cBe853e2C968fB2a651C",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "WSTETH / USD",
+"path": "wsteth-usd-shared-svr",
+"proxyAddress": "0x3F5040B50FB37934573B210fE54B53a6F1A792E8",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood INTC / USD",
+"path": "robinhood-intc-usd-shared-svr",
+"proxyAddress": "0x3f390C5C24628Ac7C489515402235FeAD71D1913",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "WBTC / USD",
+"path": "wbtc-usd-shared-svr",
+"proxyAddress": "0x62107b0d3adA75fc1697fD342d99eed947a3aA5E",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood MU / USD",
+"path": "robinhood-mu-usd-shared-svr",
+"proxyAddress": "0x425EEFdCf05ed6526C3cE61Af99429A228a6d596",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood AAPL / USD",
+"path": "robinhood-aapl-usd-shared-svr",
+"proxyAddress": "0x6B22A786bAa607d76728168703a39Ea9C99f2cD0",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "SYRUPUSDT / USDT Exchange Rate",
+"path": "syrupusdt-usdt-exchange-rate-shared-svr",
+"proxyAddress": "0xBB688c0184Ce03fEdac89D71ccE752Ab21bC2999",
+"heartbeat": 86400,
+"decimals": 18,
+"threshold": 0.05
+},
+{
+"name": "Robinhood NVDA / USD",
+"path": "robinhood-nvda-usd-shared-svr",
+"proxyAddress": "0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "LBTC / USD",
+"path": "lbtc-usd-shared-svr",
+"proxyAddress": "0xa621344AdAEE699491597Fd8890E0C59a5BFBE59",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood DELL-USD",
+"path": "rhdell-usd-shared-svr",
+"proxyAddress": "0x1C6c8cADBe02E19129c39dDB92281cE4c0bf206b",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "syrupUSDG / USDG Exchange Rate",
+"path": "syrupusdg-usdg-exchange-rate-shared-svr",
+"proxyAddress": "0xDd194C66aDcb422F188a04434e4824D70c151cF0",
+"heartbeat": 86400,
+"decimals": 18,
+"threshold": 0.05
+},
+{
+"name": "USDC / USD",
+"path": "usdc-usd-shared-svr",
+"proxyAddress": "0x9e6f4605992a899eE2999999F3Ec80C41F452546",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood NBIS / USD",
+"path": "robinhood-nbis-usd-shared-svr",
+"proxyAddress": "0xE1D87B116Ba0fe898998f1D140339D1fA1E09705",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "WEETH / EETH Exchange Rate",
+"path": "weeth-eeth-exchange-rate-shared-svr",
+"proxyAddress": "0xb63f44E40aA811Cc69Fc55da786a5F3834100B4A",
+"heartbeat": 86400,
+"decimals": 18,
+"threshold": 0.05
+},
+{
+"name": "Robinhood CLSK / USD",
+"path": "robinhood-clsk-usd-shared-svr",
+"proxyAddress": "0x810c12D3a554Bc47fd39597Fe3b3AAC4941F50eF",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood ASML / USD",
+"path": "robinhood-asml-usd-shared-svr",
+"proxyAddress": "0xB4106147E8cce40b7d46124090d373A71b70f87D",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "CBBTC / USD",
+"path": "cbbtc-usd-shared-svr",
+"proxyAddress": "0x0009cD492adf8167f9eEBf1293556A673530a21a",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood BABA / USD",
+"path": "robinhood-baba-usd-shared-svr",
+"proxyAddress": "0x62Cc8F9b5f56a33c9C8A60c8B92779f523c4E984",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood USO / USD",
+"path": "robinhood-uso-usd-shared-svr",
+"proxyAddress": "0x75a9c76Ef439e2C7c2E5a34Ab105EcFe3766431c",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "SYRUPUSDC / USD",
+"path": "syrupusdc-usd-shared-svr",
+"proxyAddress": "0x8765c3B9Cda41d1029E780D0c1C37C8200DC4675",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood META / USD",
+"path": "robinhood-meta-usd-shared-svr",
+"proxyAddress": "0x7C38C00C30BEe9378381E7B6135d7283356D71b1",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood MSFT / USD",
+"path": "robinhood-msft-usd-shared-svr",
+"proxyAddress": "0x45C3C877C15E6BA2EBB19eA114Ea508d14C1Af2E",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "BTC / USD",
+"path": "btc-usd-shared-svr",
+"proxyAddress": "0xa2c5184bF03d373Dc9dE4876eb4Bce595B460251",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood SLV / USD",
+"path": "robinhood-slv-usd-shared-svr",
+"proxyAddress": "0x209b73908e92Ae021826eD79609845451Ecba2ce",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood CRWV / USD",
+"path": "robinhood-crwv-usd-shared-svr",
+"proxyAddress": "0xe1b3aABCAFAd1c94708dc1367dcfF8Aa4407487C",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood AMD / USD",
+"path": "robinhood-amd-usd-shared-svr",
+"proxyAddress": "0x943A29E7ae51A4798823ca9eEd2ed533B2A22C72",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "GLD / USD",
+"path": "gld-usd",
+"proxyAddress": "0x470A51258068043bd43dC0a56245625C9fE86eB0",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "Robinhood GME / USD",
+"path": "robinhood-gme-usd-shared-svr",
+"proxyAddress": "0x27C71df6A64fB476468EdF256CF72c038baB5B67",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+},
+{
+"name": "WSTETH / STETH Exchange Rate",
+"path": "wsteth-steth-exchange-rate-shared-svr",
+"proxyAddress": "0x8E3Eb706B170c8FD1DdcD402932D952887736f9A",
+"heartbeat": 86400,
+"decimals": 18,
+"threshold": 0.05
+},
+{
+"name": "USDE / USD",
+"path": "usde-usd-shared-svr",
+"proxyAddress": "0xb9fB4e65744E4178894f7C61CF80E8a48A5f224a",
+"heartbeat": 86400,
+"decimals": 8,
+"threshold": 0.5
+}
+]

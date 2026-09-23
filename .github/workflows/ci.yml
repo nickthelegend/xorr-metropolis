@@ -1,0 +1,87 @@
+# What can be checked without a chain, a key or a paid API — on every push — and, on demand, what cannot.
+#
+# `checks` (typecheck, lint, unit tests, an iOS bundle) and `contracts` (forge build + every contract test) are
+# hermetic and run on every push and pull request. `robinhood-node` reaches public services — the hosted Robinhood
+# Chain node, Robinhood's REST API — so it runs only when asked for (Actions → ci → Run workflow).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: |
+          npm ci --ignore-scripts
+          (cd server && npm ci --ignore-scripts)
+
+      - name: Typecheck the app
+        run: npx tsc --noEmit
+
+      - name: Typecheck the executor
+        run: npx tsc --noEmit -p server/tsconfig.json
+
+      - name: Lint
+        run: npm run lint
+
+      # The client and the executor. The `.live.test.ts` files are excluded here and by name — they
+      # need real credentials and a real chain, and pretending otherwise is how a suite starts lying
+      # about its own coverage. `live-1inch` runs the 1inch ones on demand.
+      - name: Unit tests
+        run: npm test
+
+      # The app bundled for iOS, as a phone loads it. Web never loads a `.native` file, so a dependency only the
+      # native build imports can be missing while every step above passes — Privy's QR code peer was, and the iOS
+      # app could not start (PLAN.md X78).
+      - name: Bundle the app for iOS
+        run: npx expo export --platform ios --output-dir "$RUNNER_TEMP/ios-export"
+
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Build
+        run: forge build
+        working-directory: contracts
+
+      # Only the tests that need no fork. The fork suites — Aqua, SwapVM, the tokenized equities — need
+      # a Base mainnet RPC, so they run in `fork-contracts`, on demand.
+      - name: Contract tests (no fork required)
+        run: forge test -vv
+        working-directory: contracts
+
+  # On demand: the contracts against a fork of real Base, through the BASE_RPC secret.
+  robinhood-node:
+    # The council and the stock guards against the hosted Robinhood Chain node and Robinhood's live APIs.
+    # Manual only: it reaches public services (Robinhood's REST API, Robinhood Chain RPC, GMX's API).
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: cd server && npm ci
+      - name: Stock round trips on the Robinhood node
+        run: cd server && FORK_RPC=https://robinhood-fork-production.up.railway.app npx tsx src/fork/swap-check-robinhood.ts
+      - name: Robinhood live data
+        run: cd server && LIVE=1 npx vitest run src/robinhood/robinhood.live.test.ts

@@ -1,0 +1,50 @@
+[
+ {
+  "tokenAddress": "0x7f9FBf9bDd3F4105C478b996B648FE6e828a1e98",
+  "tokenSymbol": "APE",
+  "minPrice": "162404103722",
+  "maxPrice": "162490011168",
+  "updatedAt": 1790137966223,
+  "timestamp": 1790137965
+ },
+ {
+  "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+  "tokenSymbol": "ETH",
+  "minPrice": "2784959467690360",
+  "maxPrice": "2784959467690360",
+  "updatedAt": 1790137966223,
+  "timestamp": 1790137965
+ },
+ {
+  "tokenAddress": "0x47904963fc8b2340414262125aF798B9655E58Cd",
+  "tokenSymbol": "BTC",
+  "minPrice": "872001586635084725000000000",
+  "maxPrice": "872001586635084725000000000",
+  "updatedAt": 1790137966223,
+  "timestamp": 1790137965
+ },
+ {
+  "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+  "tokenSymbol": "WBTC.b",
+  "minPrice": "872001586635084725000000000",
+  "maxPrice": "872001586635084725000000000",
+  "updatedAt": 1790137966223,
+  "timestamp": 1790137965
+ },
+ {
+  "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+  "tokenSymbol": "USDC",
+  "minPrice": "999919538243753600000000",
+  "maxPrice": "999919538243753600000000",
+  "updatedAt": 1790137966223,
+  "timestamp": 1790137965
+ },
+ {
+  "tokenAddress": "0x004B506865409877C9fA29bfb1ebA929984B9bbC",
+  "tokenSymbol": "USDG",
+  "minPrice": "1000066281389544700000000",
+  "maxPrice": "1000066281389544700000000",
+  "updatedAt": 1790137966223,
+  "timestamp": 1790137965
+ }
+]
