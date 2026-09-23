@@ -11,8 +11,9 @@
  * `withStockTokens` (`src/markets/xstockClass.ts`), so a token the executor lists is a row and nothing else is.
  */
 import type { AssetClass } from '../types';
+import { CHAIN_KEY } from '../../chain';
 
-export const assetClasses: AssetClass[] = [
+const BASE_CLASSES: AssetClass[] = [
   {
     "id": "crypto",
     "label": "Crypto",
@@ -77,3 +78,23 @@ export const assetClasses: AssetClass[] = [
     "instruments": []
   }
 ];
+
+/**
+ * Monad: MON first — the chain's own asset and its deepest pool — then ETH and BTC, all three bought through Uniswap v3 on
+ * chain 143 (as WMON, WETH, WBTC). No Stock Token class: Monad has none this app trades. Perps are Perpl's, on /perps.
+ */
+const MONAD_CLASSES: AssetClass[] = [
+  {
+    id: 'crypto',
+    label: 'Crypto',
+    note: 'Spot prices, live',
+    more: 'All crypto',
+    instruments: [
+      { sym: 'MON', name: 'Monad', tag: 'Spot', px: '—', chg: '', up: true, c1: '#836EF9', c2: '#4B32C8', classId: 'crypto', feed: 'live' },
+      { sym: 'ETH', name: 'Ethereum', tag: 'Spot', px: '—', chg: '', up: true, c1: '#8FA6E8', c2: '#4B5FA8', classId: 'crypto', feed: 'live' },
+      { sym: 'BTC', name: 'Bitcoin', tag: 'Spot', px: '—', chg: '', up: true, c1: '#F7931A', c2: '#B96908', classId: 'crypto', feed: 'live' },
+    ],
+  },
+];
+
+export const assetClasses: AssetClass[] = CHAIN_KEY.startsWith('monad') ? MONAD_CLASSES : BASE_CLASSES;

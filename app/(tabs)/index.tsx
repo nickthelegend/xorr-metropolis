@@ -70,7 +70,7 @@ import {
   type SetupStepState,
 } from '@/state/derived';
 import type { Address } from 'viem';
-import { pinnedDelegation } from '@/chain';
+import { pinnedDelegation, CHAIN_KEY } from '@/chain';
 import { xStockGainers } from '@/markets/xstockClass';
 import { isPriced, stockName } from '@/markets/catalog';
 import { chainAccess } from '@/wallet/chainAccess';
@@ -90,8 +90,11 @@ const ALL_TABS: readonly { key: SheetTab; label: string }[] = [
   { key: 'stocks', label: 'Stocks' },
   { key: 'strategies', label: 'Strategies' },
 ];
-/** Perps get their own tab when the GMX screens land (PLAN.md P4.5); the Hyperliquid futures list is not this build's. */
-const TABS = ALL_TABS;
+/**
+ * The Hyperliquid futures list is not this build's. On Monad there are no Stock Tokens to rank or list (Gainers and Stocks
+ * both read the Stock Token catalog), so those two tabs are not drawn; perps are Perpl's, on their own screen.
+ */
+const TABS = CHAIN_KEY.startsWith('monad') ? ALL_TABS.filter((t) => t.key !== 'gainers' && t.key !== 'stocks') : ALL_TABS;
 
 const AVATAR = 40;
 const GRABBER_W = 36;
@@ -594,7 +597,17 @@ export default function Home() {
           1inch has no deployment — a strategy is watched and never filled, and a person who grants a permission and waits
           for a fill should not have to find that out three taps away.
         */}
-        {fillsNothing ? (
+        {fillsNothing && CHAIN_KEY === 'monad-testnet' ? (
+          /*
+            Monad testnet has no spot venue xorr settles through (Uniswap's testnet addresses have no code; Kuru's testnet is
+            its V2 router), but it has Perpl: agents trade perps there, for real, from a desk only you can withdraw from.
+          */
+          <View style={{ marginTop: space.s16, paddingHorizontal: space.gutter }}>
+            <Press onPress={() => router.push('/perps')} accessibilityRole="link" accessibilityLabel="Open Perps">
+              <NoteStrip kind="acted">On Monad testnet your agents trade perps on Perpl. Open Perps ›</NoteStrip>
+            </Press>
+          </View>
+        ) : fillsNothing ? (
           <View style={{ marginTop: space.s16, paddingHorizontal: space.gutter }}>
             <NoteStrip kind="blocked">
               Watch-only here: strategies are tracked, not traded.

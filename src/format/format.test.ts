@@ -40,6 +40,8 @@ describe('3.5 formatting rules — state.md', () => {
     expect(price(3412.1)).toBe('$3,412'); // ditto
     expect(price(88.32)).toBe('$88.32'); // < 1000: 2dp
     expect(price(0.1842)).toBe('$0.1842'); // sub-dollar: 4dp
+    expect(price(0.02414)).toBe('$0.02414'); // MON: 5dp, Perpl's tick
+    expect(price(0.004018)).toBe('$0.004018'); // under a cent: 6dp
   });
 
   it('percentages carry an explicit sign at 1dp', () => {

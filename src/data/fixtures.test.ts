@@ -1,7 +1,13 @@
 /**
  * Fixture integrity — PLAN.md 3.4 (G4) and 3.6 (G12).
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// These pin the catalog of a build that lists Stock Tokens (Arbitrum/Robinhood); the Monad catalog is
+// `markets-monad.test.ts`. Set before the modules below are imported, which read the chain once.
+vi.hoisted(() => {
+  process.env.EXPO_PUBLIC_XORR_CHAIN = 'arbitrum-fork';
+});
 import { assetClasses } from './fixtures/markets';
 import { activityFixtures } from './fixtures/activity';
 import { watchlistGroups, btcBars, areaSeries } from './fixtures/series';

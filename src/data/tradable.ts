@@ -7,7 +7,16 @@
  * only a handful of those can be routed and settled. Offering a Buy on the rest would put a
  * strategy in the database that no signed transaction could ever fill.
  */
+import { CHAIN_KEY } from '@/chain';
+
+/** A Monad build: MON, WETH, WBTC and USDT0 on chain 143 (or its fork / testnet). */
+const ON_MONAD = CHAIN_KEY.startsWith('monad');
+
 export const TRADABLE = [
+  // Monad's registry: MON trades as WMON; WETH, WBTC and USDT0 route to USDC (server/src/venues/tokens.ts).
+  'MON',
+  'WMON',
+  'USDT0',
   // Robinhood Chain's settlement token and its Stock Tokens with funded pools on the hosted node; Arbitrum's majors.
   'USDG',
   'NVDA',
@@ -42,10 +51,10 @@ export type TradableSymbol = (typeof TRADABLE)[number];
  * "BTC is not tradable" when the app can and does buy cbBTC for them would be true in the most
  * useless way.
  */
-export const SETTLES_AS: Record<string, string> = {
-  BTC: 'CBBTC',
-  ETH: 'WETH',
-};
+export const SETTLES_AS: Record<string, string> = ON_MONAD
+  ? // On Monad: MON is bought as WMON, ETH as WETH and BTC as WBTC — the ERC-20s the Uniswap v3 pools on 143 hold.
+    { MON: 'WMON', ETH: 'WETH', BTC: 'WBTC' }
+  : { BTC: 'CBBTC', ETH: 'WETH' };
 
 /** The token a market symbol actually trades as, or the symbol itself. */
 export function settlementSymbol(symbol: string): string {
@@ -61,7 +70,7 @@ export function isTradable(symbol: string): boolean {
 }
 
 /** What the default buy is when a screen has to pick one: WETH, which Arbitrum and Robinhood Chain both carry. */
-export const DEFAULT_BUY: string = 'WETH';
+export const DEFAULT_BUY: string = ON_MONAD ? 'WMON' : 'WETH';
 
 /**
  * What the SERVER says can be settled, which is not always what this list says.

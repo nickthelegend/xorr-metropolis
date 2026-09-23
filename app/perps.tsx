@@ -28,6 +28,8 @@ import {
   Text,
   colors,
   money,
+  price,
+  quantity,
   radius,
   size,
   space,
@@ -41,11 +43,13 @@ import { deskCalls, perps, type Desk, type DeskPosition, type PerpMarket, type P
 const SIZES = [25, 50, 100] as const;
 const OPEN_AMOUNT = 150;
 
-/** A MON price has five meaningful decimals; BTC none past the cent. */
+/** Prices through the shared formatter, which carries MON's fifth decimal (Perpl's tick). */
 function px(v: number | null): string {
-  if (v === null) return '—';
-  return v >= 100 ? money(v) : v >= 1 ? `$${v.toFixed(3)}` : `$${v.toFixed(5)}`;
+  return v === null ? '—' : price(v);
 }
+/** A plain share, e.g. 37.8 → "37.8%", with no sign: it is a distance, not a change. */
+const share = (v: number, digits = 1) => `${quantity(v, digits)}%`;
+const ausd = (v: number) => `${quantity(v, 2)} AUSD`;
 
 const short = (h: string) => `${h.slice(0, 8)}…${h.slice(-4)}`;
 
@@ -62,10 +66,11 @@ function TxLink({ label, url }: { label: string; url: string | null }) {
 
 function fundingLine(m: PerpMarket): string {
   if (m.fundingPerInterval === null) return 'Funding —';
-  const pct = Math.abs(m.fundingPerInterval * 100).toFixed(4);
   const mins = m.fundingIntervalSec ? Math.round(m.fundingIntervalSec / 60) : null;
-  const who = m.fundingPerInterval >= 0 ? 'longs pay' : 'shorts pay';
-  return `Funding: ${who} ${pct}%${mins ? ` every ${mins} min` : ''}`;
+  const every = mins ? ` every ${mins} min` : '';
+  if (m.fundingPerInterval === 0) return `Funding: flat${every}`;
+  const who = m.fundingPerInterval > 0 ? 'longs pay' : 'shorts pay';
+  return `Funding: ${who} ${share(Math.abs(m.fundingPerInterval * 100), 4)}${every}`;
 }
 
 /** How close a position is to liquidation, drawn: the bar empties as the mark walks toward the liquidation price. */
@@ -80,7 +85,7 @@ function LiqMeter({ p }: { p: DeskPosition }) {
         <View style={{ width: `${fill * 100}%`, height: 6, backgroundColor: tone }} />
       </View>
       <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>
-        Liquidation {px(p.liquidation)} · {(d * 100).toFixed(1)}% away
+        Liquidation {px(p.liquidation)} · {share(d * 100)} away
       </Text>
     </View>
   );
@@ -181,12 +186,12 @@ export default function Perps() {
               )}
             </View>
             <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s6 }}>
-              Wallet: {d.wallet.ausd.toFixed(2)} AUSD · {d.wallet.gas.toFixed(3)} MON for gas
+              Wallet: {ausd(d.wallet.ausd)} · {quantity(d.wallet.gas, 3)} MON for gas
             </Text>
             {d.desk ? (
               <>
                 <Text variant="footnote" color={colors.ink55}>
-                  On Perpl: {d.balance.toFixed(2)} AUSD{d.locked > 0 ? ` (${d.locked.toFixed(2)} in positions)` : ''} · account #{d.accountId}
+                  On Perpl: {ausd(d.balance)}{d.locked > 0 ? ` (${ausd(d.locked)} in positions)` : ''} · account #{d.accountId}
                 </Text>
                 <Text variant="footnote" color={colors.ink55}>
                   Agent limits: {money(d.caps.maxOrderUsd, { decimals: 0 })} an order, {money(d.caps.maxDayUsd, { decimals: 0 })} a day ({money(d.caps.usedTodayUsd)} used), up to {d.caps.maxLeverage}x
@@ -399,7 +404,7 @@ export default function Perps() {
               />
             )}
             <Button
-              label={`Withdraw ${(d.balance - d.locked).toFixed(2)} AUSD to my wallet`}
+              label={`Withdraw ${ausd(d.balance - d.locked)} to my wallet`}
               variant="secondary"
               disabled={d.balance - d.locked <= 0.01}
               loading={busy === 'withdraw'}

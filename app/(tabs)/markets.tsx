@@ -41,6 +41,7 @@ import { logoProps, useLogos } from '@/data/useLogos';
 import { useMarketPrices } from '@/markets/useMarketPrices';
 import { useStore } from '@/state/store';
 import type { Instrument } from '@/data/types';
+import { CHAIN_KEY } from '@/chain';
 
 export default function MarketsScreen() {
   const router = useRouter();
@@ -191,6 +192,22 @@ export default function MarketsScreen() {
                   {cls.more} ›
                 </Text>
               </Press>
+            }
+            ListHeaderComponent={
+              CHAIN_KEY.startsWith('monad') ? (
+                // Perps on Monad are Perpl's, traded by your agent from a desk only you can withdraw from.
+                <Press
+                  onPress={() => router.push('/perps')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Perps on Perpl"
+                  hitHeight={size.hit}
+                  style={{ paddingVertical: space.s10 }}
+                >
+                  <Text variant="control" color={colors.ink65}>
+                    Perps on Perpl — your agent trades, only you withdraw ›
+                  </Text>
+                </Press>
+              ) : null
             }
           />
         )}

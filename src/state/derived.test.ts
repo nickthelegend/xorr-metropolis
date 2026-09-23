@@ -58,9 +58,9 @@ describe('order ticket — screen 14', () => {
   });
 
   it('CTA reads as designed', () => {
-    // Defaults to the Base asset the executor can actually settle, not a chain we do not trade.
-    expect(d.orderCta('buy', '250')).toBe('Buy $250 of WETH');
-    expect(d.orderCta('sell', '1,000')).toBe('Sell $1,000 of WETH');
+    // Defaults to what this build's executor can actually settle: on Monad (the default build) that is WMON.
+    expect(d.orderCta('buy', '250')).toBe('Buy $250 of WMON');
+    expect(d.orderCta('sell', '1,000')).toBe('Sell $1,000 of WMON');
     expect(d.orderCta('buy', '250', 'NVDAc')).toBe('Buy $250 of NVDAc');
   });
 

@@ -57,7 +57,11 @@ export function price(n: number): string {
   const a = Math.abs(n);
   if (a >= 1000) return `${sign(n, false, 0)}$${localise(n, 0, 0)}`;
   if (a >= 1) return `${sign(n, false, 2)}$${localise(n, 2, 2)}`;
-  return `${sign(n, false, 4)}$${localise(n, 4, 4)}`;
+  if (a >= 0.1) return `${sign(n, false, 4)}$${localise(n, 4, 4)}`;
+  // MON trades near $0.024 and Perpl quotes it to $0.00001: four places would read $0.0241 for $0.02414. PUMP (~$0.004)
+  // gets six.
+  if (a >= 0.01) return `${sign(n, false, 5)}$${localise(n, 5, 5)}`;
+  return `${sign(n, false, 6)}$${localise(n, 6, 6)}`;
 }
 
 /** Percentage: 1dp with an explicit sign. `+1.0%`, `−1.0%`; a change that prints as zero is never negative. */

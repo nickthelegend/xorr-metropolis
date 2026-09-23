@@ -1,7 +1,13 @@
 /**
  * Each class is priced by its own read, and a failed read is a failure rather than a list of dashes.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// These pin the catalog of a build that lists Stock Tokens (Arbitrum/Robinhood); the Monad catalog is
+// `markets-monad.test.ts`. Set before the modules below are imported, which read the chain once.
+vi.hoisted(() => {
+  process.env.EXPO_PUBLIC_XORR_CHAIN = 'arbitrum-fork';
+});
 import { assetClasses } from '@/data/fixtures/markets';
 import type { Quote, StockQuote } from '@/data/marketData';
 import { FEED_SYMBOLS, priceClasses, priceInstrument, sourceOf } from './prices';
