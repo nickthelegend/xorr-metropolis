@@ -84,7 +84,7 @@ export function Row({
   style,
   testID,
 }: RowProps) {
-  const body = children ?? (
+  const main = (
     <>
       {left}
       {(title !== undefined || secondary !== undefined) && (
@@ -151,6 +151,11 @@ export function Row({
           )}
         </View>
       )}
+    </>
+  );
+  const body = children ?? (
+    <>
+      {main}
       {right}
     </>
   );
@@ -174,6 +179,27 @@ export function Row({
     return (
       <View testID={testID} style={rowStyle}>
         {body}
+      </View>
+    );
+  }
+
+  /*
+   * A pressable row with a control of its own at the trailing edge (the watchlist's bell, its move arrows): the control
+   * sits BESIDE the row's pressable, not inside it. Inside, the web drew a <button> within a <button> — invalid HTML,
+   * which React reports as a hydration error on every load of the screen (Watchlist, Portfolio; 2026-09-24).
+   */
+  if (children === undefined && right !== undefined && right !== null && right !== false) {
+    return (
+      <View style={rowStyle}>
+        <Press
+          testID={testID}
+          onPress={onPress}
+          accessibilityRole="button"
+          style={{ flex: 1, minWidth: 0, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.s12 }}
+        >
+          {main}
+        </Press>
+        {right}
       </View>
     );
   }

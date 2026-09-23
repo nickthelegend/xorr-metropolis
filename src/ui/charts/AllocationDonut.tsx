@@ -103,8 +103,12 @@ export function AllocationDonut({ slices, total, totalLabel, style, testID }: Al
               .map((s) => `${s.sector} ${Math.round(s.share * 100)}%`)
               .join(', ')}
           >
-            {/* From twelve o'clock: an SVG circle starts at three. */}
-            <G rotation={-90} origin={`${center}, ${center}`}>
+            {/*
+              From twelve o'clock: an SVG circle starts at three. A plain SVG transform, not `rotation`/`origin`, which
+              react-native-svg's web layer writes as a `transform-origin` attribute React DOM rejects on every render
+              (the same reason AddressQR draws its own modules).
+            */}
+            <G transform={`rotate(-90 ${center} ${center})`}>
               <Circle cx={center} cy={center} r={radius} fill="none" stroke={colors.control} strokeWidth={STROKE} />
               {slices.map((slice, i) => (
                 <Segment
