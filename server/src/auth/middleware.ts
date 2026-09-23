@@ -32,6 +32,9 @@ const PUBLIC_PATHS = new Set([
   /** GMX V2 markets (funding, open interest, liquidity) and who sits on the council: market facts, not user data. */
   '/gmx/markets',
   '/council/seats',
+  /** Monad: MON priced three ways (Uniswap v3, Kuru, Chainlink), and Perpl's public markets. Market facts. */
+  '/monad/crosscheck',
+  '/monad/perpl',
   // Same reasoning as the rest of `/market/*`: an observed price series is not user data, and
   // gating it means an unauthenticated visitor sees an equity with a number and no shape.
   '/market/stocks/history',

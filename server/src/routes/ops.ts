@@ -15,7 +15,7 @@ import { query } from '../db/index.js';
 import { THIS_CHAIN } from '../db/chain-scope.js';
 import { fillQuality } from '../executor/fill-quality.js';
 import { publicClient } from '../evm/client.js';
-import { CHAIN_KEY, IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD, UNISWAP } from '../evm/chains.js';
+import { CHAIN_KEY, IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD, UNISWAP, chain } from '../evm/chains.js';
 
 /** Only the Base deployment has a subgraph of ours (PLAN.md G10). */
 const HAS_SUBGRAPH = !IS_ARBITRUM && !IS_ROBINHOOD && !IS_MONAD;
@@ -140,8 +140,10 @@ ops.get('/health', async (c) => {
         // server being broken. It is still the single most likely reason a strategy fails.
         probe('gas', false, async () => {
           const g = await gasStatus();
-          if (!g.enough) throw new Error(`${g.eth.toFixed(4)} ETH, below the ${g.floor} floor`);
-          return `${g.eth.toFixed(4)} ETH`;
+          // Named by the chain's own gas token: MON on Monad, ETH on the others.
+          const unit = chain.nativeCurrency.symbol;
+          if (!g.enough) throw new Error(`${g.eth.toFixed(4)} ${unit}, below the ${g.floor} floor`);
+          return `${g.eth.toFixed(4)} ${unit}`;
         }),
         /*
          * The index a trade decision reads (PLAN.md 2.11). Not critical — a run the index cannot answer for
