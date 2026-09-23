@@ -13,6 +13,7 @@ import React, { useMemo } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
+import { onMonad } from '@/chain';
 import {
   EmptyList,
   ErrorState,
@@ -180,8 +181,9 @@ function AgentNext({
       </PillWrap>
 
       <Text variant="footnote" color={colors.ink55}>
-        Which of them it can actually act on is read at the moment it looks — a live price, the band
-        it has recorded, the Nasdaq session, and whether the mint has a split or dividend queued.
+        {onMonad
+          ? 'Which of them it can act on is read at the moment it looks: its Chainlink feed on Monad, the price the fill would get, and Perpl’s funding.'
+          : 'Which of them it can actually act on is read at the moment it looks — a live price, the band it has recorded, the Nasdaq session, and whether the mint has a split or dividend queued.'}
       </Text>
 
       {/*

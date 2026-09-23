@@ -16,6 +16,7 @@
  * So it reports the universe the sweep will consider and the gates that are already decided — the
  * kill switch, and the cooldown — and says plainly that the rest is read when the tick comes.
  */
+import { IS_MONAD } from '../evm/chains.js';
 import { one } from '../db/index.js';
 import { XSTOCKS } from '../venues/xstocks.js';
 import { schedulerHeartbeat } from '../executor/scheduler.js';
@@ -93,7 +94,14 @@ export async function agentPreview(walletId: string): Promise<AgentPreview> {
     tickMs,
     lastTickAt,
     nextTickAt: lastTickAt === null ? null : lastTickAt + tickMs,
-    universe: Object.values(XSTOCKS).map((s) => ({ symbol: s.symbol, name: s.name })),
+    // What this build's agents look at: on Monad, MON, ETH and BTC on their Chainlink feeds (`council/sweep.ts`).
+    universe: IS_MONAD
+      ? [
+          { symbol: 'MON', name: 'Monad' },
+          { symbol: 'ETH', name: 'Ether' },
+          { symbol: 'BTC', name: 'Bitcoin' },
+        ]
+      : Object.values(XSTOCKS).map((s) => ({ symbol: s.symbol, name: s.name })),
     wallet: {
       agentsStopped,
       cooldownUntil,
