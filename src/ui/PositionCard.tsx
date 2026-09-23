@@ -111,103 +111,111 @@ export function PositionCard({
   const statusBg = tone === 'up' ? colors.upBg : tone === 'down' ? colors.downBg : colors.neutralBg;
   const statusInk = tone === 'up' ? colors.up : tone === 'down' ? colors.down : colors.ink55;
 
+  /*
+   * The card is one surface with two controls side by side: the body opens the position, the footer's "Why this trade"
+   * unfolds the reason. The toggle sat inside the body's press, a <button> within a <button> on web — a hydration error
+   * on every Portfolio load (2026-09-24).
+   */
   return (
-    <Press
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${symbol} ${side}. ${price}. ${say(pnl, 'own')}, ${pnlPct}.`}
-      style={{ borderRadius: radius.panel, backgroundColor: colors.surfaceAlt, padding: space.s16, gap: space.s14 }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s8, flexShrink: 1 }}>
-          {mark}
-          <Text variant="cardTitle">{symbol}</Text>
-          <Pill label={side.toUpperCase()} bg={colors.neutralBg} ink={colors.ink65} />
-          <Pill label={status} bg={statusBg} ink={statusInk} />
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Price variant="rowPrimary" figure="market">
-            {price}
-          </Price>
-          <Price variant="footnote" tone={tone}>
-            {`${pnl} · ${pnlPct}`}
-          </Price>
-        </View>
-      </View>
-
-      {series === undefined ? (
-        <Placeholder height={CHART_H} style={{ borderRadius: radius.tile }} />
-      ) : series.length < 2 ? (
-        <View style={{ height: CHART_H, alignItems: 'center', justifyContent: 'center' }}>
-          <Text variant="footnote" color={colors.ink55}>
-            No price history yet
-          </Text>
-        </View>
-      ) : (
-        <View style={{ height: CHART_H }}>
-          <View style={{ position: 'absolute', left: 0, right: LABEL_W, top: 0 }}>
-            <AreaChart
-              data={series}
-              height={CHART_H}
-              bounds={bounds}
-              color={tone === 'down' ? colors.down : colors.up}
-              inset={inset}
-              drawIn
-            />
+    <View style={{ borderRadius: radius.panel, backgroundColor: colors.surfaceAlt, padding: space.s16, gap: space.s14 }}>
+      <Press
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${symbol} ${side}. ${price}. ${say(pnl, 'own')}, ${pnlPct}.`}
+        style={{ gap: space.s14 }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s8, flexShrink: 1 }}>
+            {mark}
+            <Text variant="cardTitle">{symbol}</Text>
+            <Pill label={side.toUpperCase()} bg={colors.neutralBg} ink={colors.ink65} />
+            <Pill label={status} bg={statusBg} ink={statusInk} />
           </View>
-          {levels.map((level) => {
-            const y = yOf(level.value);
-            return (
-              <React.Fragment key={level.label}>
-                <View
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: LABEL_W,
-                    top: y,
-                    height: 1,
-                    backgroundColor: LEVEL_TONE[level.tone],
-                    opacity: 0.6,
-                  }}
-                />
-                <View
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    width: LABEL_W - space.s6,
-                    top: y - space.s8,
-                    paddingHorizontal: space.s6,
-                    paddingVertical: space.s2,
-                    borderRadius: radius.glyph,
-                    backgroundColor: colors.control,
-                  }}
-                >
-                  <Text variant="chipSm" color={LEVEL_TONE[level.tone]} numberOfLines={1}>
-                    {`${level.label} ${level.formatted}`}
-                  </Text>
-                </View>
-              </React.Fragment>
-            );
-          })}
-        </View>
-      )}
-
-      <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.hairline, paddingTop: space.s12 }}>
-        {stats.map((s) => (
-          <View key={s.label} style={{ flex: 1 }}>
-            <Text variant="eyebrowSm">{s.label}</Text>
-            <Price
-              variant="rowPrimary"
-              tone={s.value2 !== undefined ? pnlTone(s.value2) : 'neutral'}
-              style={{ marginTop: space.s4 }}
-              numberOfLines={1}
-              figure={s.figure}
-            >
-              {s.value}
+          <View style={{ alignItems: 'flex-end' }}>
+            <Price variant="rowPrimary" figure="market">
+              {price}
+            </Price>
+            <Price variant="footnote" tone={tone}>
+              {`${pnl} · ${pnlPct}`}
             </Price>
           </View>
-        ))}
-      </View>
+        </View>
+
+        {series === undefined ? (
+          <Placeholder height={CHART_H} style={{ borderRadius: radius.tile }} />
+        ) : series.length < 2 ? (
+          <View style={{ height: CHART_H, alignItems: 'center', justifyContent: 'center' }}>
+            <Text variant="footnote" color={colors.ink55}>
+              No price history yet
+            </Text>
+          </View>
+        ) : (
+          <View style={{ height: CHART_H }}>
+            <View style={{ position: 'absolute', left: 0, right: LABEL_W, top: 0 }}>
+              <AreaChart
+                data={series}
+                height={CHART_H}
+                bounds={bounds}
+                color={tone === 'down' ? colors.down : colors.up}
+                inset={inset}
+                drawIn
+              />
+            </View>
+            {levels.map((level) => {
+              const y = yOf(level.value);
+              return (
+                <React.Fragment key={level.label}>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: LABEL_W,
+                      top: y,
+                      height: 1,
+                      backgroundColor: LEVEL_TONE[level.tone],
+                      opacity: 0.6,
+                    }}
+                  />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      width: LABEL_W - space.s6,
+                      top: y - space.s8,
+                      paddingHorizontal: space.s6,
+                      paddingVertical: space.s2,
+                      borderRadius: radius.glyph,
+                      backgroundColor: colors.control,
+                    }}
+                  >
+                    <Text variant="chipSm" color={LEVEL_TONE[level.tone]} numberOfLines={1}>
+                      {`${level.label} ${level.formatted}`}
+                    </Text>
+                  </View>
+                </React.Fragment>
+              );
+            })}
+          </View>
+        )}
+
+        <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.hairline, paddingTop: space.s12 }}>
+          {stats.map((s) => (
+            <View key={s.label} style={{ flex: 1 }}>
+              <Text variant="eyebrowSm">{s.label}</Text>
+              <Price
+                variant="rowPrimary"
+                tone={s.value2 !== undefined ? pnlTone(s.value2) : 'neutral'}
+                style={{ marginTop: space.s4 }}
+                numberOfLines={1}
+                figure={s.figure}
+              >
+                {s.value}
+              </Price>
+            </View>
+          ))}
+        </View>
+
+      </Press>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         {trades === undefined ? (
@@ -235,7 +243,7 @@ export function PositionCard({
           {why}
         </Text>
       ) : null}
-    </Press>
+    </View>
   );
 }
 
