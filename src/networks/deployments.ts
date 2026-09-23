@@ -2,8 +2,8 @@
  * Every network xorr is deployed on, and the one place a new one is added.
  *
  * A build is made for one chain at a time — its executor, RPC and pinned contract are inlined when it is built
- * (`scripts/build-web.mjs`). This build runs on two: a fork of Robinhood Chain (Stock Tokens, USDG) and a fork of
- * Arbitrum One. Neither is real money, and each says so. What is deployed
+ * (`scripts/build-web.mjs`). This build runs on two: a fork of Monad mainnet (real pools, test money) and Monad testnet
+ * (where the contracts are deployed and verified). Neither is real money, and each says so. What is deployed
  * where was known only to the deploy scripts. This names each deployment and the executor that serves it; everything a
  * screen says about one (whether it is up, its block, its contract, whether trades settle there) is read live from that
  * executor. No status or capability is ever written down here.
@@ -31,31 +31,28 @@ export type Deployment = {
   test: boolean;
 };
 
-/** The Arbitrum One fork's executor on Railway (PLAN.md P0.6). */
-const ARBITRUM_FORK_API = 'https://executor-fork-production-ba80.up.railway.app';
-
 /*
- * Robinhood Chain's fork executor (`executor-robinhood`, PLAN.md P1.10) has no recorded public address yet. A build made
- * for it knows its own executor — the one it was built against — so that build fills it in; any other build says the
- * address is not known rather than guessing one.
+ * No Monad executor has a recorded public address yet (PLAN.md P0.7). A build made for a Monad key knows its own
+ * executor — the one it was built against — so that build fills its own row in, when that executor is served over https;
+ * any other build, and a developer's Metro against a local executor, says the address is not known rather than guess.
  */
-const ROBINHOOD_FORK_API = CHAIN_KEY === 'robinhood-fork' ? API_BASE : null;
+const ownApi = (key: string): string | null => (CHAIN_KEY === key && /^https:\/\//.test(API_BASE) ? API_BASE : null);
 
 export const DEPLOYMENTS: readonly Deployment[] = [
   {
-    key: 'robinhood-fork',
-    name: 'Robinhood Chain fork',
-    chainId: 4663,
-    api: ROBINHOOD_FORK_API,
+    key: 'monad-fork',
+    name: 'Monad fork',
+    chainId: 143,
+    api: ownApi('monad-fork'),
     explorer: null,
     test: true,
   },
   {
-    key: 'arbitrum-fork',
-    name: 'Arbitrum fork',
-    chainId: 42161,
-    api: ARBITRUM_FORK_API,
-    explorer: null,
+    key: 'monad-testnet',
+    name: 'Monad testnet',
+    chainId: 10143,
+    api: ownApi('monad-testnet'),
+    explorer: 'https://testnet.monadvision.com',
     test: true,
   },
 ];

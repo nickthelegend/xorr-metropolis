@@ -10,6 +10,17 @@
  * delegation's approvals, history, verifier, anchor, policy, flatten, Networks — are this build's own and always shown.
  */
 
+import { CHAIN_KEY } from '@/chain';
+
+/** A Monad build (mainnet, testnet or the fork). */
+const ON_MONAD = CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-testnet' || CHAIN_KEY === 'monad-fork';
+
+/**
+ * Where the tab bar's Trade button goes: the Stock Token list where Stock Tokens trade (Robinhood Chain), the market list
+ * on Monad, where no tokenized equity trades (PLAN.md P2) and MON, WETH and WBTC do.
+ */
+export const TRADE_ROUTE = ON_MONAD ? '/markets' : '/xstocks';
+
 /** Route prefixes with nothing behind them on this build. A prefix matches itself and anything under it. */
 export const HIDDEN_HERE: readonly string[] = [
   // Perpetuals: Hyperliquid data. GMX V2 perps get their own screens (PLAN.md P4.5).
@@ -36,6 +47,12 @@ export const HIDDEN_HERE: readonly string[] = [
   // Base crypto replayed over CoinGecko history; nothing on it trades here.
   '/compare',
   '/backtest',
+  /*
+   * On Monad: GMX V2 is an Arbitrum venue (perps on Monad are Perpl's, PLAN.md P3), and Robinhood's Stock Tokens and
+   * their filing dates live on Robinhood Chain. Monad has no tokenized equity to list (checked 2026-09-24 against the
+   * official Monad token list).
+   */
+  ...(ON_MONAD ? ['/hedge', '/xstocks', '/xstock', '/earnings'] : []),
 ];
 
 /** Whether `path` has no screen on this build. */

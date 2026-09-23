@@ -6,18 +6,18 @@ import type { Health } from '@/data/system';
 import { DEPLOYMENTS } from './deployments';
 import { blockOf, networkStatus } from './status';
 
-const fork = DEPLOYMENTS.find((d) => d.key === 'arbitrum-fork')!;
+const fork = DEPLOYMENTS.find((d) => d.key === 'monad-fork')!;
 
 const health = (over: Partial<Health> = {}): Health => ({
   ok: true,
   status: 'degraded',
-  chain: 'arbitrum-fork',
+  chain: 'monad-fork',
   version: 'f4dda8a151809f4d9a4a2e88ec21e7b60829a85f',
   delegation: '0xc32dd8aeed3035d46c7c82a351fc5522c9d463f4',
   uptimeSec: 60,
   dependencies: [
     { name: 'postgres', status: 'up', critical: true, detail: 'responded' },
-    { name: 'rpc', status: 'up', critical: true, detail: 'arbitrum-fork at block 51242381' },
+    { name: 'rpc', status: 'up', critical: true, detail: 'monad-fork at block 107405129' },
     { name: 'subgraph', status: 'degraded', critical: false, detail: 'indexing another deployment' },
   ],
   ...over,
@@ -28,7 +28,7 @@ const tokens = [{ symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bd
 describe('networkStatus', () => {
   it('is up when every critical dependency is, whatever a non-critical one says, and reads the block', () => {
     const s = networkStatus(fork, { health: health(), tradable: tokens, yieldSupply: { availableHere: true } });
-    expect(s).toMatchObject({ state: 'up', block: 51242381, chain: 'arbitrum-fork', mismatch: false, trades: 'fill', earn: true });
+    expect(s).toMatchObject({ state: 'up', block: 107405129, chain: 'monad-fork', mismatch: false, trades: 'fill', earn: true });
   });
 
   it('is degraded when a critical dependency is not up, and down when the executor says so', () => {
@@ -58,7 +58,7 @@ describe('networkStatus', () => {
   });
 
   it('flags an executor serving another chain than its deployment names', () => {
-    expect(networkStatus(fork, { health: health({ chain: 'robinhood-fork' }), tradable: [], yieldSupply: null }).mismatch).toBe(true);
+    expect(networkStatus(fork, { health: health({ chain: 'monad-testnet' }), tradable: [], yieldSupply: null }).mismatch).toBe(true);
   });
 });
 

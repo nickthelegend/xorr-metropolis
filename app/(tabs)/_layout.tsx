@@ -1,7 +1,7 @@
 /**
  * The tab shell — Home, Trade and Messages (2026-09-15).
  *
- * All drawn by `TabBar`. Home is the one place. Trade opens the Stock Token list (`/xstocks`). Messages raises the drawer of conversations with the agents over whatever you were looking at and over
+ * All drawn by `TabBar`. Home is the one place. Trade opens `TRADE_ROUTE`: the Stock Token list, or Markets on Monad. Messages raises the drawer of conversations with the agents over whatever you were looking at and over
  * this bar, and closing it puts you back on that screen. The drawer is mounted at the root rather than here, so it can
  * rise over any screen; `/bot` survives as a route for the pushes and links that open it directly.
  *
@@ -20,6 +20,7 @@ import { useChatAgents } from '@/chat/agents';
 import { useChatDrawer } from '@/chat/chatDrawer';
 import { summaries, unreadTotal } from '@/chat/conversations';
 import { useVoice } from '@/chat/voice';
+import { TRADE_ROUTE } from '@/nav/buildRoutes';
 
 
 export default function TabsLayout() {
@@ -53,7 +54,7 @@ export default function TabsLayout() {
           <TabBar
             active={pathname === '/' ? 'home' : null}
             onHome={() => router.navigate('/')}
-            onSwap={() => router.push('/xstocks')}
+            onSwap={() => router.push(TRADE_ROUTE)}
             onMessages={() => show()}
             unread={unread}
             hidden={drawerRaised}

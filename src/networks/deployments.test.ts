@@ -1,7 +1,7 @@
 /**
  * The deployment list is the one place a chain is added, so what every row must carry is pinned here.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DEPLOYMENTS, deploymentFor, thisDeployment } from './deployments';
 
 describe('DEPLOYMENTS', () => {
@@ -15,18 +15,25 @@ describe('DEPLOYMENTS', () => {
     }
   });
 
-  it('lists the Robinhood Chain and Arbitrum forks, each a test network with no explorer', () => {
+  it('lists the Monad fork and Monad testnet, each a test network; only the testnet has a public explorer', () => {
     expect(DEPLOYMENTS.map((d) => [d.key, d.chainId, d.test, d.explorer])).toEqual([
-      ['robinhood-fork', 4663, true, null],
-      ['arbitrum-fork', 42161, true, null],
+      ['monad-fork', 143, true, null],
+      ['monad-testnet', 10143, true, 'https://testnet.monadvision.com'],
     ]);
   });
 });
 
 describe('thisDeployment', () => {
-  it('matches the executor this build talks to, with or without a trailing slash', () => {
-    expect(thisDeployment('https://executor-fork-production-ba80.up.railway.app')?.key).toBe('arbitrum-fork');
-    expect(thisDeployment('https://executor-fork-production-ba80.up.railway.app/')?.key).toBe('arbitrum-fork');
+  it('matches the executor this build talks to, with or without a trailing slash', async () => {
+    vi.resetModules();
+    vi.stubEnv('EXPO_PUBLIC_XORR_CHAIN', 'monad-fork');
+    vi.stubEnv('EXPO_PUBLIC_API_URL', 'https://executor-monad.example.app');
+    const m = await import('./deployments');
+    expect(m.thisDeployment('https://executor-monad.example.app')?.key).toBe('monad-fork');
+    expect(m.thisDeployment('https://executor-monad.example.app/')?.key).toBe('monad-fork');
+    expect(m.deploymentFor('monad-testnet')?.api).toBeNull();
+    vi.unstubAllEnvs();
+    vi.resetModules();
   });
 
   it('names none for an executor no deployment serves, rather than guessing from the chain', () => {
@@ -36,7 +43,7 @@ describe('thisDeployment', () => {
 
 describe('deploymentFor', () => {
   it('finds a deployment by chain key, and nothing for a key or no key', () => {
-    expect(deploymentFor('robinhood-fork')?.chainId).toBe(4663);
+    expect(deploymentFor('monad-fork')?.chainId).toBe(143);
     expect(deploymentFor('base-fork')).toBeUndefined();
     expect(deploymentFor(undefined)).toBeUndefined();
   });

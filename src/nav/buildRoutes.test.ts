@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRedirect, hiddenOn, shownHere } from './buildRoutes';
+import { TRADE_ROUTE, buildRedirect, hiddenOn, shownHere } from './buildRoutes';
 
 describe('the screens this build has', () => {
   it('hides a Base or Hyperliquid route and everything under it', () => {
@@ -17,9 +17,17 @@ describe('the screens this build has', () => {
     }
   });
 
-  it('keeps the stock, market and money screens', () => {
-    for (const p of ['/', '/xstocks', '/xstock/NVDA', '/markets', '/search', '/safety', '/deposit', '/send', '/activity', '/strategies']) {
+  it('keeps the market and money screens', () => {
+    for (const p of ['/', '/markets', '/search', '/safety', '/deposit', '/send', '/activity', '/strategies', '/council']) {
       expect(hiddenOn(p), p).toBe(false);
     }
+  });
+
+  it('on Monad, hides the Arbitrum and Robinhood Chain screens and sends Trade to Markets', () => {
+    // The app builds for monad-fork by default (src/chain.ts).
+    for (const p of ['/hedge', '/xstocks', '/xstock/NVDA', '/earnings']) {
+      expect(hiddenOn(p), p).toBe(true);
+    }
+    expect(TRADE_ROUTE).toBe('/markets');
   });
 });

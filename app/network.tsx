@@ -1,16 +1,16 @@
 /**
  * Which chain this build is actually pointed at.
  *
- * More useful than it sounds, because this app runs against a fork of Robinhood Chain and a fork of Arbitrum One. They
- * look identical from every other screen and differ where it matters — Stock Tokens and USDG live on one, GMX on the
- * other — and a fork's fresh transactions exist on no public explorer. Someone reading a price should be able to find
+ * More useful than it sounds, because this app runs against a fork of Monad mainnet and Monad testnet. They
+ * look identical from every other screen and differ where it matters — the fork fills against Monad mainnet's real pools,
+ * the testnet holds the deployed, verified contracts — and a fork's fresh transactions exist on no public explorer. Someone reading a price should be able to find
  * out which of those they are looking at without reading the source.
  *
  * The block height comes from the RPC dependency's own detail string in `/health`, which is where
  * the executor already reports it. Parsing it here rather than adding a route keeps one source of
  * truth for "what block are we on".
  *
- * Since 2026-09-15 it is also any network xorr runs on (`/network?key=arbitrum-fork`, from Networks): the same cards, read
+ * Since 2026-09-15 it is also any network xorr runs on (`/network?key=monad-fork`, from Networks): the same cards, read
  * from that network's own executor, with what works there. Without a key it is the network this app talks to, and it
  * says when this build and its executor disagree about which chain that is.
  */
@@ -48,6 +48,9 @@ import { networkStatus } from '@/networks/status';
  * public explorer has seen. The reasons live here, not on the screen.
  */
 const CHAIN_NOTE: Record<string, string> = {
+  monad: 'Monad mainnet. Real money, real fills.',
+  'monad-testnet': 'Monad testnet. Test money; the contracts are deployed and verified here.',
+  'monad-fork': 'A fork of Monad mainnet. Test money; fills are real here and nowhere else.',
   robinhood: 'Robinhood Chain. Real money, real fills.',
   'robinhood-testnet': 'Robinhood Chain testnet. Test money.',
   'robinhood-fork': 'A fork of Robinhood Chain. Stock Tokens and USDG, test money; fills are real here and nowhere else.',
