@@ -91,10 +91,11 @@ describe('a close', () => {
     expect([strategy.params[1], strategy.params[3], strategy.params[4]]).toEqual(['wallet-1', 'Sold all WETH', 'WETH']);
     const run = inserted('strategy_runs')!;
     expect(run.text).toMatch(/'filled', \$4, \$5, \$6, \$7, \$8, 'sell'/);
-    expect(run.params[7]).toBe('1inch');
+    // The venue the settlement chose (the mock's Uniswap v3), never a default: the record said '1inch' for any close.
+    expect(run.params[7]).toBe('uniswap-v3');
     expect(run.params[1]).toBe(strategy.params[0]);
     // usd, units, price, signature, venue, quoted_usd, asset_class
-    expect(run.params.slice(3)).toEqual([1240.5, 0.5, 2481, `0x${'ab'.repeat(32)}`, '1inch', 1250, 'crypto']);
+    expect(run.params.slice(3)).toEqual([1240.5, 0.5, 2481, `0x${'ab'.repeat(32)}`, 'uniswap-v3', 1250, 'crypto']);
 
     const trail = vi.mocked(append).mock.calls[0]![0] as { detail: string; payload: Record<string, unknown> };
     expect(trail.detail).toBe('0.500000 WETH for $1,240.50 USDC.');
