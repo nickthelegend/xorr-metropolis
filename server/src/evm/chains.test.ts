@@ -60,10 +60,20 @@ describe('the chain this executor starts on', () => {
     );
   });
 
-  it('is refused on Monad testnet until it names the test settlement token xorr deployed there', async () => {
+  it('on Monad testnet, settles in Agora\'s testnet AUSD — the token Perpl\'s testnet takes as margin', async () => {
     vi.stubEnv('XORR_CHAIN', 'monad-testnet');
     vi.stubEnv('MONAD_TESTNET_SETTLEMENT', '');
-    await expect(import('./chains.js')).rejects.toThrow('XORR_CHAIN=monad-testnet needs MONAD_TESTNET_SETTLEMENT');
+    const c = await import('./chains.js');
+    expect(c.chain.id).toBe(10143);
+    expect(c.SETTLEMENT_SYMBOL).toBe('AUSD');
+    expect(c.ADDRESSES.usdcBase).toBe('0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC');
+    expect(c.explorerTx('0xabc')).toBe('https://testnet.monadvision.com/tx/0xabc');
+  });
+
+  it('refuses a Monad testnet settlement override that is not an address', async () => {
+    vi.stubEnv('XORR_CHAIN', 'monad-testnet');
+    vi.stubEnv('MONAD_TESTNET_SETTLEMENT', 'ausd');
+    await expect(import('./chains.js')).rejects.toThrow('MONAD_TESTNET_SETTLEMENT=ausd is not an address');
   });
 
   it('on a Monad fork, is chain 143 settling in Circle\'s USDC, with no 1inch whatever the environment says', async () => {

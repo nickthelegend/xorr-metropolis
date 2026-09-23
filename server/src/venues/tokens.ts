@@ -97,6 +97,16 @@ const MONAD_TOKENS: Record<string, TokenInfo> = {
   AUSD: { address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a', decimals: 6, toSettlement: null, kind: 'crypto', name: 'Agora USD' },
 };
 
+/**
+ * Monad testnet: Agora's testnet AUSD settles. No spot venue is wired on this testnet (Uniswap's published testnet
+ * addresses have no code; Kuru's testnet is its V2 router), so the registry holds the dollar and WMON, and trading here is
+ * Perpl's perps (`monad/perpl-desk.ts`).
+ */
+const MONAD_TESTNET_TOKENS: Record<string, TokenInfo> = {
+  AUSD: { address: '0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC', decimals: 6, toSettlement: [], kind: 'cash', name: 'Agora USD' },
+  WMON: { address: '0xFb8bf4c1CC7a94c73D209a149eA2AbEa852BC541', decimals: 18, toSettlement: null, kind: 'crypto', name: 'Wrapped MON' },
+};
+
 const BASE_TOKENS: Record<string, TokenInfo> = {
   ETH: { address: QUOTE_ADDRESSES.nativeEth, decimals: 18, toSettlement: null, kind: 'crypto' },
   WETH: { address: QUOTE_ADDRESSES.wethBase, decimals: 18, toSettlement: [{ via: 'USDC', fee: 500 }], kind: 'crypto' },
@@ -114,7 +124,15 @@ const BASE_TOKENS: Record<string, TokenInfo> = {
  * Mutable on purpose, and only through `registerToken`: the Stock Tokens on Robinhood Chain are a live catalog.
  */
 export const TOKENS: Record<string, TokenInfo> = {
-  ...(IS_ARBITRUM ? ARBITRUM_TOKENS : IS_ROBINHOOD ? ROBINHOOD_TOKENS : IS_MONAD ? MONAD_TOKENS : BASE_TOKENS),
+  ...(IS_ARBITRUM
+    ? ARBITRUM_TOKENS
+    : IS_ROBINHOOD
+      ? ROBINHOOD_TOKENS
+      : CHAIN_KEY === 'monad-testnet'
+        ? MONAD_TESTNET_TOKENS
+        : IS_MONAD
+          ? MONAD_TOKENS
+          : BASE_TOKENS),
 };
 
 /**
@@ -125,14 +143,14 @@ export const TOKENS: Record<string, TokenInfo> = {
  *   2. Base's Ondo equities carry a lowercase `c` — `NVDAc`. Robinhood's Stock Tokens are the bare ticker — `NVDA`.
  *   3. **No boundary may uppercase a caller's symbol.** Resolve through `canonicalSymbol` instead.
  *
- * One alias: on Robinhood Chain `USDC` names the settlement role and resolves to `USDG`. The strategy planners and the
+ * One alias: on Robinhood Chain `USDC` names the settlement role and resolves to `USDG` (and to `AUSD` on Monad testnet). The strategy planners and the
  * app were written when the settlement token was always USDC, and on this chain the token in that role is USDG.
  */
 const CANONICAL = new Map<string, string>();
 function reindex(): void {
   CANONICAL.clear();
   for (const k of Object.keys(TOKENS)) CANONICAL.set(k.toUpperCase(), k);
-  if (IS_ROBINHOOD && !CANONICAL.has('USDC')) CANONICAL.set('USDC', SETTLEMENT_SYMBOL);
+  if ((IS_ROBINHOOD || CHAIN_KEY === 'monad-testnet') && !CANONICAL.has('USDC')) CANONICAL.set('USDC', SETTLEMENT_SYMBOL);
 }
 reindex();
 

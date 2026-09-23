@@ -267,7 +267,11 @@ export const networkChip = chainLabel;
 export const walletSignsOnly = money === 'copy';
 
 /** The settlement token by name: Paxos USDG on Robinhood Chain (where the Stock Token pools are quoted), USDC elsewhere. */
-export const settlementSymbol: 'USDC' | 'USDG' = CHAIN_KEY.startsWith('robinhood') ? 'USDG' : 'USDC';
+export const settlementSymbol: 'USDC' | 'USDG' | 'AUSD' = CHAIN_KEY.startsWith('robinhood')
+  ? 'USDG'
+  : CHAIN_KEY === 'monad-testnet'
+    ? 'AUSD'
+    : 'USDC';
 
 /**
  * Can a deposit code name the chain this build is on?

@@ -103,7 +103,7 @@ export const IS_MONAD = CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-fork' || C
  * What the settlement token is called where a person reads it. USDG (Paxos) on Robinhood Chain, where the Stock Token
  * pools are quoted in it; USDC everywhere else.
  */
-export const SETTLEMENT_SYMBOL: 'USDC' | 'USDG' = IS_ROBINHOOD ? 'USDG' : 'USDC';
+export const SETTLEMENT_SYMBOL: 'USDC' | 'USDG' | 'AUSD' = IS_ROBINHOOD ? 'USDG' : CHAIN_KEY === 'monad-testnet' ? 'AUSD' : 'USDC';
 
 /**
  * The chain id 1inch is asked about. A local fork of Base Sepolia still quotes against Base; every Arbitrum key quotes
@@ -193,19 +193,21 @@ const MONAD_ADDRESSES = {
 } as const;
 
 /**
- * Monad testnet has been reset since mainnet launched, and the USDC addresses published for it before then have no code
- * (checked 2026-09-24). So, as on Robinhood Chain testnet, the settlement token is the one xorr deploys there
- * (`contracts/deploy-testnet.sh` deploys `TestUSDC`), named by MONAD_TESTNET_SETTLEMENT. Unset, the executor refuses to
- * start on this key rather than guess.
+ * Monad testnet settles in Agora's testnet AUSD (`0xa901…22dC`): Agora's own faucet (`requestFunds`) mints it and Perpl's
+ * testnet Exchange takes it as margin, so the permission, the faucet and the perps desk count the same dollar. The USDC
+ * published for this testnet before its reset has no code (checked 2026-09-24). XorrDelegation(AUSD) is deployed and
+ * Sourcify-verified at `contracts/deployments/monad-testnet.json`. MONAD_TESTNET_SETTLEMENT overrides the token.
  */
-const MONAD_TESTNET_SETTLEMENT = process.env.MONAD_TESTNET_SETTLEMENT as `0x${string}` | undefined;
-if (CHAIN_KEY === 'monad-testnet' && !(MONAD_TESTNET_SETTLEMENT && /^0x[0-9a-fA-F]{40}$/.test(MONAD_TESTNET_SETTLEMENT))) {
-  throw new Error('XORR_CHAIN=monad-testnet needs MONAD_TESTNET_SETTLEMENT: the test settlement token xorr deployed there.');
+export const MONAD_TESTNET_AUSD = '0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC' as const;
+const MONAD_TESTNET_SETTLEMENT = (process.env.MONAD_TESTNET_SETTLEMENT || MONAD_TESTNET_AUSD) as `0x${string}`;
+if (CHAIN_KEY === 'monad-testnet' && !/^0x[0-9a-fA-F]{40}$/.test(MONAD_TESTNET_SETTLEMENT)) {
+  throw new Error(`MONAD_TESTNET_SETTLEMENT=${MONAD_TESTNET_SETTLEMENT} is not an address.`);
 }
 const MONAD_TESTNET_ADDRESSES = {
   oneInchRouter: '0x111111125421cA6dc452d289314280a0f8842A65',
-  usdcBase: MONAD_TESTNET_SETTLEMENT ?? '0x0000000000000000000000000000000000000000',
-  wethBase: '0x0000000000000000000000000000000000000000',
+  usdcBase: MONAD_TESTNET_SETTLEMENT,
+  /** WMON on Monad testnet (answers WMON, 18 decimals, 2026-09-24). */
+  wethBase: '0xFb8bf4c1CC7a94c73D209a149eA2AbEa852BC541',
   cbbtcBase: '0x0000000000000000000000000000000000000000',
   nativeEth: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
 } as const;

@@ -108,6 +108,8 @@ describe('the chain a build signs on', () => {
   it('on Monad testnet, is test funds on chain 10143', async () => {
     const c = await buildFor('monad-testnet');
     expect(facts(c)).toMatchObject({ id: 10143, label: 'Monad testnet', test: true, code: true, signsOnly: false });
+    expect(settlement(c)).toBe('AUSD');
+    expect(c.depositQrNote).toBe('Send only AUSD on Monad testnet.');
   });
 
   it('refuses a Solana cluster: this app signs on EVM chains', async () => {

@@ -5,10 +5,10 @@
 #   ./deploy-testnet.sh arbitrum-sepolia     # chain 421614, settlement = Circle's test USDC
 #   ./deploy-testnet.sh robinhood-testnet    # chain 46630, settlement = xorr's TestUSDC, deployed first
 #
-# Monad testnet was reset after mainnet launched, and the USDC addresses published for it before then have no code
-# (checked 2026-09-24); Robinhood Chain testnet has no canonical USDG. On both, the settlement token is xorr's own
-# openly-mintable TestUSDC — deployed here, labelled test money everywhere it is shown, and handed to the executor as
-# MONAD_TESTNET_SETTLEMENT / ROBINHOOD_TESTNET_SETTLEMENT.
+# On Monad testnet the settlement token is Agora's testnet AUSD (`0xa901…22dC`): Agora's own faucet mints it, and Perpl's
+# testnet Exchange takes it as margin, so the permission and the perps desk count the same dollars. Robinhood Chain testnet
+# has no canonical USDG, so there the settlement token is xorr's own openly-mintable TestUSDC, deployed first and handed to
+# the executor as ROBINHOOD_TESTNET_SETTLEMENT.
 #
 # Reads DEPLOYER_PRIVATE_KEY/DEPLOYER_ADDRESS from ../server/.env.deployer-monad (Monad) or .env.deployer-arbitrum
 # (gitignored, never printed). Refuses to run while the deployer holds no gas on the target chain, and writes
@@ -19,12 +19,14 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 NETWORK="${1:?usage: ./deploy-testnet.sh monad-testnet|arbitrum-sepolia|robinhood-testnet}"
-KEYS=../server/.env.deployer-arbitrum; GAS=ETH; VERIFIER_URL=""
+KEYS=../server/.env.deployer-arbitrum; GAS=ETH; VERIFIER_URL=""; GAS_MULT=130
 case "$NETWORK" in
   monad-testnet)
+    # Agora's testnet AUSD: what Agora's faucet (requestFunds) hands out and what Perpl's testnet Exchange takes as margin.
     RPC="${MONAD_TESTNET_RPC:-https://testnet-rpc.monad.xyz}"; CHAIN=10143
-    SETTLEMENT=""; EXPLORER="https://testnet.monadvision.com/address"
-    KEYS=../server/.env.deployer-monad; GAS=MON; VERIFIER_URL="https://sourcify-api-monad.blockvision.org" ;;
+    SETTLEMENT="0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC"; EXPLORER="https://testnet.monadvision.com/address"
+    # Monad bills the gas LIMIT a transaction declares, not the gas it uses, so the estimate is padded 10%, not 30%.
+    KEYS=../server/.env.deployer-monad; GAS=MON; VERIFIER_URL="https://sourcify-api-monad.blockvision.org"; GAS_MULT=110 ;;
   arbitrum-sepolia)
     RPC="${ARBITRUM_SEPOLIA_RPC:-https://sepolia-rollup.arbitrum.io/rpc}"; CHAIN=421614
     SETTLEMENT="0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"; EXPLORER="https://sepolia.arbiscan.io/address" ;;
@@ -55,16 +57,16 @@ wait_nonce() { for _ in $(seq 1 30); do [ "$(cast nonce "$DEPLOYER_ADDRESS" --rp
 TEST_TOKEN_JSON=""
 if [ -z "$SETTLEMENT" ]; then
   START=$(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$RPC")
-  forge script script/DeployTestUSDC.s.sol:DeployTestUSDC --rpc-url "$RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --broadcast --slow
+  forge script script/DeployTestUSDC.s.sol:DeployTestUSDC --rpc-url "$RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --broadcast --slow --gas-estimate-multiplier "$GAS_MULT"
   wait_nonce $((START + 1))
   SETTLEMENT=$(receipt DeployTestUSDC.s.sol contractAddress)
   TEST_TOKEN_JSON="\"TestUSDC\": { \"address\": \"$SETTLEMENT\", \"deployTx\": \"$(receipt DeployTestUSDC.s.sol transactionHash)\", \"note\": \"xorr's openly-mintable test settlement token\" },"
 fi
 
 START=$(cast nonce "$DEPLOYER_ADDRESS" --rpc-url "$RPC")
-SETTLEMENT_TOKEN="$SETTLEMENT" forge script script/Deploy.s.sol:Deploy --rpc-url "$RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --broadcast --slow
+SETTLEMENT_TOKEN="$SETTLEMENT" forge script script/Deploy.s.sol:Deploy --rpc-url "$RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --broadcast --slow --gas-estimate-multiplier "$GAS_MULT"
 wait_nonce $((START + 1))
-forge script script/DeployAnchor.s.sol:DeployAnchor --rpc-url "$RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --broadcast --slow
+forge script script/DeployAnchor.s.sol:DeployAnchor --rpc-url "$RPC" --private-key "$DEPLOYER_PRIVATE_KEY" --broadcast --slow --gas-estimate-multiplier "$GAS_MULT"
 DELEGATION=$(receipt Deploy.s.sol contractAddress); DELEGATION_TX=$(receipt Deploy.s.sol transactionHash); DELEGATION_BLOCK=$(receipt Deploy.s.sol blockNumber)
 ANCHOR=$(receipt DeployAnchor.s.sol contractAddress); ANCHOR_TX=$(receipt DeployAnchor.s.sol transactionHash); ANCHOR_BLOCK=$(receipt DeployAnchor.s.sol blockNumber)
 for a in "$DELEGATION" "$ANCHOR"; do [ "$(cast code "$a" --rpc-url "$RPC")" != "0x" ] || { echo "no code at $a"; exit 1; }; done
@@ -100,6 +102,6 @@ JSON
 echo
 echo "DELEGATION_ADDRESS=$DELEGATION"
 echo "ANCHOR_ADDRESS=$ANCHOR"
-[ "$NETWORK" = monad-testnet ] && echo "MONAD_TESTNET_SETTLEMENT=$SETTLEMENT"
+[ "$NETWORK" = monad-testnet ] && echo "MONAD_TESTNET_SETTLEMENT=$SETTLEMENT   # Agora testnet AUSD"
 [ "$NETWORK" = robinhood-testnet ] && echo "ROBINHOOD_TESTNET_SETTLEMENT=$SETTLEMENT"
 echo "wrote deployments/$NETWORK.json"

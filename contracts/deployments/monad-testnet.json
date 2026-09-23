@@ -1,0 +1,14 @@
+{
+  "network": "monad-testnet",
+  "chainId": 10143,
+  "deployer": "0x5C1948d90570BA8547956B2Be2d3179454D22938",
+  "sourceCommit": "b7abb23d1e28c4fe1f7e69ce5b7ecfaf854f45d5",
+  "deployedAt": "2026-09-23T21:41:17Z",
+  "contracts": {
+    
+    "XorrDelegation": { "address": "0x5995925de0169574365cc7f6b65f765275b0bd4b", "deployTx": "0x808687beb5699fc3a07353f65780e4e89f83d52452795b6871fb6b0c148d764e", "blockNumber": 65123156, "constructorArgs": { "settlementToken": "0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC" } },
+    "XorrAuditAnchor": { "address": "0x5a717b204c77bfba8805ffe1f382b074a3d26203", "deployTx": "0xeb90b3ebded116e7195da07942baade60e7bc21e763159469111f634107ce2fe", "blockNumber": 65123188 }
+  },
+  "explorer": "https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b",
+  "sourcifyVerified": true
+}
