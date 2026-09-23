@@ -6,21 +6,27 @@
  * without triggering a deploy of its own, uploads `server/`, and then waits until `/health` reports
  * that exact SHA — a deploy is not done because the upload finished.
  *
- *   node scripts/deploy-executor.mjs executor
- *   node scripts/deploy-executor.mjs executor-fork
+ *   XORR_RAILWAY_PROJECT=<id> XORR_EXECUTOR_URL=https://… node scripts/deploy-executor.mjs executor-monad-fork
+ *
+ * This repository is the Monad build (PLAN.md P0.6). It inherited this script with the production xorr project and
+ * `api.xorr.finance` written in, so running it here would have uploaded the Monad executor over another deployment's
+ * live one. Nothing is written in now: the Railway project and the service's public address are named on every run, and
+ * the script refuses without them.
  *
  * `-dirty` is appended when `server/` has uncommitted changes, so a hand-patched deploy says so.
  */
 import { execFileSync } from 'node:child_process';
 
-const SERVICES = {
-  executor: 'https://api.xorr.finance',
-  'executor-fork': 'https://executor-fork-production.up.railway.app',
-};
+const SERVICES = ['executor-monad-fork', 'executor-monad-testnet'];
 
 const service = process.argv[2];
-if (!(service in SERVICES)) {
-  console.error(`\n  usage: node scripts/deploy-executor.mjs ${Object.keys(SERVICES).join(' | ')}\n`);
+const PROJECT = process.env.XORR_RAILWAY_PROJECT;
+const BASE_URL = process.env.XORR_EXECUTOR_URL;
+if (!SERVICES.includes(service) || !PROJECT || !BASE_URL?.startsWith('https://')) {
+  console.error(
+    `\n  usage: XORR_RAILWAY_PROJECT=<the Monad Railway project id> XORR_EXECUTOR_URL=https://<its public domain> \\\n` +
+      `         node scripts/deploy-executor.mjs ${SERVICES.join(' | ')}\n`,
+  );
   process.exit(1);
 }
 
@@ -36,7 +42,6 @@ const stamp = dirty ? `${sha}-dirty` : sha;
  * the path argument and the directory the project is linked from did not agree. Naming the target
  * outright means neither the working directory's link nor a path argument decides where this goes.
  */
-const PROJECT = '7bceeadb-7a50-462a-9554-3282d389ebff';
 const ENVIRONMENT = 'production';
 const target = ['--project', PROJECT, '--environment', ENVIRONMENT, '--service', service];
 
@@ -47,7 +52,7 @@ execFileSync('railway', ['variable', 'set', `XORR_BUILD_SHA=${stamp}`, ...target
 execFileSync('railway', ['up', ...target, '--ci'], { stdio: 'inherit', cwd: 'server' });
 
 /* The upload returning is not the deploy being live: wait for the service to say which commit it runs. */
-const base = SERVICES[service];
+const base = BASE_URL.replace(/\/+$/, '');
 const deadline = Date.now() + 10 * 60_000;
 for (;;) {
   const health = await fetch(`${base}/health`)

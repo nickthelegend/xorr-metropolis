@@ -40,10 +40,18 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync,
 import { join } from 'node:path';
 
 const OUT = 'dist-web';
-const API = process.env.XORR_WEB_API ?? 'https://executor-robinhood-production.up.railway.app';
+/*
+ * The executor this build talks to, named on every run: no Monad executor has a public address yet (PLAN.md P0.6), and
+ * the Robinhood Chain one this defaulted to belongs to another deployment.
+ */
+const API = process.env.XORR_WEB_API;
+if (!API) {
+  console.error('\n  Refusing to build: name the executor with XORR_WEB_API=https://… (the Monad fork or testnet executor).\n');
+  process.exit(1);
+}
 const ENV_FILE = '.env';
-/** The deployment record of the executor's fork: Robinhood Chain's by default, Arbitrum's for the Arbitrum build. */
-const FORK_ENV_FILE = process.env.FORK_ENV_FILE ?? (API.includes('executor-fork-') ? 'server/.env.arbitrum-fork' : 'server/.env.robinhood-fork');
+/** The deployment record of the executor's fork (written by `server/src/fork-bootstrap-evm.ts`). */
+const FORK_ENV_FILE = process.env.FORK_ENV_FILE ?? 'server/.env.fork';
 
 const refuse = (why) => {
   console.error(`\n  Refusing to build: ${why}\n`);
@@ -96,7 +104,7 @@ if (SOLANA) {
 
 /* A fork build names the fork's RPC, and the RPC has to be the fork. */
 /** The chain id each fork answers with: the id of the chain it copies. */
-const FORK_CHAIN_IDS = { 'base-fork': 8453, localnet: 8453, 'arbitrum-fork': 42161, 'robinhood-fork': 4663 };
+const FORK_CHAIN_IDS = { 'base-fork': 8453, localnet: 8453, 'arbitrum-fork': 42161, 'robinhood-fork': 4663, 'monad-fork': 143 };
 const FORK = !SOLANA && Object.prototype.hasOwnProperty.call(FORK_CHAIN_IDS, health.chain);
 const CHAIN_RPC = SOLANA
   ? process.env.XORR_WEB_CHAIN_RPC
@@ -131,6 +139,8 @@ const PUBLIC_RPC = {
   arbitrum: 'https://arb1.arbitrum.io/rpc',
   robinhood: 'https://rpc.mainnet.chain.robinhood.com',
   'arbitrum-sepolia': 'https://sepolia-rollup.arbitrum.io/rpc',
+  monad: 'https://rpc.monad.xyz',
+  'monad-testnet': 'https://testnet-rpc.monad.xyz',
 };
 const PIN = SOLANA ? undefined : String(health.delegation ?? '').toLowerCase();
 if (!SOLANA) {
@@ -229,7 +239,7 @@ try {
     writeFileSync(linkFile, keptLink);
     console.log('  kept the existing Vercel project link, so --prod goes where it went last time');
   } else {
-    console.log('  NOTE: no Vercel link in this directory. Run `vercel link --project xorr-arbitrum` before deploying,');
+    console.log('  NOTE: no Vercel link in this directory. Run `vercel link --project xorr-metropolis` before deploying,');
     console.log('        or `vercel deploy --prod` will create a new project named after the folder.');
   }
 } finally {

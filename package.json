@@ -1,11 +1,11 @@
 {
-  "name": "xorr-arbitrum",
+  "name": "xorr-metropolis",
   "version": "0.1.0",
   "private": true,
   "main": "index.js",
   "scripts": {
     "start": "expo start",
-    "start:fork": "sh -c 'set -a; . ./server/.env.fork; set +a; EXPO_PUBLIC_API_URL=https://executor-fork-production.up.railway.app exec expo start --port 8081'",
+    "start:fork": "sh -c 'set -a; . ./server/.env.fork; set +a; EXPO_PUBLIC_API_URL=${EXPO_PUBLIC_API_URL:-http://localhost:8787} exec expo start --port 8081'",
     "ios": "expo run:ios",
     "android": "expo run:android",
     "web": "expo start --web",
@@ -16,7 +16,7 @@
     "test:live": "LIVE=1 vitest run live.test",
     "postinstall": "patch-package",
     "build:base": "node scripts/build-base.mjs",
-    "deploy:web": "node scripts/build-web.mjs && cd dist-web && vercel link --yes --project xorr-arbitrum && vercel deploy --prod --yes",
+    "deploy:web": "node scripts/build-web.mjs && cd dist-web && vercel link --yes --project xorr-metropolis && vercel deploy --prod --yes",
     "deploy:executor": "node scripts/deploy-executor.mjs"
   },
   "dependencies": {
