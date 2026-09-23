@@ -15,7 +15,7 @@
  */
 import { rhStockAsync } from '../venues/rh-stocks.js';
 import { stockPriceUsd } from '../venues/stocks.js';
-import { IS_ROBINHOOD } from '../evm/chains.js';
+import { IS_MONAD, IS_ROBINHOOD, SETTLEMENT_SYMBOL } from '../evm/chains.js';
 import { Hono } from 'hono';
 import { PublicKey } from '@solana/web3.js';
 import { ON_SOLANA, DEFAULT_MINTS } from '../solana/clusters.js';
@@ -450,6 +450,12 @@ market.get('/market/classification', async (c) => {
   const unique = [...new Set(asked)];
   const found = await Promise.all(
     unique.map(async (symbol) => {
+      /*
+       * A registry token that is crypto or cash is not a company, and is never looked up at the SEC: a ticker search for
+       * "WETH" found an unrelated filer and labelled the WETH slice "Computer Peripheral Equipment, NEC" (2026-09-24).
+       */
+      const kind = TOKENS[canonicalSymbol(symbol)]?.kind;
+      if (kind === 'crypto' || kind === 'cash') return [symbol, { sector: kind === 'crypto' ? 'Crypto' : 'Cash', sic: null, source: 'registry' }] as const;
       const hit = await classificationFor(symbol).catch(() => null);
       if (hit !== null) return [symbol, { sector: hit.description, sic: hit.sic, source: 'sec' }] as const;
       const issuer = TESSERA[symbol];
@@ -570,7 +576,13 @@ market.get('/market/tradable', async (c) => {
    * gives any symbol this list does not name.
    */
   if (!CAN_SETTLE) return c.json([]);
-  return c.json(await functioningHere());
+  /*
+   * On Monad, only what a swap can reach (2026-09-24): the native-MON sentinel (kept under the key `ETH`) is never swapped
+   * as such, and AUSD has no pool deeper than a few dollars, so both are held and sent (`functioningHere`, for Send) but
+   * not offered to buy — the recurring-buy list offered AUSD, which could never run, and "ETH" beside WETH.
+   */
+  const here = await functioningHere();
+  return c.json(IS_MONAD ? here.filter((t) => t.symbol === SETTLEMENT_SYMBOL || TOKENS[t.symbol]?.toSettlement != null) : here);
 });
 
 /**

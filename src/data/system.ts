@@ -315,7 +315,8 @@ export type SectorClassification = {
   sector: string;
   /** The four-digit SIC code it came from. Null for an issuer answer: a private company has no SIC. */
   sic: string | null;
-  source: 'sec' | 'issuer';
+  /** `registry`: the executor's own token registry says it is crypto or cash, not a company (never looked up). */
+  source: 'sec' | 'issuer' | 'registry';
 };
 
 export type StrategyRunRow = {
