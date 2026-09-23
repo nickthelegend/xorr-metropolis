@@ -29,5 +29,6 @@ describe('the screens this build has', () => {
       expect(hiddenOn(p), p).toBe(true);
     }
     expect(TRADE_ROUTE).toBe('/markets');
+    expect(hiddenOn('/perps'), '/perps is Monad\'s').toBe(false);
   });
 });

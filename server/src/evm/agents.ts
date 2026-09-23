@@ -62,10 +62,10 @@ export function actingWalletClient(): WalletClient {
 /** The ETH an agent keeps for gas, and the floor below which it is topped up. */
 /*
  * On Monad a sender must hold the whole gas LIMIT × price before a transaction runs (the limit is what is billed): a Perpl
- * order declares ~290k gas at ~102 gwei on testnet, 0.03 MON, so the floor is above one order and the target covers a few.
+ * open declares ~395k gas at ~112 gwei max fee on testnet (0.044 MON held up front, less spent), so the floor is one open.
  */
-export const AGENT_GAS_FLOOR = parseEther(CHAIN_KEY === 'monad-testnet' ? '0.035' : '0.005');
-const AGENT_GAS_TARGET = parseEther(CHAIN_KEY === 'monad-testnet' ? '0.1' : '0.02');
+export const AGENT_GAS_FLOOR = parseEther(CHAIN_KEY === 'monad-testnet' ? '0.045' : '0.005');
+const AGENT_GAS_TARGET = parseEther(CHAIN_KEY === 'monad-testnet' ? '0.06' : '0.02');
 
 /**
  * Keep an agent's wallet able to pay for its own transactions.

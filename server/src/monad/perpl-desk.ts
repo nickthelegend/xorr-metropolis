@@ -31,7 +31,7 @@ import { chain, CHAIN_KEY, explorerTx } from '../evm/chains.js';
 import { delegateAccount, publicClient, walletClient } from '../evm/client.js';
 import { agentActor, ensureAgentGas } from '../evm/agents.js';
 import { one, query } from '../db/index.js';
-import { monadFees, sendWhenSpendable } from '../evm/spendable.js';
+import { isNotYetSpendable, monadFees, sendWhenSpendable } from '../evm/spendable.js';
 import { append } from '../audit/log.js';
 import { getJson } from '../http/get.js';
 import {
@@ -445,7 +445,18 @@ export async function placePerpOrder(p: {
     throw new PerplRefusal('perpl_refused', `Perpl would refuse this order: ${name}.`, 409);
   }
   const fees = await monadFees(publicClient, chain.id);
-  const hash = await sendWhenSpendable(() => op.wallet.sendTransaction({ account: op.account, chain, to: desk, data, gas: (gas * 110n) / 100n, ...fees }));
+  let hash: Hex;
+  try {
+    // Up to ~90 s: MON a top-up just added can stay unspendable longer than the 3-block lag (measured >45 s once).
+    hash = await sendWhenSpendable(() => op.wallet.sendTransaction({ account: op.account, chain, to: desk, data, gas: (gas * 110n) / 100n, ...fees }), { attempts: 30, waitMs: 3000 });
+  } catch (e) {
+    const raw = e instanceof BaseError ? `${e.shortMessage} ${e.details ?? ''}` : String(e);
+    console.warn(`[perpl] order not sent for ${p.owner}: ${raw}`);
+    if (isNotYetSpendable(e)) {
+      throw new PerplRefusal('agent_gas_pending', "xorr's agent key was just given gas and Monad has not credited it yet, so the order was not sent. Try again in a minute.", 409);
+    }
+    throw new PerplRefusal('send_failed', `The order could not be sent: ${e instanceof BaseError ? e.shortMessage : String(e).split('\n')[0]}`, 502);
+  }
   const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 90_000 });
   const status = receipt.status === 'success' ? 'filled' : 'reverted';
   const position = await readPosition(publicClient, n, m, accountId);
@@ -466,6 +477,8 @@ export async function placePerpOrder(p: {
     signature: hash,
     payload: { id, desk, perpId: m.id, side: p.side, lots: plan.lots, limitPrice: plan.limitPrice, notionalUsd: plan.notionalUsd, explorer: explorerTx(hash) },
   });
+  // Top the agent's gas up now, between orders, so the next order never waits on MON Monad has not credited yet.
+  void ensureAgentGas(`perpl:${p.owner.toLowerCase()}`).catch((e) => console.warn(`[perpl] gas top-up after order: ${e instanceof Error ? e.message.split('\n')[0] : e}`));
   return { id, status, txHash: hash, explorer: explorerTx(hash), market: m.name, side: p.side, lots: plan.lots, limitPrice: plan.limitPrice, notionalUsd: plan.notionalUsd, position };
 }
 

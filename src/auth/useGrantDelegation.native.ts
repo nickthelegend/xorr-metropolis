@@ -17,14 +17,14 @@
  */
 import { useCallback, useState } from 'react';
 import { useEmbeddedEthereumWallet } from '@privy-io/expo';
-import { encodeFunctionData, parseUnits, type Address, type Hex } from 'viem';
+import { type TypedDataDefinition, encodeFunctionData, parseUnits, type Address, type Hex } from 'viem';
 import { api } from '@/data/api';
 import { activeChain, pinnedDelegation, walletSignsOnly } from '@/chain';
 import { humanWalletError } from '@/wallet/walletError';
 import { SETTLEMENT_APPROVAL_DAYS, type GrantOptions } from '@/wallet/grantPlan';
 import { chainAccess } from '@/wallet/chainAccess';
 import { assertGrantDestination, confirmStopped, contractToStop } from '@/wallet/delegationChain';
-import { estimateUserFee, sendAsUser, type UserSigner } from '@/wallet/userSigning';
+import { estimateUserFee, sendAsUser, type UserSigner, signTypedDataAsUser } from '@/wallet/userSigning';
 
 const DELEGATION_ABI = [
   {
@@ -252,5 +252,15 @@ export function useGrantDelegation() {
    */
   /** Whether a grant or a stop can be signed right now. The EVM embedded wallet is there as soon as sign-in is. */
   const ready = true;
-  return { grant, revoke, sendTransaction: send, estimateFee, busy, error, ready };
+  /** Sign EIP-712 typed data as the user (a message: nothing sent, no gas) — Perpl's desk creation. */
+  const signTypedData = useCallback(
+    async (typed: TypedDataDefinition) => {
+      const s = await signer();
+      if (!s) throw new Error('No wallet yet. Finish sign-in first.');
+      return signTypedDataAsUser(s, typed);
+    },
+    [signer],
+  );
+
+  return { grant, revoke, sendTransaction: send, signTypedData, estimateFee, busy, error, ready };
 }

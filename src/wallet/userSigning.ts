@@ -20,6 +20,8 @@ import {
   isAddressEqual,
   parseTransaction,
   recoverTransactionAddress,
+  recoverTypedDataAddress,
+  type TypedDataDefinition,
   toHex,
   type Address,
   type Chain,
@@ -103,8 +105,39 @@ export async function assertSignedAsAsked(
   }
 }
 
-/** A quarter over the estimate: it is made against this block and the transaction runs against a later one. */
-const withHeadroom = (gas: bigint) => (gas * 125n) / 100n;
+/**
+ * A quarter over the estimate: it is made against this block and the transaction runs against a later one. On Monad the
+ * gas LIMIT is what is billed and what the sender must hold up front, so the pad there is a tenth.
+ */
+const isMonad = (chainId: number) => chainId === 143 || chainId === 10143;
+const withHeadroom = (gas: bigint, chainId?: number) => (chainId !== undefined && isMonad(chainId) ? (gas * 110n) / 100n : (gas * 125n) / 100n);
+
+/**
+ * Monad admits a transaction only if the sender holds limit × max fee, and a wallet's default max fee is about twice the
+ * base fee: a small, just-funded wallet then cannot send what it can afford. The base fee plus a tenth and a 2 gwei tip
+ * (what the network charges, 100 + 2 gwei on testnet, 2026-09-24). Elsewhere the wallet's own fees stand.
+ */
+async function monadFeeParams(chainAccess: ChainAccess, chainId: number): Promise<Record<string, Hex>> {
+  if (!isMonad(chainId)) return {};
+  const price = await chainAccess.getGasPrice().catch(() => undefined);
+  if (!price) return {};
+  const tip = 2_000_000_000n;
+  return { maxFeePerGas: toHex((price * 110n) / 100n + tip), maxPriorityFeePerGas: toHex(tip) };
+}
+
+/**
+ * Sign EIP-712 typed data as the user — a message, not a transaction: nothing is sent and no gas is paid. The signature
+ * is checked to be the wallet's own before it is used, as a signed transaction is (`assertSignedAsAsked`).
+ */
+export async function signTypedDataAsUser(signer: UserSigner, typed: TypedDataDefinition): Promise<Hex> {
+  const { provider, from, chain } = signer;
+  await ensureChain(provider, chain);
+  const payload = JSON.stringify(typed, (_k, v) => (typeof v === 'bigint' ? v.toString() : v));
+  const signature = (await provider.request({ method: 'eth_signTypedData_v4', params: [from, payload] })) as Hex;
+  const recovered = await recoverTypedDataAddress({ ...typed, signature } as Parameters<typeof recoverTypedDataAddress>[0]);
+  if (!isAddressEqual(recovered, from)) throw new Error(`Your wallet signed as ${recovered}, not ${from}, so the signature was not used.`);
+  return signature;
+}
 
 /** Send `data` to `to` as the user. Returns the transaction hash. */
 export async function sendAsUser(signer: UserSigner, to: Address, data: Hex): Promise<Hex> {
@@ -123,11 +156,12 @@ export async function sendAsUser(signer: UserSigner, to: Address, data: Hex): Pr
      */
     const gas = await provider
       .request({ method: 'eth_estimateGas', params: [{ from, to, data }] })
-      .then((g) => toHex(withHeadroom(BigInt(g as string))))
+      .then((g) => toHex(withHeadroom(BigInt(g as string), chain.id)))
       .catch(() => undefined);
+    const fees = await monadFeeParams(chainAccess, chain.id);
     return (await provider.request({
       method: 'eth_sendTransaction',
-      params: [{ from, to, data, ...(gas ? { gas } : {}) }],
+      params: [{ from, to, data, ...(gas ? { gas } : {}), ...fees }],
     })) as Hex;
   }
 
@@ -148,7 +182,7 @@ export async function sendAsUser(signer: UserSigner, to: Address, data: Hex): Pr
         chainId: chain.id,
         type: 2,
         nonce: toHex(nonce),
-        gasLimit: toHex(withHeadroom(gas)),
+        gasLimit: toHex(withHeadroom(gas, chain.id)),
         maxFeePerGas: toHex(fees.maxFeePerGas),
         maxPriorityFeePerGas: toHex(fees.maxPriorityFeePerGas),
       },

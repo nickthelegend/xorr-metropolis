@@ -35,6 +35,8 @@ const PUBLIC_PATHS = new Set([
   /** Monad: MON priced three ways (Uniswap v3, Kuru, Chainlink), and Perpl's public markets. Market facts. */
   '/monad/crosscheck',
   '/monad/perpl',
+  /** Perpl's open markets for the Perps screen: market facts. */
+  '/perps/markets',
   // Same reasoning as the rest of `/market/*`: an observed price series is not user data, and
   // gating it means an unauthenticated visitor sees an equity with a number and no shape.
   '/market/stocks/history',

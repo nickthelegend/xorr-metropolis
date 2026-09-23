@@ -53,6 +53,8 @@ export const HIDDEN_HERE: readonly string[] = [
    * official Monad token list).
    */
   ...(ON_MONAD ? ['/hedge', '/xstocks', '/xstock', '/earnings'] : []),
+  // Perpl perps are Monad's (Perpl's DelegatedAccount desk); no other build has them.
+  ...(ON_MONAD ? [] : ['/perps']),
 ];
 
 /** Whether `path` has no screen on this build. */
