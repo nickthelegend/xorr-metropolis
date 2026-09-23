@@ -153,6 +153,8 @@ describe('motion — animations.md', () => {
       .sort();
     expect(animated).toEqual([
       'AgentOrb.tsx',
+      // The chain's head, brightening as each block lands (FEATURES-100 #24).
+      'BlockPulse.tsx',
       'CloseResult.tsx',
       'FillReceipt.tsx',
       'HoldButton.tsx',

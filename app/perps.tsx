@@ -36,6 +36,8 @@ import {
 } from '@/ui';
 import { useGrantDelegation } from '@/auth/useGrantDelegation';
 import { chainAccess } from '@/wallet/chainAccess';
+import { BlockPulse } from '@/ui/BlockPulse';
+import { chainLabel } from '@/chain';
 import { useAsync } from '@/data/useAsync';
 import { apiProse } from '@/data/apiError';
 import { deskCalls, perps, type Desk, type DeskPosition, type PerpMarket, type PerpOrder } from '@/data/perps';
@@ -170,6 +172,10 @@ export default function Perps() {
         <Text variant="secondary" color={colors.ink55} style={{ marginTop: space.s6 }}>
           Perpl, traded by your agent from a desk only you can withdraw from.
         </Text>
+        {/* The chain under the desk, live: Monad's head, read each second. */}
+        <View style={{ marginTop: space.s6 }}>
+          <BlockPulse label={chainLabel} />
+        </View>
       </View>
       <ScrollView contentContainerStyle={{ padding: space.gutter, gap: space.s12, paddingBottom: space.s44 }}>
         {desk.error ? <ErrorState error={desk.error} onRetry={desk.reload} /> : null}
