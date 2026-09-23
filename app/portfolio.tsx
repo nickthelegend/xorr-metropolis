@@ -10,6 +10,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { shownHere } from '@/nav/buildRoutes';
+import { settlementSymbol } from '@/chain';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
@@ -474,7 +475,8 @@ export default function Portfolio() {
 
         <Rise index={6} style={[card, { flexDirection: 'row', gap: space.s12 }]}>
           <View style={{ flex: 1, gap: space.s4 }}>
-            <Text variant="eyebrowSm">Cash</Text>
+            {/* Which dollar the cash is: AUSD, Agora's, on Monad testnet; USDC or USDG elsewhere. It was named nowhere. */}
+            <Text variant="eyebrowSm">{`Cash · ${settlementSymbol}`}</Text>
             {balance.data ? (
               <Price variant="rowPrimary">{money(balance.data.cash)}</Price>
             ) : balance.loading ? (
