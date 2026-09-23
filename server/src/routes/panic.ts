@@ -108,7 +108,7 @@ export async function recordSale(
     signature: string;
     /** A sale into the settlement token is a `close`; one into any other token is a `swap` (PLAN.md 3.9). */
     kind?: 'close' | 'swap';
-    /** Where it settled. A close goes to the aggregator; a swap names the venue its settlement chose. */
+    /** Where it settled, as the settlement chose it (`chooseSettlement`). Recorded as 'unrecorded' when not given. */
     venue?: string;
   },
 ): Promise<string> {
@@ -131,7 +131,8 @@ export async function recordSale(
       sale.units,
       sale.units > 0 ? sale.proceedsUsd / sale.units : null,
       sale.signature,
-      sale.venue ?? '1inch',
+      // Never a guess: an unnamed venue was recorded as 1inch, and Metrics counted Monad's Uniswap sales as 1inch fills.
+      sale.venue ?? null,
       sale.quotedUsd,
       isStock(sale.symbol) ? 'equity' : 'crypto',
     ],
@@ -326,6 +327,8 @@ panic.post('/panic/flatten', async (c) => {
           proceedsUsd,
           quotedUsd: proceeds === undefined ? null : h.usd,
           signature,
+          // Where it filled, as the settlement chose it: the default was "1inch" whatever filled it (2026-09-24).
+          venue: route.venue,
         });
         await append(
           {
@@ -696,6 +699,8 @@ export async function closeHolding(params: {
         proceedsUsd,
         quotedUsd: proceeds === undefined ? null : usd,
         signature,
+        // Where it filled. Left out, the record said "1inch" for a Uniswap v3 fill on Monad, where 1inch is off.
+        venue: route.venue,
       });
       await append(
         {
