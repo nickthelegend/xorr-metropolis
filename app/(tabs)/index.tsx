@@ -69,7 +69,7 @@ import {
   type SetupStepKey,
   type SetupStepState,
 } from '@/state/derived';
-import type { Address } from 'viem';
+import { isAddress, type Address } from 'viem';
 import { pinnedDelegation, CHAIN_KEY } from '@/chain';
 import { xStockGainers } from '@/markets/xstockClass';
 import { isPriced, stockName } from '@/markets/catalog';
@@ -378,7 +378,20 @@ export default function Home() {
   const standing = useAsync<SetupStanding>(async () => {
     const owner = wallet?.address as Address | undefined;
     if (!owner) return 'none';
-    return (await standingOnChain(chainAccess, owner, pinnedDelegation, Date.now())).kind;
+    /*
+     * The contract to read: the build's pinned one, else the one the executor names — the order the stop uses. Only a build
+     * made by build-web.mjs pins one, so every other build asked no contract at all and said "Not granted" over a grant
+     * confirmed on chain (judge pass, 2026-09-24). The chain is read either way; a contract nobody can name is "Can't
+     * check", never "Not granted".
+     */
+    const contract =
+      pinnedDelegation ??
+      (await system.delegationParams().then(
+        (p) => (isAddress(p.contract) ? (p.contract as Address) : undefined),
+        () => undefined,
+      ));
+    if (!contract) return 'unreadable';
+    return (await standingOnChain(chainAccess, owner, contract, Date.now())).kind;
   }, [wallet?.address]);
   /*
    * The trade step is a fill the executor recorded, not a strategy somebody created. A strategy's run is one kind; a
