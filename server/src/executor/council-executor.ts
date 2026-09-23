@@ -19,12 +19,17 @@ import type { WalletRow } from '../routes/wallet-context.js';
 import { canonicalSymbol, ensureRegistry } from '../venues/tokens.js';
 import { placeOrder } from './order.js';
 import { ensureAgentGas, withAgent } from '../evm/agents.js';
+import { CHAIN_KEY, IS_MONAD } from '../evm/chains.js';
+import { spotToken } from '../council/monad-inputs.js';
+import { PerplRefusal, perplMarkets, placePerpOrder } from '../monad/perpl-desk.js';
 
 /**
  * An agent's round is executed AS that agent: its own wallet signs (`withAgent`), its own permission and tally are what
  * the contract checks, and its gas is topped up first. A round the owner convened is the desk's, as their own order is.
  */
 export const councilExecutor: CouncilExecutor = async (p): Promise<ExecutionResult> => {
+  // Monad testnet has no spot venue: an approved round trades the owner's Perpl desk, by xorr's operator key.
+  if (CHAIN_KEY === 'monad-testnet') return executeOnDesk(p);
   if (!p.agentId) return executeRound(p);
   const agentId = p.agentId;
   await ensureAgentGas(agentId);
@@ -37,7 +42,8 @@ async function executeRound({ walletId, owner, proposal, roundId, agentId }: Par
     return { status: 'refused', detail: 'The round names a wallet this executor has no record of for that owner.' };
   }
   await ensureRegistry();
-  const symbol = canonicalSymbol(proposal.symbol);
+  // A Monad round names MON, ETH or BTC; the fill moves WMON, WETH or WBTC (Monad's `ETH` key is native MON).
+  const symbol = canonicalSymbol(IS_MONAD ? spotToken(proposal.symbol) : proposal.symbol);
 
   if (proposal.side === 'buy') {
     const order = await placeOrder(w, symbol, proposal.usd, `Council round ${roundId}: buy $${proposal.usd} of ${symbol}`);
@@ -70,4 +76,36 @@ async function executeRound({ walletId, owner, proposal, roundId, agentId }: Par
   }
   const detail = String(b.detail ?? b.error ?? 'The sale did not go through.');
   return out.status === 409 ? { status: 'refused', detail: `${String(b.reason ?? 'refused')}: ${detail}` } : { status: 'failed', detail };
+}
+
+/**
+ * Monad testnet: a buy opens a 1x long of that size on the owner's Perpl desk, a sell closes the desk's long (Perpl's
+ * close is the whole position). The desk's own limits and Perpl's checks apply; the operator can trade and never withdraw.
+ */
+async function executeOnDesk({ walletId, owner, proposal, roundId, agentId }: Parameters<CouncilExecutor>[0]): Promise<ExecutionResult> {
+  const m = (await perplMarkets()).find((x) => x.name === proposal.symbol.toUpperCase());
+  if (!m) return { status: 'refused', detail: `Perpl has no open ${proposal.symbol} market.` };
+  try {
+    const r = await placePerpOrder({
+      owner,
+      walletId,
+      perpId: m.id,
+      side: proposal.side === 'buy' ? 'open_long' : 'close_long',
+      usd: proposal.side === 'buy' ? proposal.usd : undefined,
+      leverage: 1,
+      placedBy: agentId ?? 'Council',
+      reason: `Council round ${roundId}`,
+    });
+    if (r.status !== 'filled') return { status: 'failed', txHash: r.txHash, detail: `The order was mined and reverted (${r.txHash}).` };
+    const price = r.position?.entry ?? r.limitPrice;
+    return {
+      status: 'executed',
+      txHash: r.txHash,
+      detail: `${proposal.side === 'buy' ? 'Opened a 1x long of' : 'Closed the long of'} ${r.lots} ${m.name} on Perpl through your desk.`,
+      fill: { units: r.lots, price, usd: r.notionalUsd },
+    };
+  } catch (e) {
+    if (e instanceof PerplRefusal) return { status: 'refused', detail: `${e.code}: ${e.message}` };
+    throw e;
+  }
 }

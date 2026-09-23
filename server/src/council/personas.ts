@@ -12,9 +12,14 @@
  *   trend-reader  The stock's direction: its last Chainlink rounds, and where the ask sits in today's range.
  *   macro-desk    Crypto's risk appetite on GMX V2: who pays funding on ETH and BTC, and how one-sided open interest is.
  *
+ * On Monad (`monad-inputs.ts`) the same seats read Monad's own inputs: the session desk becomes the price desk (Chainlink
+ * against the fill's venue and Kuru's book; crypto has no session), and the macro desk reads Perpl's funding. The risk
+ * keeper and the trend reader are unchanged.
+ *
  * A round is approved when nobody vetoes and at least two seats vote yes with more yes than no.
  */
 import type { CouncilInputs } from './inputs.js';
+import type { MonadCouncilInputs } from './monad-inputs.js';
 
 export type SeatId = 'session-desk' | 'risk-keeper' | 'trend-reader' | 'macro-desk';
 export type Vote = 'yes' | 'no' | 'veto' | 'abstain';
@@ -28,6 +33,14 @@ export const SEATS: readonly { id: SeatId; name: string; role: string }[] = [
   { id: 'macro-desk', name: 'Macro Desk', role: 'Is the wider market crowded, per GMX funding and open interest?' },
 ];
 
+/** The seats as they sit on Monad: the same ids (stored with every vote), asking Monad's questions. */
+export const MONAD_SEATS: readonly { id: SeatId; name: string; role: string }[] = [
+  { id: 'session-desk', name: 'Price Desk', role: 'Is Chainlink fresh, and does the fill price agree with it?' },
+  { id: 'risk-keeper', name: 'Risk Keeper', role: 'Does it fit the permission and the position limit?' },
+  { id: 'trend-reader', name: 'Trend Reader', role: 'Which way is Chainlink moving?' },
+  { id: 'macro-desk', name: 'Perps Desk', role: 'Are Perpl longs crowded, per who pays funding on BTC, ETH and MON?' },
+];
+
 /** The share of the whole grant one symbol may reach (the pacing rule the Solana build enforced: 25%). */
 export const POSITION_SHARE_OF_GRANT = 0.25;
 /** Funding above this, paid by longs, with open interest this one-sided, reads as a crowded long market. */
@@ -35,6 +48,8 @@ export const CROWDED_FUNDING_PCT_PER_HOUR = 0.005;
 export const CROWDED_LONG_SHARE_PCT = 65;
 
 const usd = (n: number) => `$${n.toFixed(2)}`;
+/** A unit price: cents where that is enough, four significant digits under a dollar (MON is $0.024). */
+const px = (n: number) => (n >= 1 ? `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `$${n.toPrecision(4)}`);
 const pct = (n: number, d = 2) => `${n >= 0 ? '+' : ''}${n.toFixed(d)}%`;
 
 export function sessionDesk(i: CouncilInputs): Ballot {
@@ -57,7 +72,7 @@ export function sessionDesk(i: CouncilInputs): Ballot {
   return { ...base, vote: 'yes', confidence: Math.max(0.5, Math.min(0.95, 0.5 + room / 2)), reason: `Tradable now: ${parts.join(', ')}.`, cites: ['guard'] };
 }
 
-export function riskKeeper(i: CouncilInputs): Ballot {
+export function riskKeeper(i: Pick<CouncilInputs, 'proposal' | 'permission' | 'holding' | 'readAt'>): Ballot {
   const base = { persona: 'risk-keeper' as const };
   const { proposal } = i;
   if (!i.permission.ok) {
@@ -107,11 +122,12 @@ export function riskKeeper(i: CouncilInputs): Ballot {
   };
 }
 
-export function trendReader(i: CouncilInputs): Ballot {
+export function trendReader(i: Pick<CouncilInputs, 'proposal' | 'trend'> & { day?: CouncilInputs['day'] }): Ballot {
   const base = { persona: 'trend-reader' as const };
   const buy = i.proposal.side === 'buy';
-  if (!i.trend.ok && !i.day.ok) {
-    return { ...base, vote: 'abstain', confidence: 0, reason: `No price history: ${i.trend.error}; ${i.day.error}.`, cites: ['trend', 'day'] };
+  if (!i.trend.ok && !i.day?.ok) {
+    const why = [i.trend.ok ? undefined : i.trend.error, i.day && !i.day.ok ? i.day.error : undefined].filter(Boolean).join('; ');
+    return { ...base, vote: 'abstain', confidence: 0, reason: `No price history: ${why}.`, cites: i.day ? ['trend', 'day'] : ['trend'] };
   }
   const notes: string[] = [];
   let score = 0;
@@ -122,7 +138,7 @@ export function trendReader(i: CouncilInputs): Ballot {
   } else if (i.trend.ok) {
     notes.push('one Chainlink round only');
   }
-  if (i.day.ok) {
+  if (i.day?.ok) {
     const at = i.day.positionInRange;
     notes.push(`ask ${usd(i.day.ask)} at ${(at * 100).toFixed(0)}% of today's ${usd(i.day.low)}–${usd(i.day.high)} range`);
     score += at > 0.9 ? -1 : at < 0.5 ? 0.5 : 0;
@@ -130,7 +146,7 @@ export function trendReader(i: CouncilInputs): Ballot {
   const s = buy ? score : -score;
   const vote: Vote = s > 0 ? 'yes' : s < 0 ? 'no' : 'abstain';
   const lead = vote === 'yes' ? (buy ? 'Leaning up' : 'Leaning down') : vote === 'no' ? (buy ? 'Stretched or falling' : 'Still rising') : 'No clear direction';
-  return { ...base, vote, confidence: Math.min(0.9, 0.4 + Math.abs(s) * 0.25), reason: `${lead}: ${notes.join('; ')}.`, cites: ['trend', 'day'] };
+  return { ...base, vote, confidence: Math.min(0.9, 0.4 + Math.abs(s) * 0.25), reason: `${lead}: ${notes.join('; ')}.`, cites: i.day ? ['trend', 'day'] : ['trend'] };
 }
 
 export function macroDesk(i: CouncilInputs): Ballot {
@@ -150,8 +166,46 @@ export function macroDesk(i: CouncilInputs): Ballot {
   return { ...base, vote: 'yes', confidence: 0.6, reason: `Risk appetite not stretched: ${text}.`, cites: ['gmx'] };
 }
 
-export function castBallots(i: CouncilInputs): Ballot[] {
-  return [sessionDesk(i), riskKeeper(i), trendReader(i), macroDesk(i)];
+/** Monad's price desk, in the session desk's seat. Its "no" is a veto: a stale feed, or a fill far from Chainlink. */
+export function priceDesk(i: MonadCouncilInputs): Ballot {
+  const base = { persona: 'session-desk' as const };
+  if (!i.price.ok) {
+    return { ...base, vote: 'veto', confidence: 1, reason: `The price check could not run: ${i.price.error}. Nothing is traded blind.`, cites: ['price'] };
+  }
+  const { chainlink, fill, kuru, gapBps, maxGapBps } = i.price;
+  const feed = `Chainlink ${px(chainlink.price)} (${Math.round(chainlink.ageSec / 60)} min old)`;
+  if (chainlink.ageSec > chainlink.maxAgeSec) {
+    return { ...base, vote: 'veto', confidence: 1, reason: `Stale: ${feed}, past its ${chainlink.maxAgeSec / 60} min heartbeat.`, cites: ['price'] };
+  }
+  const parts = [feed, `fill ${px(fill.price)} on ${fill.venue}`, kuru ? `Kuru mid ${px(kuru.mid)}` : undefined, `${gapBps.toFixed(1)} bps apart (limit ${maxGapBps})`];
+  if (gapBps > maxGapBps) {
+    return { ...base, vote: 'veto', confidence: 1, reason: `The fill is too far from Chainlink: ${parts.filter(Boolean).join(', ')}.`, cites: ['price'] };
+  }
+  const room = 1 - gapBps / maxGapBps;
+  return { ...base, vote: 'yes', confidence: Math.max(0.5, Math.min(0.95, 0.5 + room / 2)), reason: `Prices agree: ${parts.filter(Boolean).join(', ')}.`, cites: ['price'] };
+}
+
+/** Monad's perps desk, in the macro desk's seat: Perpl's funding says whether longs are crowded. */
+export function perpsDesk(i: MonadCouncilInputs): Ballot {
+  const base = { persona: 'macro-desk' as const };
+  if (!i.perps.ok) return { ...base, vote: 'abstain', confidence: 0, reason: `Perpl unreadable: ${i.perps.error}.`, cites: ['perps'] };
+  const crowded = i.perps.markets.filter((m) => m.fundingPctPerHour > CROWDED_FUNDING_PCT_PER_HOUR);
+  const text = i.perps.markets
+    .map((m) => `${m.market} longs ${m.fundingPctPerHour >= 0 ? 'pay' : 'earn'} ${Math.abs(m.fundingPctPerHour).toFixed(4)}%/h`)
+    .join('; ');
+  const own = crowded.some((m) => m.market === i.proposal.symbol);
+  if (i.proposal.side === 'sell') {
+    return { ...base, vote: crowded.length > 0 ? 'yes' : 'abstain', confidence: crowded.length > 0 ? 0.6 : 0, reason: `${crowded.length > 0 ? 'Crowded longs favour taking risk off' : 'Nothing crowded either way'}: ${text}.`, cites: ['perps'] };
+  }
+  if (own || crowded.length >= 2) return { ...base, vote: 'no', confidence: 0.7, reason: `Longs crowded on ${crowded.map((m) => m.market).join(' and ')}: ${text}.`, cites: ['perps'] };
+  if (crowded.length === 1) return { ...base, vote: 'abstain', confidence: 0.3, reason: `One market crowded long: ${text}.`, cites: ['perps'] };
+  return { ...base, vote: 'yes', confidence: 0.6, reason: `Perps not stretched: ${text}.`, cites: ['perps'] };
+}
+
+export function castBallots(i: CouncilInputs | MonadCouncilInputs): Ballot[] {
+  if ('venue' in i && i.venue === 'monad') return [priceDesk(i), riskKeeper(i), trendReader(i), perpsDesk(i)];
+  const r = i as CouncilInputs;
+  return [sessionDesk(r), riskKeeper(r), trendReader(r), macroDesk(r)];
 }
 
 export function tally(ballots: readonly Ballot[]): { decision: Decision; yes: number; no: number; summary: string } {

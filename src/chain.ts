@@ -92,6 +92,9 @@ if (ASKED.startsWith('solana-')) {
 
 export const CHAIN_KEY = ASKED as ChainKey;
 
+/** Monad mainnet, testnet or a fork of it: crypto spot and Perpl perps, no Stock Tokens. */
+export const onMonad = CHAIN_KEY.startsWith('monad');
+
 /**
  * Every chain this app knows, which must be every chain the executor knows.
  *

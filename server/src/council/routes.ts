@@ -10,12 +10,15 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Address } from 'viem';
 import { requireWallet } from '../routes/wallet-context.js';
-import { SEATS } from './personas.js';
+import { IS_MONAD } from '../evm/chains.js';
+import { MONAD_SEATS, SEATS } from './personas.js';
+import { MONAD_COUNCIL_SYMBOLS } from './monad-inputs.js';
 import { convene, roundById, roundsFor } from './convene.js';
 
 export const councilRoutes = new Hono();
 
-councilRoutes.get('/council/seats', (c) => c.json({ seats: SEATS }));
+// The seats as they sit on this chain, and what the council can be asked about here (Monad: MON, ETH, BTC).
+councilRoutes.get('/council/seats', (c) => c.json({ seats: IS_MONAD ? MONAD_SEATS : SEATS, symbols: IS_MONAD ? MONAD_COUNCIL_SYMBOLS : null }));
 
 councilRoutes.get('/council/rounds', async (c) => {
   const w = await requireWallet(c);

@@ -158,7 +158,7 @@ async function gmxOf() {
   return { source: markets[0]?.source ?? 'GMX /markets/info', eth: side('ETH-USD'), btc: side('BTC-USD') };
 }
 
-async function permissionOf(owner: Address, agentId?: string) {
+export async function permissionOf(owner: Address, agentId?: string) {
   // The proposing agent's own permission (its own cap and tally), or the desk's for a round the owner convened.
   const p = await readPolicy(owner, agentId ? agentAddress(agentId) : undefined);
   if (!p) throw new Error(agentId ? `the owner has not granted ${agentId} a permission of its own` : 'no grant on XorrDelegation for this owner');

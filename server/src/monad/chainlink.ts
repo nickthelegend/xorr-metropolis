@@ -14,6 +14,8 @@ import { monadMainnet } from './mainnet.js';
 export const CHAINLINK_MONAD = {
   MON: '0xBcD78f76005B7515837af6b50c7C52BCf73822fb',
   ETH: '0x1B1414782B859871781bA3E4B0979b9ca57A0A04',
+  // BTC / USD, 18 decimals (not 8): read on chain 143 on 2026-09-24, $84,386, the round 224 s old.
+  BTC: '0x187efD8ba8483105f2735740D956f7CD23723deC',
   USDC: '0xf5F15f188AbCb0d165D1Edb7f37F7d6fA2fCebec',
   AUSD: '0xE20751C7B5867bCBef815ffc1b284c3f412a9e13',
 } as const satisfies Record<string, `0x${string}`>;
@@ -21,7 +23,7 @@ export const CHAINLINK_MONAD = {
 export type ChainlinkSymbol = keyof typeof CHAINLINK_MONAD;
 
 /** The registry's symbols a Chainlink feed prices: WMON is MON, WETH is ETH. */
-const FEED_FOR: Record<string, ChainlinkSymbol> = { MON: 'MON', WMON: 'MON', ETH: 'ETH', WETH: 'ETH', USDC: 'USDC', AUSD: 'AUSD' };
+const FEED_FOR: Record<string, ChainlinkSymbol> = { MON: 'MON', WMON: 'MON', ETH: 'ETH', WETH: 'ETH', BTC: 'BTC', WBTC: 'BTC', USDC: 'USDC', AUSD: 'AUSD' };
 
 export function feedFor(symbol: string): ChainlinkSymbol | undefined {
   return FEED_FOR[symbol.toUpperCase()];

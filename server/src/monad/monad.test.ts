@@ -48,10 +48,12 @@ describe('Chainlink, one feed', () => {
     await expect(readFeed('MON', { client: client(0n, 1n), nowSec: 2 })).rejects.toThrow('not a price');
   });
 
-  it('prices WMON by the MON feed and WETH by the ETH feed, and names no feed it does not have', () => {
+  it('prices WMON by the MON feed, WETH by the ETH feed and WBTC by the BTC feed, and names no feed it does not have', () => {
     expect(feedFor('WMON')).toBe('MON');
     expect(feedFor('weth')).toBe('ETH');
-    expect(feedFor('WBTC')).toBeUndefined();
+    // BTC / USD on Monad mainnet (18 decimals), read on chain 143 on 2026-09-24.
+    expect(feedFor('WBTC')).toBe('BTC');
+    expect(feedFor('USDT0')).toBeUndefined();
   });
 });
 

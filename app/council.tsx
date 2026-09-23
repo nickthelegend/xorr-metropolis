@@ -4,7 +4,8 @@
  *
  * A round is shown exactly as the executor stored it. A vote's reason carries the numbers it rested on — the session,
  * the Chainlink price and its age, the pool's price, GMX funding, the cap left today — so a reader can check every vote
- * against what it saw. The hash is the chain's: an explorer link where one exists, the bare hash on a fork.
+ * against what it saw. On Monad the seats read Monad's own: Chainlink on Monad against the fill's venue and Kuru's book,
+ * and Perpl's funding; the council is asked about MON, ETH and BTC, the assets with a Monad feed and a Perpl market. The hash is the chain's: an explorer link where one exists, the bare hash on a fork.
  */
 import React, { useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
@@ -36,14 +37,13 @@ import { convenedByLabel, roundSigner } from '@/agents/agentPermission';
 import { useAsync } from '@/data/useAsync';
 import { apiProse } from '@/data/apiError';
 import { council, type CouncilBallot, type CouncilRound } from '@/data/council';
+import { CHAIN_KEY, onMonad } from '@/chain';
 
-const SEAT_NAMES: Record<CouncilBallot['persona'], string> = {
-  'session-desk': 'Session Desk',
-  'risk-keeper': 'Risk Keeper',
-  'trend-reader': 'Trend Reader',
-  'macro-desk': 'Macro Desk',
-};
-const SYMBOLS = ['NVDA', 'TSLA', 'AAPL', 'SPY'] as const;
+const SEAT_NAMES: Record<CouncilBallot['persona'], string> = onMonad
+  ? { 'session-desk': 'Price Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Perps Desk' }
+  : { 'session-desk': 'Session Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Macro Desk' };
+// What the executor's council can be asked about here (`/council/seats`): Stock Tokens, or on Monad MON, ETH and BTC.
+const SYMBOLS: readonly string[] = onMonad ? ['MON', 'ETH', 'BTC'] : ['NVDA', 'TSLA', 'AAPL', 'SPY'];
 const SIZES = [25, 50, 100] as const;
 
 function voteTone(v: CouncilBallot['vote']): TagTone {
@@ -134,7 +134,7 @@ export default function Council() {
   const { data, loading, error, reload } = useAsync(() => council.rounds(), []);
   // Names and wallets for the rounds an agent proposed. A roster that cannot be read leaves the stored tag, not a guess.
   const roster = useAsync(() => repos.bot.listAgents(), []);
-  const [symbol, setSymbol] = useState<(typeof SYMBOLS)[number]>('NVDA');
+  const [symbol, setSymbol] = useState<string>(SYMBOLS[0]!);
   const [usd, setUsd] = useState<(typeof SIZES)[number]>(50);
   const [asking, setAsking] = useState(false);
   const [askError, setAskError] = useState<string | null>(null);
@@ -159,6 +159,12 @@ export default function Council() {
         <Text variant="secondary" color={colors.ink55} style={{ marginTop: space.s6 }}>
           Every trade is voted on first.
         </Text>
+        {CHAIN_KEY === 'monad-testnet' ? (
+          // No spot venue on Monad testnet: an approved round trades the owner's Perpl desk (`council-executor.ts`).
+          <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>
+            On Monad testnet an approved buy opens a 1x long on your Perpl desk; a sell closes it.
+          </Text>
+        ) : null}
       </View>
 
       <PillRow style={{ marginTop: space.s14 }} contentPadding={space.gutter}>

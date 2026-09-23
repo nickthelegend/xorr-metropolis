@@ -9,8 +9,9 @@
 import type { Address } from 'viem';
 import { query, one } from '../db/index.js';
 import { THIS_CHAIN } from '../db/chain-scope.js';
-import { explorerTx } from '../evm/chains.js';
+import { IS_MONAD, explorerTx } from '../evm/chains.js';
 import { readCouncilInputs, type CouncilInputs, type Proposal } from './inputs.js';
+import { readMonadCouncilInputs, type MonadCouncilInputs } from './monad-inputs.js';
 import { castBallots, tally, type Ballot, type Decision } from './personas.js';
 
 /** What a fill bought or sold: token units, the price per token, and the dollars. */
@@ -33,7 +34,7 @@ export type CouncilRound = {
   walletId: string;
   owner: string;
   proposal: Proposal;
-  inputs: CouncilInputs;
+  inputs: CouncilInputs | MonadCouncilInputs;
   decision: Decision;
   summary: string;
   outcome: 'pending' | 'executed' | 'refused' | 'failed' | 'not_executed';
@@ -53,7 +54,7 @@ type RoundRow = {
   wallet_id: string;
   owner: string;
   proposal: Proposal;
-  inputs: CouncilInputs & { summary?: string };
+  inputs: (CouncilInputs | MonadCouncilInputs) & { summary?: string };
   decision: Decision;
   outcome: CouncilRound['outcome'];
   tx_hash: string | null;
@@ -72,7 +73,7 @@ function toRound(r: RoundRow, votes: VoteRow[]): CouncilRound {
     walletId: r.wallet_id,
     owner: r.owner,
     proposal: r.proposal,
-    inputs: inputs as CouncilInputs,
+    inputs: inputs as CouncilInputs | MonadCouncilInputs,
     decision: r.decision,
     summary: summary ?? '',
     outcome: r.outcome,
@@ -98,7 +99,8 @@ export async function convene(p: {
   if (!(p.proposal.usd > 0)) throw new Error('A proposal needs a positive dollar size.');
   const agentId = p.convenedBy.startsWith('agent:') ? p.convenedBy.slice('agent:'.length) : undefined;
   // An agent's round is judged against that agent's OWN permission; the owner's is the desk's.
-  const inputs = await readCouncilInputs(p.owner, p.proposal, agentId);
+  // Monad reads its own inputs (Chainlink on Monad, the fill's venue, Kuru, Perpl); the seats and the tally are shared.
+  const inputs = IS_MONAD ? await readMonadCouncilInputs(p.owner, p.proposal, agentId) : await readCouncilInputs(p.owner, p.proposal, agentId);
   const ballots = castBallots(inputs);
   const t = tally(ballots);
   const row = await one<RoundRow>(
