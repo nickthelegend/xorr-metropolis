@@ -10,6 +10,7 @@
  */
 import { solanaExitSweep } from './solanaExits.js';
 import { ON_SOLANA } from '../solana/clusters.js';
+import { IS_MONAD } from '../evm/chains.js';
 import { query } from '../db/index.js';
 import { THIS_CHAIN } from '../db/chain-scope.js';
 import { log } from '../http/request-id.js';
@@ -68,7 +69,9 @@ export async function tick(now: Date = new Date()): Promise<number> {
    * because the index rate-limits a burst, and a symbol lost to a 429 has to come back around. Once
    * every symbol is in it returns immediately and costs nothing.
    */
-  if (!historyComplete()) void seedHistory().catch((e: unknown) => log.error('[history]', e));
+  // Not on Monad: the series is the Solana xStocks' and Tessera's, which no Monad agent reads (it trades MON, ETH and BTC
+  // on their Chainlink feeds), and backfilling it there spent the index's rate limit on tokens that are not on the chain.
+  if (!IS_MONAD && !historyComplete()) void seedHistory().catch((e: unknown) => log.error('[history]', e));
 
   try {
     await observeSweep(now);

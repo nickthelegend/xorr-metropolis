@@ -888,9 +888,9 @@ export async function recordLook(
   looks: readonly SymbolLook[],
 ): Promise<void> {
   await query(
-    `INSERT INTO agent_looks (wallet_id, at, outcome, headline, looks)
-     VALUES ($1, now(), $2, $3, $4::jsonb)
-     ON CONFLICT (wallet_id) DO UPDATE SET at = now(), outcome = $2, headline = $3, looks = $4::jsonb`,
+    `INSERT INTO agent_looks (wallet_id, at, outcome, headline, looks, chain)
+     VALUES ($1, now(), $2, $3, $4::jsonb, current_setting('xorr.chain_key'))
+     ON CONFLICT (wallet_id) DO UPDATE SET at = now(), outcome = $2, headline = $3, looks = $4::jsonb, chain = current_setting('xorr.chain_key')`,
     [walletId, outcome, headline, JSON.stringify(looks)],
   ).catch((e: unknown) => log.error('[autonomous] could not record what the agent looked at:', e));
 }

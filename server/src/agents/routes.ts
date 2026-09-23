@@ -420,7 +420,8 @@ agents.get('/agents/last-look', async (c) => {
   if (!w) return c.json({ error: 'no_wallet' }, 400);
 
   const row = await one<{ at: Date; outcome: string; headline: string; looks: unknown }>(
-    `SELECT at, outcome, headline, looks FROM agent_looks WHERE wallet_id = $1`,
+    // This chain's sweep only: a row another chain's executor wrote is not what this build's agent saw.
+    `SELECT at, outcome, headline, looks FROM agent_looks WHERE wallet_id = $1 AND chain = current_setting('xorr.chain_key')`,
     [w.id],
   );
   if (!row) return c.json({ looked: false });
