@@ -36,8 +36,12 @@ import { HAS_MAINNET_STATE, CHAIN_KEY, chain, rpcUrl } from './chains.js';
 import { moneyOn } from './money.js';
 import { markBroadcast } from '../http/request-id.js';
 
-/** Enough for the approvals and the grant on an L2, and not a penny of use beyond that. */
-const DRIP_ETH = '0.002';
+/**
+ * Enough for the approvals and the grant, and not a penny of use beyond that. On Monad testnet gas is billed on the
+ * declared limit at ~102 gwei, so the owner's desk transactions (an AUSD transfer and `createAccount`, ~250k gas) and the
+ * grant cost ~0.03 MON; 0.002 would not pay for one.
+ */
+const DRIP_ETH = CHAIN_KEY === 'monad-testnet' ? '0.05' : '0.002';
 /** What the faucet keeps back, so a nearly empty one refuses cleanly instead of failing mid-send. */
 const FAUCET_FLOOR_ETH = '0.0005';
 
