@@ -40,9 +40,14 @@ import { BlockPulse } from '@/ui/BlockPulse';
 import { chainLabel } from '@/chain';
 import { useAsync } from '@/data/useAsync';
 import { apiProse } from '@/data/apiError';
+import { classify } from '@/data/failures';
 import { deskCalls, perps, type Desk, type DeskPosition, type PerpMarket, type PerpOrder } from '@/data/perps';
 
 const SIZES = [25, 50, 100] as const;
+/** The limits an owner can pick for the agent on this desk. Leverage stays within what Perpl opens MON at (3x). */
+const LIMIT_ORDER = [50, 100, 250, 500] as const;
+const LIMIT_DAY = [250, 500, 1000, 2500] as const;
+const LIMIT_LEVERAGE = [1, 2, 3] as const;
 const OPEN_AMOUNT = 150;
 
 /** Prices through the shared formatter, which carries MON's fifth decimal (Perpl's tick). */
@@ -132,6 +137,8 @@ export default function Perps() {
   const [err, setErr] = useState<string | null>(null);
   const [perpId, setPerpId] = useState<number | null>(null);
   const [usd, setUsd] = useState<(typeof SIZES)[number]>(50);
+  // The agent's limits on this desk, as the owner edits them (FEATURES-100 #37). Null until "Change" is tapped.
+  const [limits, setLimits] = useState<{ maxOrderUsd: number; maxDayUsd: number; maxLeverage: number } | null>(null);
 
   const reload = useCallback(() => {
     desk.reload();
@@ -147,7 +154,8 @@ export default function Perps() {
       if (r) setNote(r);
       reload();
     } catch (e) {
-      setErr(apiProse(e) ?? (e instanceof Error ? e.message : 'That did not go through.'));
+      // The executor's sentence when it wrote one; otherwise the shared wording ("Failed to fetch" reached the screen raw).
+      setErr(apiProse(e) ?? classify(e).message);
     } finally {
       setBusy(null);
     }
@@ -199,9 +207,56 @@ export default function Perps() {
                 <Text variant="footnote" color={colors.ink55}>
                   On Perpl: {ausd(d.balance)}{d.locked > 0 ? ` (${ausd(d.locked)} in positions)` : ''} · account #{d.accountId}
                 </Text>
-                <Text variant="footnote" color={colors.ink55}>
-                  Agent limits: {money(d.caps.maxOrderUsd, { decimals: 0 })} an order, {money(d.caps.maxDayUsd, { decimals: 0 })} a day ({money(d.caps.usedTodayUsd)} used), up to {d.caps.maxLeverage}x
-                </Text>
+                <Press
+                  onPress={() => setLimits(limits ? null : { maxOrderUsd: d.caps.maxOrderUsd, maxDayUsd: d.caps.maxDayUsd, maxLeverage: d.caps.maxLeverage })}
+                  accessibilityRole="button"
+                  accessibilityLabel="Change the agent's limits"
+                  testID="perps-limits"
+                >
+                  <Text variant="footnote" color={colors.ink55}>
+                    Agent limits: {money(d.caps.maxOrderUsd, { decimals: 0 })} an order, {money(d.caps.maxDayUsd, { decimals: 0 })} a day ({money(d.caps.usedTodayUsd)} used), up to {d.caps.maxLeverage}x · {limits ? 'Close' : 'Change ›'}
+                  </Text>
+                </Press>
+                {limits ? (
+                  /*
+                   * The limits the executor holds every agent order to, before it is signed: per order, per day, and
+                   * leverage. Kept off-chain by design — Perpl's desk has no cap of its own — and enforced in
+                   * `placePerpOrder`; the on-chain guarantee is the operator's, which can trade and never withdraw.
+                   */
+                  <View style={{ gap: space.s8, marginTop: space.s10 }}>
+                    <Text variant="footnote" color={colors.ink55}>An order, at most</Text>
+                    <PillRow>
+                      {LIMIT_ORDER.map((n) => (
+                        <Pill key={n} label={money(n, { decimals: 0 })} selected={limits.maxOrderUsd === n} onPress={() => setLimits({ ...limits, maxOrderUsd: n, maxDayUsd: Math.max(limits.maxDayUsd, n) })} />
+                      ))}
+                    </PillRow>
+                    <Text variant="footnote" color={colors.ink55}>A day, at most</Text>
+                    <PillRow>
+                      {LIMIT_DAY.filter((n) => n >= limits.maxOrderUsd).map((n) => (
+                        <Pill key={n} label={money(n, { decimals: 0 })} selected={limits.maxDayUsd === n} onPress={() => setLimits({ ...limits, maxDayUsd: n })} />
+                      ))}
+                    </PillRow>
+                    <Text variant="footnote" color={colors.ink55}>Leverage, at most</Text>
+                    <PillRow>
+                      {LIMIT_LEVERAGE.map((n) => (
+                        <Pill key={n} label={`${n}x`} selected={limits.maxLeverage === n} onPress={() => setLimits({ ...limits, maxLeverage: n })} />
+                      ))}
+                    </PillRow>
+                    <Button
+                      label="Save the limits"
+                      variant="ghost"
+                      loading={busy === 'limits'}
+                      testID="perps-limits-save"
+                      onPress={() =>
+                        run('limits', async () => {
+                          const next = await perps.setCaps(limits);
+                          setLimits(null);
+                          return { text: `Saved: ${money(next.caps.maxOrderUsd, { decimals: 0 })} an order, ${money(next.caps.maxDayUsd, { decimals: 0 })} a day, up to ${next.caps.maxLeverage}x.` };
+                        })
+                      }
+                    />
+                  </View>
+                ) : null}
                 <TxLink label={`Desk ${short(d.desk)} — Perpl's DelegatedAccount`} url={d.explorer ? d.explorer.replace(/\/tx\/.*$/, `/address/${d.desk}`) : null} />
               </>
             ) : null}

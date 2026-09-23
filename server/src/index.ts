@@ -111,7 +111,8 @@ app.use('*', async (c, next) => {
   // `idempotency-key` and `x-request-id` are ours; without them here the browser preflight
   // strips exactly the two headers that make a retry safe and a failure traceable.
   c.header('access-control-allow-headers', 'content-type,authorization,idempotency-key,x-request-id');
-  c.header('access-control-allow-methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+  // PUT for the routes that replace a whole record (`/perps/caps`): left out, a browser's preflight refused it (2026-09-24).
+  c.header('access-control-allow-methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   c.header('access-control-expose-headers', 'x-request-id,idempotent-replay,retry-after');
 });
 app.options('*', (c) => c.body(null, 204));
