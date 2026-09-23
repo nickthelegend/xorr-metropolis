@@ -56,7 +56,8 @@ import { useStore } from '@/state/store';
 import { delegationOrUnknown, delegationScope } from '@/accounts/delegationScope';
 import { readDelegationIntoStore } from '@/wallet/readDelegation';
 import { useNow } from '@/state/useNow';
-import { pinnedDelegation, settlementSymbol } from '@/chain';
+import { CHAIN_KEY, pinnedDelegation, settlementSymbol } from '@/chain';
+import { deskCalls, perps } from '@/data/perps';
 import { useAllowlist } from '@/wallet/allowlist';
 import { useApprovals, type ApprovalsView } from '@/wallet/useApprovals';
 import { planResume, type GrantOptions, type ResumePlan } from '@/wallet/grantPlan';
@@ -298,7 +299,7 @@ export default function Safety() {
   const live = !asking && !signedOut && !unreadable && granted && !killed && !unusable && !expired;
 
   // Signed by the user, on-chain: a stop reaches every device without any server needing to be reachable.
-  const { grant: signGrant, revoke: signRevoke, busy, error: txError, ready: canSign } = useGrantDelegation();
+  const { grant: signGrant, revoke: signRevoke, sendTransaction, busy, error: txError, ready: canSign } = useGrantDelegation();
   const error = localError ?? txError;
 
   /** The grant, called as a resume calls it: with the approvals the plan found missing (PLAN.md 4.7). */
@@ -363,6 +364,24 @@ export default function Safety() {
          * one thing on that screen someone can check for themselves.
          */
         setStopSignature(await signRevoke());
+        /*
+         * One stop for everything the agents hold (FEATURES-100 #5): on Monad testnet they also trade the owner's Perpl
+         * desk, whose operator the delegation does not govern. So the same hold removes xorr's key from the desk — a
+         * second signature — and a desk that could not be stopped is said, never assumed.
+         */
+        if (CHAIN_KEY === 'monad-testnet') {
+          const desk = await perps.desk().catch(() => null);
+          if (desk?.desk && desk.operatorActive) {
+            try {
+              const c = deskCalls.stop(desk.desk, desk.operator);
+              const h = await sendTransaction(c.to, c.data);
+              const r = await chainAccess.waitForTransactionReceipt({ hash: h, timeout: 90_000 });
+              if (r.status !== 'success') throw new Error('the transaction reverted');
+            } catch (e) {
+              setLocalError(`Trading is stopped, but your Perpl desk still lets xorr trade: ${humanWalletError(e)} Stop it on Perps.`);
+            }
+          }
+        }
         setStopping('stopped');
       }
     } catch (e) {
@@ -748,7 +767,9 @@ export default function Safety() {
             {killed || unusable || expired
               ? 'You’ll sign to confirm.'
               : /* A revoked policy refuses closePosition too (XorrDelegation.sol), so no stop-loss can fire after this. */
-                'Stops all trading, stop-losses too. Your funds stay in your wallet.'}
+                CHAIN_KEY === 'monad-testnet'
+                ? 'Stops all trading, stop-losses and your Perpl desk too. Your funds stay yours.'
+                : 'Stops all trading, stop-losses too. Your funds stay in your wallet.'}
           </Text>
         </>
       ) : null}
