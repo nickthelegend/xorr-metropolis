@@ -64,8 +64,9 @@ Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED*
   Evidence: `b37b187`; ran locally, chain 143, mining.
 - P0.4 **DONE** Fork bootstrap on `monad-fork`: XorrDelegation + anchor deployed, delegate funded, 25,000 USDC paid.
   Evidence: `b37b187`.
-- P0.5 **BLOCKED (owner)** Monad testnet deployment: `contracts/deploy-testnet.sh monad-testnet` is ready (`c721596`:
-  TestUSDC → XorrDelegation → anchor → Sourcify). Deployer `0x5C1948d90570BA8547956B2Be2d3179454D22938` holds 0 MON.
+- P0.5 **DONE** Monad testnet deployment, settling in Agora's AUSD: XorrDelegation
+  `0x5995925de0169574365cc7f6b65f765275b0bd4b`, anchor `0x5a717b204c77bfba8805ffe1f382b074a3d26203`, Sourcify-verified.
+  Evidence: `86f7900`, `contracts/deployments/monad-testnet.json`.
 - P0.6 **NOT STARTED** Hosting: Railway project + `monad-fork` + `executor-monad-fork` + Postgres; Vercel
   `xorr-metropolis`. Deploy scripts refuse without an explicit target (`900cdcd`).
 - P0.7 **DONE** App builds for Monad: networks, hidden Arbitrum/Robinhood screens, Trade → Markets. Evidence: `aeddf20`;
@@ -86,21 +87,27 @@ Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED*
 - P2.1 **DONE** `server/src/monad/`: Chainlink feeds, Kuru top of book, Perpl markets, `crosscheckMon`; public
   `/monad/crosscheck`, `/monad/perpl`. Evidence: `d4c76b4`; live test: Uniswap $0.024112, Kuru $0.024117, Chainlink
   $0.024118, gap 2.2 bps.
-- P2.2 **NOT STARTED** The gap gates a spend: a MON trade is refused, with the three numbers, when sources disagree past a
-  limit or Chainlink is stale.
-- P2.3 **NOT STARTED** Council seats read the crosscheck and Perpl funding/open interest (replacing the GMX Macro Desk).
+- P2.2 **IN PROGRESS** The gap gates a council spend: the price desk vetoes a round whose fill is past 150 bps from
+  Chainlink, or whose feed is stale, naming the numbers (`bf8b4f6`). A manual order is not gated yet.
+- P2.3 **DONE** Council seats on Monad read Chainlink on Monad, the fill's venue, Kuru's book and Perpl funding (price desk,
+  risk keeper, trend reader, perps desk). Evidence: `bf8b4f6`; round #2 on the fork approved 2–1 and executed
+  (1,037.94 WMON, `0x6289f268…c9c121`, receipt status 1).
 
 ### P3 — Perps on Perpl (Agora, Perpl API)
 - P3.1 **DONE** Public market read (`monad/perpl.ts`).
-- P3.2 **NOT STARTED** API key enrolment (Ed25519, wallet-signed once) and order placement from an agent; positions read.
-- P3.3 **NOT STARTED** The permission for perps: an AUSD margin cap the user sets, enforced before an order and shown on
-  the grant screen; revoke stops Perpl orders too.
-- P3.4 **NOT STARTED** Perpl positions, funding and liquidation distance on the risk dashboard. (Perpl risk tool.)
+- P3.2 **DONE** Orders from an agent through Perpl's own `DelegatedAccount` — on chain, no API key: the owner owns the desk,
+  xorr's key is its operator (trades, never withdraws). Evidence: `2c5fde5`,
+  `docs/evidence/prove-perpl-desk-testnet-2026-09-24.txt` (desk `0xa21F…98b5`, account #692); UI flow on desk `0x3323…11b8`.
+- P3.3 **DONE** The perps permission: per-order, per-day and leverage limits the owner sets on Perps (`9c0a894`), enforced
+  before every order; removing the operator (Perps' hold, or Safety's stop, `9e101cf`) stops orders on chain.
+- P3.4 **DONE** Positions with entry, mark, PnL, liquidation price and a meter (`9b84ce2`); Perpl live, every market's open
+  interest and funding (`16c4fcb`).
 
 ### P4 — Accounts: Mera (Agora, Mera ×2)
 - P4.1 **NOT STARTED** Mera passkey sign-in on web and Expo (iOS 18+/Android 9+, one passkey domain); Privy removed from
   the sign-in path.
-- P4.2 **NOT STARTED** AUSD balance on Home and Deposit; AUSD testnet faucet.
+- P4.2 **IN PROGRESS** AUSD is the testnet dollar ("Cash · AUSD" on Portfolio, `14e8745`); Agora's faucet (or the
+  reserve) behind the Perps test-funds button (`2c5fde5`). Home and Deposit do not name it yet.
 - P4.3 **NOT STARTED** Per-agent identity keys and an encrypted agent-memory key derived from the passkey's PRF output.
 - P4.4 **NOT STARTED** Scoped session: agents trade without a prompt inside the grant; identity rebuilt on a fresh device.
 
@@ -117,8 +124,8 @@ Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED*
 
 ## 4. Owner actions
 
-1. Fund the Monad testnet deployer `0x5C1948d90570BA8547956B2Be2d3179454D22938` with test MON (faucet.monad.xyz), then
-   `cd contracts && ./deploy-testnet.sh monad-testnet`.
+1. Top up the Monad testnet deployer `0x5C1948d90570BA8547956B2Be2d3179454D22938` with test MON (faucet.monad.xyz): it
+   is the faucet key for `/perps/fund-test` and the delegate's gas, and holds ~0.009 MON after the testnet runs.
 2. Register on https://hackathon.monad.xyz (bounty pages are visible only to registered participants).
 3. Make the repository public before submitting (the rules require it).
 4. Keys when those phases start: Perpl API enrolment (a wallet signature), Nansen API key, a Monad archive RPC for the
