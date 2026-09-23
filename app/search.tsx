@@ -21,6 +21,7 @@ import React, { useMemo, useState } from 'react';
 import { ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
+import { onMonad } from '@/chain';
 import {
   AssetMark,
   CloseButton,
@@ -92,7 +93,8 @@ export default function Search() {
    * Its own read, so a search box opens instantly on the names it already has and the Solana rows
    * arrive when the executor answers — the same reasoning the class prices already follow.
    */
-  const xstocks = useAsync(() => system.xstocks(), []);
+  // Monad lists no tokenized stock, so there is no catalogue to ask for there.
+  const xstocks = useAsync(() => (onMonad ? Promise.resolve({ rows: [], sectors: [], unpriced: 0 }) : system.xstocks()), []);
 
   const results = useMemo(() => {
     const fromClasses: Hit[] = classes.flatMap((c) =>

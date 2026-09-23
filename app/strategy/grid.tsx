@@ -12,6 +12,7 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, TextInput, View } from 'react-native';
 import { useGoBack } from '@/nav/useGoBack';
+import { onMonad } from '@/chain';
 import {
   Button,
   CloseButton,
@@ -51,11 +52,19 @@ type GridBacktest = {
   disclaimer: string;
 };
 
-const SYMBOLS = [
-  { value: 'WETH', label: 'WETH' },
-  { value: 'CBBTC', label: 'CBBTC' },
-] as const;
-type Symbol = (typeof SYMBOLS)[number]['value'];
+// What a grid can run on here: Monad's WMON, WETH and WBTC, or Base's WETH and cbBTC. Each has a price history the
+// executor replays (`server/src/market/ids.ts`).
+const SYMBOLS: readonly { value: string; label: string }[] = onMonad
+  ? [
+      { value: 'WMON', label: 'WMON' },
+      { value: 'WETH', label: 'WETH' },
+      { value: 'WBTC', label: 'WBTC' },
+    ]
+  : [
+      { value: 'WETH', label: 'WETH' },
+      { value: 'CBBTC', label: 'CBBTC' },
+    ];
+type Symbol = string;
 
 /** What a backtest ran on. Its result is shown only while the screen still says the same. */
 type GridInputs = { symbol: Symbol; lower: number; upper: number; steps: number; usdPerStep: number };
@@ -141,8 +150,10 @@ export default function GridSetup() {
    */
   const suggest = () => {
     if (!mark) return;
-    setLower(Math.round(mark * 0.88).toString());
-    setUpper(Math.round(mark * 1.12).toString());
+    // Whole dollars for WETH; three significant digits for WMON at $0.024, which whole dollars rounded to a 0–0 range.
+    const at = (x: number) => (x >= 100 ? Math.round(x).toString() : String(Number(x.toPrecision(3))));
+    setLower(at(mark * 0.88));
+    setUpper(at(mark * 1.12));
   };
 
   const rungs = useMemo(() => {

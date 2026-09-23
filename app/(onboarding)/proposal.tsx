@@ -38,7 +38,7 @@ import {
   type AgentStage,
 } from '@/ui';
 import { canApprove, proposalRebalance, sleeveHeldAsCash, weightBarPct, weightTotal } from '@/state/derived';
-import { sleeveFixtures } from '@/data/fixtures/sleeves';
+import { sleeves as sleeveFixtures } from '@/data/sleeves';
 import { useStore } from '@/state/store';
 import { repos } from '@/data';
 import { system } from '@/data/system';

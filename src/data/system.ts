@@ -266,6 +266,8 @@ export type CrossCheck = {
   /** How far apart, as a percentage. Absent when only one side answered. */
   spreadPct?: number | null;
   note: string;
+  /** Who gave the on-chain price ("1inch", or on Monad the Uniswap v3 pool a fill uses). Absent from older executors. */
+  source?: string;
 };
 
 export type TradableToken = { symbol: string; address: string; decimals: number };

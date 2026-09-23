@@ -17,7 +17,10 @@
  */
 import { erc20Abi, formatEther, formatUnits, type Address } from 'viem';
 import { publicClient } from '../evm/client.js';
-import { ADDRESSES, CHAIN_KEY, chain, rpcUrl, SETTLEMENT_VENUES } from '../evm/chains.js';
+import { ADDRESSES, CHAIN_KEY, IS_MONAD, SETTLEMENT_SYMBOL, chain, rpcUrl, SETTLEMENT_VENUES } from '../evm/chains.js';
+import { crosscheckMon } from '../monad/crosscheck.js';
+import { perplHere } from '../monad/perpl-chain.js';
+import { perplMarkets } from '../monad/perpl-desk.js';
 import { DELEGATION_ADDRESS, delegatePublicKey, readPolicy } from '../evm/delegation.js';
 import { query } from '../db/index.js';
 import { THIS_CHAIN } from '../db/chain-scope.js';
@@ -116,6 +119,59 @@ async function timed(p: Probe): Promise<Check> {
 }
 
 const money = (n: number) => `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+
+/** The chain by its own name ("Monad Testnet"), its gas token and the wrapped token the delegation holds. */
+const CHAIN_NAME = chain.name;
+const NATIVE = chain.nativeCurrency.symbol;
+const WRAPPED = IS_MONAD ? 'WMON' : 'WETH';
+
+const BASE_ONLY = new Set(['oneinch', 'aave', 'equities', 'equities-tradable', 'earnings-calendar', 'subgraph']);
+
+/** The widest gap between Uniswap, Kuru and Chainlink on MON that still counts as agreeing (the council's limit). */
+const MON_AGREE_BPS = 150;
+
+/** Monad's own claims (2026-09-24): its spot venue, its three independent MON prices, and Perpl. */
+function monadProbes(): Probe[] {
+  return [
+    {
+      id: 'monad-spot',
+      claim: 'Uniswap v3 on this chain routes real liquidity for the agents’ spot fills.',
+      how: `QuoterV2, 100 ${SETTLEMENT_SYMBOL} → WMON on chain ${chain.id}`,
+      run: async () => {
+        if (CHAIN_KEY === 'monad-testnet') skip('Monad testnet has no spot venue (Uniswap’s testnet addresses hold no code); agents trade Perpl there.');
+        const q = await quote({ inSymbol: 'USDC', outSymbol: 'WMON', amount: 100 });
+        if (!(q.outAmount > 0)) throw new Error('quote returned zero');
+        return `100 ${SETTLEMENT_SYMBOL} → ${q.outAmount.toFixed(2)} WMON via ${q.venues.join(', ') || 'an unnamed route'}`;
+      },
+    },
+    {
+      id: 'monad-prices',
+      claim: 'MON is priced three independent ways on Monad, and they agree.',
+      how: 'Uniswap v3 QuoterV2, Kuru’s MON/USDC book and Chainlink MON/USD, all read on chain 143',
+      run: async () => {
+        const x = await crosscheckMon();
+        const got = [x.uniswap, x.kuru, x.chainlink].filter((s) => s.ok) as { price: number }[];
+        if (got.length < 2) throw new Error('fewer than two of Uniswap, Kuru and Chainlink answered');
+        if (x.maxGapBps !== null && x.maxGapBps > MON_AGREE_BPS) throw new Error(`the sources are ${x.maxGapBps.toFixed(1)} bps apart, past ${MON_AGREE_BPS}`);
+        const p = (s: { ok: true; price: number } | { ok: false }) => (s.ok ? `$${s.price.toPrecision(4)}` : 'no answer');
+        return `Uniswap ${p(x.uniswap)}, Kuru ${p(x.kuru)}, Chainlink ${p(x.chainlink)}: ${x.maxGapBps?.toFixed(1)} bps apart`;
+      },
+    },
+    {
+      id: 'perpl',
+      claim: 'Perpl’s perps are live here, and the desk factory xorr opens desks with is deployed.',
+      how: 'Perpl’s public market context, and eth_getCode on its DelegatedAccountFactory',
+      run: async () => {
+        const net = perplHere();
+        if (!net) skip('A fork has no Perpl keeper pushing prices, so perps run on Monad testnet and mainnet only.');
+        const [markets, code] = await Promise.all([perplMarkets(), publicClient.getCode({ address: net.factory })]);
+        if (!code || code === '0x') throw new Error(`no code at the DelegatedAccountFactory ${net.factory}`);
+        if (markets.length === 0) throw new Error(`${net.name} lists no open market`);
+        return `${markets.length} open markets (${markets.slice(0, 4).map((m) => m.name).join(', ')}…); factory ${net.factory} has code`;
+      },
+    },
+  ];
+}
 
 const VENUE_ABI = [
   {
@@ -358,7 +414,7 @@ export async function runChecks(owner?: Address): Promise<VerifyReport> {
     },
     {
       id: 'audit-anchor',
-      claim: 'The trail\u2019s integrity is not our word: its head hash is published on Base.',
+      claim: `The trail\u2019s integrity is not our word: its head hash is published on ${CHAIN_NAME}.`,
       how: 'latest(botKey, owner) on XorrAuditAnchor, compared to the head we hold',
       run: async () => {
         if (!owner) skip('No wallet on this request.');
@@ -384,7 +440,7 @@ export async function runChecks(owner?: Address): Promise<VerifyReport> {
         if (a.state === 'diverged') {
           throw new Error(
             `the trail no longer matches what was published at ${explorer(a.anchor.blockNo)}. ` +
-              `Base holds ${a.anchor.head.slice(0, 18)}\u2026 for entry ${a.anchor.entryCount}; ` +
+              `${CHAIN_NAME} holds ${a.anchor.head.slice(0, 18)}\u2026 for entry ${a.anchor.entryCount}; ` +
               'ours does not hash to it.',
           );
         }
@@ -397,7 +453,7 @@ export async function runChecks(owner?: Address): Promise<VerifyReport> {
             ? `, plus ${a.entryCount - a.anchor.entryCount} written since`
             : '';
         return (
-          `${a.anchor.head.slice(0, 18)}\u2026 for ${a.anchor.entryCount} entries, held by Base ` +
+          `${a.anchor.head.slice(0, 18)}\u2026 for ${a.anchor.entryCount} entries, held by ${CHAIN_NAME} ` +
           `since ${explorer(a.anchor.blockNo)} (${since} UTC)${extra}`
         );
       },
@@ -587,19 +643,19 @@ export async function runChecks(owner?: Address): Promise<VerifyReport> {
     },
     {
       id: 'gas',
-      claim: 'The bot pays its own gas and never touches the user’s ETH.',
+      claim: `The bot pays its own gas and never touches the user’s ${NATIVE}.`,
       how: `eth_getBalance on the delegate key ${delegatePublicKey}`,
       run: async () => {
         if (ON_SOLANA) skip('This deployment settles on Solana; this claim is about the Base build and is not one it can make here.');
         const eth = Number(formatEther(await publicClient.getBalance({ address: delegatePublicKey })));
-        if (eth <= 0) throw new Error('the delegate has no ETH — every run would fail');
-        return `${eth.toFixed(4)} ETH at ${delegatePublicKey}`;
+        if (eth <= 0) throw new Error(`the delegate has no ${NATIVE} — every run would fail`);
+        return `${eth.toFixed(4)} ${NATIVE} at ${delegatePublicKey}`;
       },
     },
     {
       id: 'custody',
       claim: 'The delegation contract never holds funds between trades.',
-      how: 'balanceOf(delegation) for USDC and WETH',
+      how: `balanceOf(delegation) for ${SETTLEMENT_SYMBOL} and ${WRAPPED}`,
       run: async () => {
         if (ON_SOLANA) skip('This deployment settles on Solana; this claim is about the Base build and is not one it can make here.');
         const [usdc, weth] = await publicClient.multicall({
@@ -611,10 +667,10 @@ export async function runChecks(owner?: Address): Promise<VerifyReport> {
         });
         if (usdc > 0n || weth > 0n) {
           throw new Error(
-            `the contract is holding ${formatUnits(usdc, 6)} USDC and ${formatUnits(weth, 18)} WETH`,
+            `the contract is holding ${formatUnits(usdc, 6)} ${SETTLEMENT_SYMBOL} and ${formatUnits(weth, 18)} ${WRAPPED}`,
           );
         }
-        return 'zero USDC, zero WETH — nothing parked';
+        return `zero ${SETTLEMENT_SYMBOL}, zero ${WRAPPED} — nothing parked`;
       },
     },
     {
@@ -660,7 +716,10 @@ export async function runChecks(owner?: Address): Promise<VerifyReport> {
     },
   ];
 
-  const checks = await Promise.all(probes.map(timed));
+  // Monad: the Base-only claims (1inch, Aave, Base's tokenized equities and their EDGAR calendar, the Base subgraph)
+  // are not this build's, so they are not listed at all; Monad's own venues are checked in their place.
+  const list = IS_MONAD ? [...probes.filter((p) => !BASE_ONLY.has(p.id)), ...monadProbes()] : probes;
+  const checks = await Promise.all(list.map(timed));
   return {
     checks,
     passed: checks.filter((c) => c.status === 'pass').length,

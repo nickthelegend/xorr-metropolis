@@ -17,6 +17,8 @@ import { View } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { brand } from '@/design/brand';
+import { onMonad } from '@/chain';
+import { TRADE_ROUTE } from '@/nav/buildRoutes';
 import { CoinHero } from '@/design/CoinHero';
 import { Button, Fill, Press, Screen, signIn, Text, colors, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
@@ -56,7 +58,7 @@ export default function Splash() {
             align="center"
             style={{ marginTop: space.s10 }}
           >
-            {brand.SUBLINE}
+            {onMonad ? brand.SUBLINE_MONAD : brand.SUBLINE}
           </Text>
         </Rise>
 
@@ -65,13 +67,14 @@ export default function Splash() {
           {/* A wallet that already exists goes straight to the email step, not through the questions a new one answers. */}
           <Button label="Sign in" variant="ghost" onPress={signIn} style={{ marginTop: space.s10 }} />
           {/*
-            A way in that costs nothing: the Stock Token market reads live without a session and is the most convincing
-            thing here, so it is offered before the ask.
+            A way in that costs nothing: the market reads live without a session and is the most convincing thing here,
+            so it is offered before the ask. It is the Trade tab's list: Stock Tokens, or on Monad the crypto and perps
+            markets (`/xstocks` does not exist there).
           */}
           <Button
             label="See the market first"
             variant="ghost"
-            onPress={() => router.push('/xstocks')}
+            onPress={() => router.push(TRADE_ROUTE)}
             style={{ marginTop: space.s4 }}
             testID="welcome-see-market"
           />

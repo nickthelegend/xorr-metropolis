@@ -30,7 +30,7 @@ import { notifyEntry } from '../notifications/alerts.js';
 import { ON_SOLANA } from '../solana/clusters.js';
 import { explorerTx } from '../solana/connection.js';
 import { SellRefused, prepareUserSell, verifyUserSell } from '../solana/userSell.js';
-import { IS_ARBITRUM, IS_ROBINHOOD, CHAIN_KEY, explorerTx as evmExplorerTx } from '../evm/chains.js';
+import { IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD, CHAIN_KEY, explorerTx as evmExplorerTx } from '../evm/chains.js';
 import { rhCatalog, rhStockQuote } from '../venues/rh-xstocks.js';
 import { placeOrder } from '../executor/order.js';
 import { closeHolding } from './panic.js';
@@ -58,6 +58,10 @@ xstockRoutes.get('/market/xstocks', async (c) => {
   if (IS_ROBINHOOD) return c.json(await rhCatalog());
   if (IS_ARBITRUM) {
     return c.json({ rows: [], sectors: [], unpriced: 0, chain: CHAIN_KEY, note: 'Stock Tokens trade on Robinhood Chain, not on Arbitrum One.' });
+  }
+  // Monad lists no tokenized equity (checked against Monad's token list, 2026-09-24): xorr trades MON, ETH and BTC here.
+  if (IS_MONAD) {
+    return c.json({ rows: [], sectors: [], unpriced: 0, chain: CHAIN_KEY, note: 'Monad lists no tokenized stock; xorr trades MON, ETH and BTC here.' });
   }
   const rows = await xStockCatalog();
   const unpriced = rows.filter((r) => r.feed !== 'live').length;

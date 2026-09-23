@@ -811,9 +811,12 @@ export function driftSentence(symbol: string, drift: { kind: 'missing' | 'unreco
 
 /** Which tradable symbols each onboarding sleeve means (PLAN.md 2.17). Stable yield is Aave, not a swap: cash here. */
 export const SLEEVE_SYMBOLS: Readonly<Record<string, readonly string[]>> = {
-  'Blue-chip crypto': ['WETH', 'CBBTC'],
+  'Blue-chip crypto': ['WETH', 'CBBTC', 'WBTC'],
   'Tokenized equities': ['NVDAc', 'AAPLc', 'TSLAc', 'METAc', 'MSFTc', 'AMZNc', 'GOOGLc', 'MSTRc'],
   'Stable yield': [],
+  // Monad's sleeves (`data/sleeves.ts`): the majors, MON, and cash, which names nothing to swap.
+  Monad: ['WMON'],
+  Cash: [],
 };
 
 /**

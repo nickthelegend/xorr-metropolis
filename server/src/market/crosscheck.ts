@@ -15,7 +15,8 @@
  * winner, because picking one silently is how a wrong price becomes an executed trade.
  */
 import { getJson } from '../http/get.js';
-import { ONEINCH_CHAIN_ID, ONEINCH_ENABLED } from '../evm/chains.js';
+import { CHAIN_KEY, IS_MONAD, ONEINCH_CHAIN_ID, ONEINCH_ENABLED } from '../evm/chains.js';
+import { quote as uniswapQuote } from '../venues/uniswap.js';
 import { canonicalSymbol, TOKENS } from '../venues/tokens.js';
 import { priceOf } from './prices.js';
 
@@ -53,7 +54,25 @@ export type CrossCheck = {
   compared: boolean;
   agree: boolean;
   note: string;
+  /** Who gave the on-chain price: "1inch", or on Monad "Uniswap v3 on Monad" (the pool a fill goes through). */
+  source?: string;
 };
+
+/**
+ * Monad mainnet and its fork (2026-09-24): the on-chain price is the Uniswap v3 pool a fill would actually go through —
+ * what $100 of USDC buys, fee included. 1inch is not configured on this deployment, and Monad testnet has no spot pool.
+ */
+const MONAD_SPOT = IS_MONAD && CHAIN_KEY !== 'monad-testnet';
+const PROBE_USD = 100;
+
+async function uniswapSpot(symbol: string): Promise<number | null> {
+  try {
+    const q = await uniswapQuote({ inSymbol: 'USDC', outSymbol: symbol, amount: PROBE_USD, skipPriceImpact: true });
+    return q.outAmount > 0 ? PROBE_USD / q.outAmount : null;
+  } catch {
+    return null;
+  }
+}
 
 async function oneinchSpot(address: string): Promise<number | null> {
   if (!API_KEY || !ONEINCH_ENABLED) return null;
@@ -84,7 +103,8 @@ export async function crossCheck(symbol: string): Promise<CrossCheck> {
    * precisely what loses the lowercase `c` on a tokenized equity, so it could never resolve one and
    * every equity silently reported "not routable on Base" — for assets that route on Base daily.
    */
-  const token = TOKENS[canonicalSymbol(symbol === 'ETH' ? 'WETH' : symbol)];
+  // On Monad the registry's `ETH` is the native-MON sentinel, and MON trades as WMON.
+  const token = TOKENS[canonicalSymbol(symbol === 'ETH' ? 'WETH' : IS_MONAD && symbol === 'MON' ? 'WMON' : symbol)];
   if (!token) {
     return {
       symbol,
@@ -93,14 +113,15 @@ export async function crossCheck(symbol: string): Promise<CrossCheck> {
       spreadPct: null,
       compared: false,
       agree: true,
-      note: `${symbol} is not routable on Base, so there is no on-chain price to compare against.`,
+      note: `${symbol} is not routable on ${IS_MONAD ? 'Monad' : 'Base'}, so there is no on-chain price to compare against.`,
     };
   }
 
   const [coingecko, oneinch] = await Promise.all([
     priceOf(symbol, 8_000).catch(() => null),
-    oneinchSpot(token.address),
+    MONAD_SPOT ? uniswapSpot(canonicalSymbol(symbol === 'ETH' ? 'WETH' : symbol === 'MON' ? 'WMON' : symbol)) : oneinchSpot(token.address),
   ]);
+  const source = MONAD_SPOT ? 'Uniswap v3 on Monad, $100 quoted, fee included' : '1inch';
 
   /*
    * One source missing is not a disagreement.
@@ -120,6 +141,7 @@ export async function crossCheck(symbol: string): Promise<CrossCheck> {
         coingecko === null && oneinch === null
           ? 'Neither price source answered.'
           : `Only one source answered, so there is nothing to compare.`,
+      source,
     };
   }
 
@@ -135,5 +157,6 @@ export async function crossCheck(symbol: string): Promise<CrossCheck> {
     note: agree
       ? `Two independent sources within ${spreadPct.toFixed(2)}%.`
       : `The two price sources disagree by ${spreadPct.toFixed(2)}%. The number shown is the market feed; a fill would happen nearer ${oneinch.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}.`,
+    source,
   };
 }

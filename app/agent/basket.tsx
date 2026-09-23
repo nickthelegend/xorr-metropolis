@@ -12,6 +12,7 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { useGoBack } from '@/nav/useGoBack';
+import { onMonad } from '@/chain';
 import {
   BackButton,
   ErrorState,
@@ -67,8 +68,7 @@ export default function AgentBasket() {
           <LoadingRows count={4} height={size.rowLg} />
         ) : !state.configured ? (
           <Text variant="secondary" color={colors.ink55}>
-            No basket set. A basket is a list of target weights — 40% NVDAx, 30% TSLAx, 30% AAPLx —
-            that the agent buys and sells to hold, once a sleeve drifts past the band you choose.
+            {`No basket set. A basket is a list of target weights — ${onMonad ? '40% WETH, 30% WBTC, 30% WMON' : '40% NVDAx, 30% TSLAx, 30% AAPLx'} — that the agent buys and sells to hold, once a sleeve drifts past the band you choose.`}
           </Text>
         ) : (
           <ScrollView

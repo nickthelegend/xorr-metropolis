@@ -22,6 +22,7 @@ import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
+import { CHAIN_KEY, onMonad } from '@/chain';
 import {
   Button,
   Fill,
@@ -66,6 +67,43 @@ const STOCK_SOURCES: Source[] = [
   },
 ];
 
+/**
+ * Monad's own (2026-09-24): every venue and feed the council, the cross-check and the desk read, each on chain 143 or
+ * Perpl's public API. No Stock Token, Robinhood or EDGAR source exists on this build.
+ */
+const MONAD_SOURCES: Source[] = [
+  {
+    name: 'Chainlink',
+    owns: 'The reference price for MON, ETH, BTC and AUSD',
+    how: 'Each asset’s own feed on Monad mainnet, read with its age. A round past its hour heartbeat is stale and refused.',
+  },
+  // Monad testnet has no spot venue (Uniswap's testnet addresses hold no code): trading there is Perpl's.
+  ...(CHAIN_KEY === 'monad-testnet'
+    ? []
+    : [
+        {
+          name: 'Uniswap',
+          owns: 'Spot quotes and fills',
+          how: 'The v3 pool against USDC that a buy or sale goes through, quoted on chain before it is sent.',
+        },
+      ]),
+  {
+    name: 'Kuru',
+    owns: 'The MON/USDC order book',
+    how: 'The best bid and ask, read from Kuru’s book contract on Monad. An empty side is shown as empty.',
+  },
+  {
+    name: 'Perpl',
+    owns: 'Perpetuals: marks, funding, open interest, and your desk’s positions',
+    how: 'Perpl’s public market API, and the Exchange contract read on chain for positions and collateral.',
+  },
+  {
+    name: 'Agora',
+    owns: 'AUSD, the dollar the desk settles in',
+    how: 'The AUSD token contract on Monad, read over RPC like every other balance.',
+  },
+];
+
 const SOURCES: Source[] = [
   {
     name: 'The chain',
@@ -74,20 +112,24 @@ const SOURCES: Source[] = [
   },
   {
     name: 'xorr',
-    owns: 'Positions and their cost, realised profit, runs, alerts, stock readings and the audit trail',
+    owns: `Positions and their cost, realised profit, runs, alerts, ${onMonad ? 'council rounds, desk orders' : 'stock readings'} and the audit trail`,
     how: 'The executor’s own database. The audit trail in it is hash-chained and anchored on the chain.',
   },
-  ...STOCK_SOURCES,
+  ...(onMonad ? MONAD_SOURCES : STOCK_SOURCES),
   {
     name: 'CoinGecko',
     owns: 'Crypto prices and charts',
     how: 'One batched request per refresh, cached — the public tier rate-limits hard.',
   },
-  {
-    name: 'EDGAR',
-    owns: 'Earnings dates for the tokenized equities',
-    how: "The regulator's own filing record. The next date is a projection from the cadence, and says so.",
-  },
+  ...(onMonad
+    ? []
+    : [
+        {
+          name: 'EDGAR',
+          owns: 'Earnings dates for the tokenized equities',
+          how: "The regulator's own filing record. The next date is a projection from the cadence, and says so.",
+        },
+      ]),
   {
     name: 'Privy',
     owns: 'Keys, signing, and the policy that refuses a bad destination',

@@ -12,3 +12,12 @@ export const STOCK_TOKEN_NOTICE = {
 
 /** The one line under a stock ticket. */
 export const STOCK_TOKEN_TICKET_LINE = 'Not for US persons. Restricted in Canada, the UK and Switzerland.';
+
+/**
+ * Monad's notice (2026-09-24): no Stock Token trades there; the restriction that applies is Perpl's. Perpl's own
+ * `geo_block` list (its public context, mainnet and testnet alike, read 2026-09-24): BY, CU, GB, IR, KP, RU, SY, UA, US.
+ */
+export const PERPL_NOTICE = {
+  title: 'Perps on Perpl are not offered in the US or the UK',
+  detail: 'Perpl also blocks Belarus, Cuba, Iran, North Korea, Russia, Syria and Ukraine. Trade only where you may.',
+} as const;

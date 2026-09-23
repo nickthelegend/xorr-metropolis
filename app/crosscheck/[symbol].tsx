@@ -100,7 +100,7 @@ export default function Crosscheck() {
             ) : null}
 
             <Text variant="footnote" color={colors.ink55}>
-              On-chain price from 1inch. Reference from CoinGecko.
+              {`On-chain price from ${data.source ?? '1inch'}. Reference from CoinGecko.`}
             </Text>
           </>
         )}

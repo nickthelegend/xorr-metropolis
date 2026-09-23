@@ -40,8 +40,8 @@ import { CAP_MAX, CAP_MIN, RUN_FOR, capLabel, runForMs } from '@/state/derived';
 import { useStore } from '@/state/store';
 import { readDelegationIntoStore } from '@/wallet/readDelegation';
 import { errorText } from '@/data/apiError';
-import { settlementSymbol } from '@/chain';
-import { STOCK_TOKEN_NOTICE } from '@/legal/jurisdiction';
+import { onMonad, settlementSymbol } from '@/chain';
+import { PERPL_NOTICE, STOCK_TOKEN_NOTICE } from '@/legal/jurisdiction';
 
 /** Goals' drawdown answers (Steady / Balanced / Aggressive) as the executor's risk profiles, by position. */
 const RISK_PROFILE_FOR = ['conservative', 'balanced', 'aggressive'] as const;
@@ -147,8 +147,13 @@ export default function GrantDelegation() {
             label="You can take it back in one tap"
             detail="From Safety, anytime."
           />
-          {/* The one notice a new holder must see before granting (PLAN.md P1.9); Settings → Risk disclosure has the rest. */}
-          <ConsequenceCard tone="warn" label={STOCK_TOKEN_NOTICE.title} detail={STOCK_TOKEN_NOTICE.detail} />
+          {/* The one notice a new holder must see before granting (PLAN.md P1.9); Settings → Risk disclosure has the rest.
+              On Monad no Stock Token trades; the restriction that applies is Perpl's geo-block. */}
+          <ConsequenceCard
+            tone="warn"
+            label={(onMonad ? PERPL_NOTICE : STOCK_TOKEN_NOTICE).title}
+            detail={(onMonad ? PERPL_NOTICE : STOCK_TOKEN_NOTICE).detail}
+          />
         </View>
 
         <SheetCard borderRadius={radius.panel} padding={space.s16} style={{ marginTop: space.s18 }}>

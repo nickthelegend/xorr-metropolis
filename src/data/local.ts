@@ -10,7 +10,7 @@
  * PLAN.md §1.3 item 8: "Never present synthetic data as live."
  */
 import { assetClasses } from './fixtures/markets';
-import { sleeveFixtures } from './fixtures/sleeves';
+import { sleeves as sleeveFixtures } from './sleeves';
 import {
   StillWarming,
   fetchCandles,

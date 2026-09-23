@@ -52,7 +52,8 @@ export const HIDDEN_HERE: readonly string[] = [
    * their filing dates live on Robinhood Chain. Monad has no tokenized equity to list (checked 2026-09-24 against the
    * official Monad token list).
    */
-  ...(ON_MONAD ? ['/hedge', '/xstocks', '/xstock', '/earnings'] : []),
+  // `/oracle` is the Stock Tokens' recorded prices (linked only from the stock list); Monad has no equity to record.
+  ...(ON_MONAD ? ['/hedge', '/xstocks', '/xstock', '/earnings', '/oracle'] : []),
   // Perpl perps are Monad's (Perpl's DelegatedAccount desk); no other build has them.
   ...(ON_MONAD ? [] : ['/perps']),
 ];

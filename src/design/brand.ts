@@ -22,6 +22,8 @@ export const brand = {
    * named only where money moves.
    */
   SUBLINE: 'Tokenized US stocks, traded by agents you can stop in one tap. It never holds your money.',
+  /** The same line on Monad, where the agents trade crypto spot and Perpl perps in AUSD, and no stocks are listed. */
+  SUBLINE_MONAD: 'Crypto and perps in dollars, traded by agents you can stop in one tap. It never holds your money.',
   /** screens.md screen 1 terms line. */
   TERMS: 'By continuing you agree to the Terms and Privacy Policy.',
 } as const;
