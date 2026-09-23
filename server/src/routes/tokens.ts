@@ -19,7 +19,7 @@ import { Hono } from 'hono';
 import { formatUnits, getAddress, type Address } from 'viem';
 import { readChain } from '../http/chain-read.js';
 import { currentRequestId, log } from '../http/request-id.js';
-import { ADDRESSES, CHAIN_KEY } from '../evm/chains.js';
+import { ADDRESSES, CHAIN_KEY, chain } from '../evm/chains.js';
 import { publicClient } from '../evm/client.js';
 import { cashUsd, holdings } from '../evm/balances.js';
 import { TOKENS, SETTLEMENT_SYMBOL } from '../venues/tokens.js';
@@ -125,13 +125,19 @@ async function chainHoldings(owner: Address): Promise<Omit<HeldToken, 'logo'>[]>
   ]);
   const rows: Omit<HeldToken, 'logo'>[] = [];
   if (wei > 0n) {
+    /*
+     * The chain's own gas token, by its own name and feed. It was "ETH" priced at ETH on every chain, so on Monad a
+     * wallet's 0.0496 MON of gas read "ETH 0.0496 · $133.20" — MON at ETH's $2,689, a number nothing measured
+     * (2026-09-24). At MON's price it is about a tenth of a cent.
+     */
+    const native = chain.nativeCurrency.symbol;
     rows.push({
-      symbol: 'ETH',
+      symbol: native,
       address: ADDRESSES.nativeEth,
       decimals: 18,
       units: Number(formatUnits(wei, 18)),
       native: true,
-      feed: 'ETH',
+      feed: native,
     });
   }
   // `cashUsd` answers in USDC's own units, read at its six decimals.

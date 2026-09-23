@@ -39,6 +39,8 @@ vi.mock('../evm/chains.js', () => ({
   get ADDRESSES() {
     return h.chain === 'base-sepolia' ? h.SEPOLIA : h.MAINNET;
   },
+  // The native row is named and priced as the chain's own gas token (ETH on these; MON on Monad).
+  chain: { nativeCurrency: { symbol: 'ETH' } },
 }));
 vi.mock('../evm/client.js', () => ({ publicClient: { getBalance: h.getBalance } }));
 vi.mock('../evm/balances.js', () => ({ holdings: vi.fn(), cashUsd: vi.fn() }));
