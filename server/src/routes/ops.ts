@@ -15,10 +15,10 @@ import { query } from '../db/index.js';
 import { THIS_CHAIN } from '../db/chain-scope.js';
 import { fillQuality } from '../executor/fill-quality.js';
 import { publicClient } from '../evm/client.js';
-import { CHAIN_KEY, IS_ARBITRUM, IS_ROBINHOOD, UNISWAP } from '../evm/chains.js';
+import { CHAIN_KEY, IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD, UNISWAP } from '../evm/chains.js';
 
 /** Only the Base deployment has a subgraph of ours (PLAN.md G10). */
-const HAS_SUBGRAPH = !IS_ARBITRUM && !IS_ROBINHOOD;
+const HAS_SUBGRAPH = !IS_ARBITRUM && !IS_ROBINHOOD && !IS_MONAD;
 import { DELEGATION_ADDRESS } from '../evm/delegation.js';
 import { gasStatus } from '../evm/gas.js';
 import { publicSurface } from '../auth/middleware.js';

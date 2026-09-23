@@ -11,7 +11,7 @@
  * silently turning a Buy button into a dead end.
  */
 import type { Address } from 'viem';
-import { IS_ARBITRUM, IS_ROBINHOOD } from '../evm/chains.js';
+import { IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD } from '../evm/chains.js';
 
 export type StockToken = {
   /** The on-chain symbol. What the app shows, so the screen matches the block explorer. */
@@ -78,7 +78,7 @@ const ONDO_ON_BASE: Record<string, StockToken> = {
  * Chain the Stock Tokens are Robinhood's live catalog, registered at runtime into `RUNTIME_STOCKS` by
  * `venues/rh-stocks.ts` (2026-09-23).
  */
-export const STOCKS: Record<string, StockToken> = IS_ARBITRUM || IS_ROBINHOOD ? {} : ONDO_ON_BASE;
+export const STOCKS: Record<string, StockToken> = IS_ARBITRUM || IS_ROBINHOOD || IS_MONAD ? {} : ONDO_ON_BASE;
 
 /**
  * Stock Tokens known at runtime — Robinhood Chain's, narrowed to what has code on this node. Filled by
@@ -243,6 +243,8 @@ let functional: Promise<boolean> | undefined;
 export function equitiesFunctional(): Promise<boolean> {
   // Robinhood Chain: a Stock Token is registered only once its code has been found on this node (`venues/rh-stocks.ts`).
   if (IS_ROBINHOOD) return import('./rh-stocks.js').then((m) => m.robinhoodStocks()).then((s) => s.length > 0, () => false);
+  // Monad: no tokenized equity is wired as a venue here yet (PLAN.md P2), so the equity screens say so rather than probe Base's.
+  if (IS_MONAD) return Promise.resolve(false);
   functional ??= (async () => {
     /*
      * Ask several, not one, and accept any answer.

@@ -36,6 +36,12 @@ describe('the venues a grant names', () => {
     expect(await venues()).toContain('0x111111125421ca6dc452d289314280a0f8842a65');
   });
 
+  it('on Monad is Uniswap\'s SwapRouter02 on chain 143 alone: no 1inch (no deployment there), no Aave', async () => {
+    vi.stubEnv('XORR_CHAIN', 'monad-fork');
+    vi.stubEnv('ONEINCH_API_KEY', 'a-key');
+    expect(await venues()).toEqual(['0xfe31f71c1b106eac32f1a19239c9a9a72ddfb900']);
+  });
+
   it('never names an Aqua or SwapVM book, whatever the environment says (they were Base-only and are gone)', async () => {
     vi.stubEnv('XORR_CHAIN', 'base-fork');
     vi.stubEnv('AQUA_BOOK_ADDRESS', BOOK);

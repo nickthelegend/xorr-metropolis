@@ -13,11 +13,16 @@
  *   - **Robinhood Chain** (and its fork): Paxos USDG settles. The Stock Tokens are not listed here — they come from
  *     Robinhood's live catalog (`robinhood/catalog.ts`), narrowed to what has code on the node, and are added at runtime
  *     by `venues/rh-stocks.ts` through `registerToken`.
+ *   - **Monad** (and its fork; Monad testnet quotes against it): Circle USDC settles. Uniswap v3 on chain 143, quoted
+ *     through QuoterV2 on 2026-09-24: WMON/USDC 0.3% is deep ($10,000 → 412,238 WMON, ~$0.0243 a MON, no measurable
+ *     impact); WETH/USDC 0.3% (~$7K USDC a side: $50 fills at ~$2,676, $1,000 moves it ~1.3%); WBTC/USDC 0.3% (~$1.7K
+ *     USDC: a demo-sized fill, and the slippage ceiling refuses anything the pool cannot carry); USDT0/USDC 0.01% (~$30K
+ *     USDC). Agora's AUSD is held and shown: its Uniswap pools hold dollars, not a market.
  *   - **Base** keys keep their old registry so the Base build still reads: USDC, WETH, cbBTC and the Ondo equities (which
  *     route only through 1inch — no v3 pool — so their `toSettlement` is null here).
  */
 import type { Address } from 'viem';
-import { CHAIN_KEY, IS_ARBITRUM, IS_ROBINHOOD, QUOTE_ADDRESSES, SETTLEMENT_SYMBOL, UNISWAP } from '../evm/chains.js';
+import { CHAIN_KEY, IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD, QUOTE_ADDRESSES, SETTLEMENT_SYMBOL, UNISWAP } from '../evm/chains.js';
 import { STOCKS } from './stocks.js';
 
 export { SETTLEMENT_SYMBOL };
@@ -77,6 +82,21 @@ const ROBINHOOD_TOKENS: Record<string, TokenInfo> = {
   WETH: { address: '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73', decimals: 18, toSettlement: null, kind: 'crypto' },
 };
 
+const MONAD_TOKENS: Record<string, TokenInfo> = {
+  /**
+   * The native-token sentinel, kept under the key `ETH` because every reader filters native gas out by that name
+   * (`evm/balances.ts`). On Monad it is MON. Never swapped as such: the delegation moves WMON.
+   */
+  ETH: { address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', decimals: 18, toSettlement: null, kind: 'crypto', name: 'MON' },
+  USDC: { address: '0x754704Bc059F8C67012fEd69BC8A327a5aafb603', decimals: 6, toSettlement: [], kind: 'cash' },
+  WMON: { address: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A', decimals: 18, toSettlement: [{ via: 'USDC', fee: 3000 }], kind: 'crypto', name: 'Wrapped MON' },
+  WETH: { address: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242', decimals: 18, toSettlement: [{ via: 'USDC', fee: 3000 }], kind: 'crypto' },
+  WBTC: { address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', decimals: 8, toSettlement: [{ via: 'USDC', fee: 3000 }], kind: 'crypto' },
+  USDT0: { address: '0xe7cd86e13AC4309349F30B3435a9d337750fC82D', decimals: 6, toSettlement: [{ via: 'USDC', fee: 100 }], kind: 'crypto' },
+  /** Agora's AUSD. Held and shown; no Uniswap pool on Monad holds more than a few dollars of it (2026-09-24). */
+  AUSD: { address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a', decimals: 6, toSettlement: null, kind: 'crypto', name: 'Agora USD' },
+};
+
 const BASE_TOKENS: Record<string, TokenInfo> = {
   ETH: { address: QUOTE_ADDRESSES.nativeEth, decimals: 18, toSettlement: null, kind: 'crypto' },
   WETH: { address: QUOTE_ADDRESSES.wethBase, decimals: 18, toSettlement: [{ via: 'USDC', fee: 500 }], kind: 'crypto' },
@@ -93,7 +113,9 @@ const BASE_TOKENS: Record<string, TokenInfo> = {
  *
  * Mutable on purpose, and only through `registerToken`: the Stock Tokens on Robinhood Chain are a live catalog.
  */
-export const TOKENS: Record<string, TokenInfo> = { ...(IS_ARBITRUM ? ARBITRUM_TOKENS : IS_ROBINHOOD ? ROBINHOOD_TOKENS : BASE_TOKENS) };
+export const TOKENS: Record<string, TokenInfo> = {
+  ...(IS_ARBITRUM ? ARBITRUM_TOKENS : IS_ROBINHOOD ? ROBINHOOD_TOKENS : IS_MONAD ? MONAD_TOKENS : BASE_TOKENS),
+};
 
 /**
  * A symbol as the registry spells it, from however the caller spelled it.

@@ -22,6 +22,7 @@ vi.mock('../evm/chains.js', () => ({
   IS_BASE_MAINNET_STATE: true,
   IS_ARBITRUM: false,
   IS_ROBINHOOD: false,
+  IS_MONAD: false,
 }));
 vi.mock('../db/index.js', () => ({ one: vi.fn(), query: vi.fn() }));
 

@@ -25,7 +25,7 @@ import { publicClient } from '../evm/client.js';
 import { gasStatus } from '../evm/gas.js';
 import { explorerTx, ADDRESSES } from '../evm/chains.js';
 import { SETTLEMENT_SYMBOL, TOKENS, ensureRegistry } from '../venues/tokens.js';
-import { IS_ARBITRUM, IS_ROBINHOOD } from '../evm/chains.js';
+import { IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD } from '../evm/chains.js';
 import { stockGuard } from './stock-guard.js';
 import { decide } from '../graph/decide.js';
 import type { Address } from 'viem';
@@ -46,10 +46,10 @@ import { snapshotWallet } from '../portfolio/snapshots.js';
 import { THIS_CHAIN } from '../db/chain-scope.js';
 
 /**
- * The Graph's delegation index exists for the Base deployment only. On Arbitrum and Robinhood Chain there is no subgraph
+ * The Graph's delegation index exists for the Base deployment only. On Arbitrum, Robinhood Chain and Monad there is no subgraph
  * of ours to ask, so `decide()` is not called there (2026-09-23): it answered from Base's index, about another contract.
  */
-const HAS_SUBGRAPH = !IS_ARBITRUM && !IS_ROBINHOOD;
+const HAS_SUBGRAPH = !IS_ARBITRUM && !IS_ROBINHOOD && !IS_MONAD;
 
 /** The address that holds the tokens when the router is called: the delegation contract. */
 const DELEGATION_FROM = DELEGATION_ADDRESS;

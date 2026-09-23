@@ -34,6 +34,12 @@ export const COINGECKO_IDS: Record<string, string> = {
   ARB: 'arbitrum',
   GMX: 'gmx',
   USDG: 'global-dollar',
+  // Monad's registry (venues/tokens.ts), 2026-09-24. WMON has its own feed, as WETH does; it read $0.02416 against the
+  // Uniswap v3 WMON/USDC 0.3% pool's $0.0242 on chain 143 the same hour.
+  MON: 'monad',
+  WMON: 'wrapped-monad',
+  USDT0: 'usdt0',
+  AUSD: 'agora-dollar',
 };
 
 export function knownSymbols(): string[] {

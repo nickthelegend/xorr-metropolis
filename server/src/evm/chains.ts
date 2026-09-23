@@ -309,7 +309,7 @@ export const HAS_MAINNET_STATE =
  * Uniswap v3 per chain: QuoterV2 (what a fill will get), SwapRouter02 (what `spend()` forwards to) and the factory.
  *
  * Addresses from Uniswap's deployment lists, and each confirmed to carry code on its chain (Arbitrum One and Robinhood
- * Chain, 2026-09-23). Null where this build does not settle through Uniswap: a testnet quotes against its mainnet
+ * Chain, 2026-09-23; Monad, 2026-09-24). Null where this build does not settle through Uniswap: a testnet quotes against its mainnet
  * (`UNISWAP_QUOTE_CHAIN`) and settles nothing. A record, so a chain added later says, or does not compile.
  */
 export type UniswapV3 = { quoter: `0x${string}`; router: `0x${string}`; factory: `0x${string}` };
@@ -322,6 +322,15 @@ const UNISWAP_ROBINHOOD: UniswapV3 = {
   quoter: '0x33e885ed0ec9bf04ecfb19341582aadcb4c8a9e7',
   router: '0xcaf681a66d020601342297493863e78c959e5cb2',
   factory: '0x1f7d7550b1b028f7571e69a784071f0205fd2efa',
+};
+/**
+ * Monad mainnet, from Uniswap's Monad deployment list (developers.uniswap.org, v3-monad-deployments); QuoterV2 answered a
+ * real quote on chain 143 on 2026-09-24 ($10,000 USDC → 412,238 WMON through the 0.3% pool).
+ */
+const UNISWAP_MONAD: UniswapV3 = {
+  quoter: '0x661e93cca42afacb172121ef892830ca3b70f08d',
+  router: '0xfe31f71c1b106eac32f1a19239c9a9a72ddfb900',
+  factory: '0x204faca1764b154221e35c0d20abb3c525710498',
 };
 const UNISWAP_BASE: UniswapV3 = {
   quoter: '0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a',
@@ -339,8 +348,8 @@ const UNISWAP_BY_CHAIN: Record<ChainKey, UniswapV3 | null> = {
   robinhood: UNISWAP_ROBINHOOD,
   'robinhood-fork': UNISWAP_ROBINHOOD,
   'robinhood-testnet': null,
-  monad: null,
-  'monad-fork': null,
+  monad: UNISWAP_MONAD,
+  'monad-fork': UNISWAP_MONAD,
   'monad-testnet': null,
 };
 
@@ -355,7 +364,9 @@ export const UNISWAP_QUOTE_CHAIN: { uniswap: UniswapV3; rpc: string; chain: Chai
   ? null
   : IS_ARBITRUM
     ? { uniswap: UNISWAP_ARBITRUM, rpc: process.env.ARBITRUM_RPC ?? 'https://arb1.arbitrum.io/rpc', chain: arbitrum }
-    : IS_ROBINHOOD
+    : IS_MONAD
+      ? { uniswap: UNISWAP_MONAD, rpc: process.env.MONAD_RPC ?? 'https://rpc.monad.xyz', chain: monad }
+      : IS_ROBINHOOD
       ? { uniswap: UNISWAP_ROBINHOOD, rpc: process.env.ROBINHOOD_RPC ?? 'https://rpc.mainnet.chain.robinhood.com', chain: robinhood }
       : { uniswap: UNISWAP_BASE, rpc: process.env.BASE_RPC ?? 'https://mainnet.base.org', chain: base };
 

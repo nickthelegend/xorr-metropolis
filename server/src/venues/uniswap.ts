@@ -23,7 +23,7 @@
  * there by an `eth_call` state override: the canonical contract, against the fork's own pools, and nothing written.
  */
 import { createPublicClient, encodeFunctionData, encodePacked, http, parseAbi, type Address, type Hex, type PublicClient } from 'viem';
-import { CHAIN_KEY, IS_ROBINHOOD, UNISWAP, UNISWAP_QUOTE_CHAIN } from '../evm/chains.js';
+import { CHAIN_KEY, IS_MONAD, IS_ROBINHOOD, UNISWAP, UNISWAP_QUOTE_CHAIN } from '../evm/chains.js';
 import {
   CAN_SETTLE,
   DEFAULT_SLIPPAGE_PCT,
@@ -87,7 +87,9 @@ function quoterOverride(c: PublicClient, quoter: Address): Promise<Hex | null> {
     // The mainnet the chain is a copy of — the only place the canonical bytecode can come from.
     const rpc = IS_ROBINHOOD
       ? (process.env.ROBINHOOD_RPC ?? 'https://rpc.mainnet.chain.robinhood.com')
-      : (process.env.ARBITRUM_RPC ?? 'https://arb1.arbitrum.io/rpc');
+      : IS_MONAD
+        ? (process.env.MONAD_RPC ?? 'https://rpc.monad.xyz')
+        : (process.env.ARBITRUM_RPC ?? 'https://arb1.arbitrum.io/rpc');
     const code = await createPublicClient({ transport: http(rpc, { timeout: 10_000 }) }).getCode({ address: quoter });
     if (!code || code === '0x') throw new Error(`QuoterV2 ${quoter} has no code on ${CHAIN_KEY} or on its mainnet`);
     return code;
