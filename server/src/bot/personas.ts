@@ -7,6 +7,8 @@
  * Each persona carries three lines it would say and three it would never — the "never" list is
  * the useful half, because it is what a model drifts toward when left alone.
  */
+import { IS_MONAD } from '../evm/chains.js';
+
 export type PersonaId = 'momentum-scout' | 'earnings-desk' | 'yield-keeper' | 'drawdown-guard';
 
 export type Persona = {
@@ -90,6 +92,44 @@ export const PERSONAS: Record<PersonaId, Persona> = {
 };
 
 /**
+ * On Monad the four keep their names and voices and trade what Monad has (2026-09-24): no Stock Token, dividend or index
+ * exists there, so the two whose mandate was one get a Monad mandate with the same temperament. What each proposes is
+ * `council/sweep.ts`; this is how each describes itself.
+ *
+ *   Momentum Scout  whichever of MON, ETH and BTC is rising fastest on its own Chainlink feed on Monad.
+ *   Earnings Desk   earns funding: buys where Perpl's shorts pay the longs (negative funding), and nowhere longs pay.
+ *   Yield Keeper    buys MON a little every day, whatever the tape says.
+ *   Drawdown Guard  unchanged: sells a holding 3% under its cost, at the Chainlink price.
+ */
+const MONAD_OVERRIDES: Partial<Record<PersonaId, Pick<Persona, 'role'> & Partial<Pick<Persona, 'says' | 'neverSays'>>>> = {
+  'momentum-scout': { role: 'Buys whichever of MON, ETH or BTC is rising fastest' },
+  'earnings-desk': {
+    role: 'Buys where Perpl shorts pay the longs',
+    says: [
+      'Shorts are paying longs on this one, so I bought the spot and let the funding clock run.',
+      'Longs are the ones paying everywhere today. I am not buying into that.',
+      'Nothing is paying the long side this interval. I am doing nothing, deliberately.',
+    ],
+    neverSays: ['Funding will flip soon.', 'This carry is free money.', 'I have a feeling about this interval.'],
+  },
+  'yield-keeper': {
+    role: 'Buys MON a little every day',
+    says: [
+      'Bought today’s slice of MON. Same size as yesterday, on purpose.',
+      'Already bought today. Tomorrow gets its own slice.',
+      'The tape is loud today. I bought the same small slice anyway.',
+    ],
+    neverSays: ['You should put more in.', 'MON will keep going up.', 'This is the dip to buy.'],
+  },
+};
+
+if (IS_MONAD) {
+  for (const [id, o] of Object.entries(MONAD_OVERRIDES) as [PersonaId, (typeof MONAD_OVERRIDES)[PersonaId]][]) {
+    if (o) PERSONAS[id] = { ...PERSONAS[id], ...o };
+  }
+}
+
+/**
  * The shared contract — PLAN.md 11.2. Encodes the persona AND the hard copy rules from copy.md.
  *
  * The instruction to never write a number is belt-and-braces: the real guarantee is structural,
@@ -114,6 +154,10 @@ export const PERSONAS: Record<PersonaId, Persona> = {
 export type Venue = {
   /** e.g. "Base" — the chain orders actually settle on. */
   chain: string;
+  /** How a spot fill is routed: "1inch", or "Uniswap v3, through the XorrDelegation contract". */
+  route: string;
+  /** Perpetuals the agent can trade here, in words (Monad: Perpl through the owner's desk). Absent: spot only. */
+  perps?: string;
   /** The symbols the executor can settle right now, from `/market/tradable`. */
   tradable: readonly string[];
 };
@@ -128,9 +172,9 @@ export function systemPrompt(
     ...(venue
       ? [
           '',
-          `WHERE YOU ARE: xorr trades on-chain on ${venue.chain}, routing through 1inch. Spot only.`,
-          `The ONLY instruments you can trade are: ${venue.tradable.join(', ')}.`,
-          'You have no access to foreign exchange, futures, options or any other venue. Never',
+          `WHERE YOU ARE: xorr trades on-chain on ${venue.chain}, routing through ${venue.route}.${venue.perps ? '' : ' Spot only.'}`,
+          `The ONLY instruments you can trade are: ${venue.tradable.join(', ')}${venue.perps ? `, and ${venue.perps}` : ''}.`,
+          `You have no access to foreign exchange, ${venue.perps ? '' : 'futures, '}options or any other venue. Never`,
           'describe watching or trading a market that is not in that list — if you are asked about',
           'one, say plainly that you do not trade it.',
         ]

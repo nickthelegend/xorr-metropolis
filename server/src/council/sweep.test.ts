@@ -29,3 +29,21 @@ describe('Drawdown Guard', () => {
     expect(pickDrawdown([{ symbol: 'SPY', units: 1, costUsd: 775, price: 770 }])).toHaveProperty('none');
   });
 });
+
+import { pickFunding } from './sweep.js';
+describe('Earnings Desk on Monad', () => {
+  it('buys where Perpl shorts pay the longs most, skipping what it entered today', () => {
+    const markets = [
+      { market: 'MON', fundingPctPerHour: 0.0056 },
+      { market: 'ETH', fundingPctPerHour: -0.0014 },
+      { market: 'BTC', fundingPctPerHour: -0.0042 },
+    ];
+    expect(pickFunding(markets, new Set())).toEqual({ symbol: 'BTC', fundingPctPerHour: -0.0042 });
+    expect(pickFunding(markets, new Set(['BTC']))).toEqual({ symbol: 'ETH', fundingPctPerHour: -0.0014 });
+  });
+  it('buys nothing when longs pay everywhere, and says so', () => {
+    // Perpl on 2026-09-24: MON and ETH longs paid 0.0056%/h, BTC flat.
+    const r = pickFunding([{ market: 'MON', fundingPctPerHour: 0.0056 }, { market: 'ETH', fundingPctPerHour: 0.0056 }, { market: 'BTC', fundingPctPerHour: 0 }], new Set());
+    expect('none' in r && r.none).toContain('no Perpl market pays longs');
+  });
+});

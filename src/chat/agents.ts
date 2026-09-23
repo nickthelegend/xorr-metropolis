@@ -20,6 +20,7 @@ import { useMemo } from 'react';
 import type { Href } from 'expo-router';
 import { create } from 'zustand';
 import type { Agent } from '@/data/types';
+import { onMonad } from '@/chain';
 
 /** A screen that already shows part of an agent's work from real records. */
 export type Shortcut = {
@@ -50,7 +51,7 @@ export type ChatAgent = {
   shortcuts: readonly Shortcut[];
 };
 
-export const CHAT_AGENTS: readonly ChatAgent[] = [
+const CHAT_AGENTS_EQUITIES: readonly ChatAgent[] = [
   {
     id: 'momentum-scout',
     name: 'Momentum Scout',
@@ -112,6 +113,60 @@ export const CHAT_AGENTS: readonly ChatAgent[] = [
     ],
   },
 ] as const;
+
+/**
+ * The same four on Monad, where no Stock Token, dividend or index trades (server `bot/personas.ts` MONAD_OVERRIDES and
+ * `council/sweep.ts`): the mandates and questions are Monad's, and every shortcut opens a screen this build has — the
+ * movers, earnings and rates screens do not exist here.
+ */
+const CHAT_AGENTS_MONAD: readonly ChatAgent[] = [
+  {
+    id: 'momentum-scout',
+    name: 'Momentum Scout',
+    role: 'Buys whichever of MON, ETH or BTC is rising fastest',
+    openers: ['What are you watching right now', 'Why did you skip today', 'What would make you take a position'],
+    shortcuts: [
+      { label: 'How it trades', href: '/agent/momentum-scout' },
+      { label: 'Markets', href: '/markets' },
+      { label: 'All runs', href: '/runs' },
+    ],
+  },
+  {
+    id: 'earnings-desk',
+    name: 'Earnings Desk',
+    role: 'Buys where Perpl shorts pay the longs',
+    openers: ['Who is paying funding right now', 'Why not buy when longs pay', 'How do you size around funding'],
+    shortcuts: [
+      { label: 'How it trades', href: '/agent/earnings-desk' },
+      { label: 'Perps on Perpl', href: '/perps' },
+      { label: 'All runs', href: '/runs' },
+    ],
+  },
+  {
+    id: 'yield-keeper',
+    name: 'Yield Keeper',
+    role: 'Buys MON a little every day',
+    openers: ['Why a little every day', 'When would you skip a day', 'What does buying this way cost'],
+    shortcuts: [
+      { label: 'How it trades', href: '/agent/yield-keeper' },
+      { label: 'The council', href: '/council' },
+      { label: 'All runs', href: '/runs' },
+    ],
+  },
+  {
+    id: 'drawdown-guard',
+    name: 'Drawdown Guard',
+    role: 'Sells a holding 3% under its cost',
+    openers: ['When would you cut', 'What are you watching for', 'How do you decide what to sell first'],
+    shortcuts: [
+      { label: 'How it trades', href: '/agent/drawdown-guard' },
+      { label: 'Agent limits', href: '/risk' },
+      { label: 'All runs', href: '/runs' },
+    ],
+  },
+];
+
+export const CHAT_AGENTS: readonly ChatAgent[] = onMonad ? CHAT_AGENTS_MONAD : CHAT_AGENTS_EQUITIES;
 
 export const DEFAULT_AGENT: ChatAgent = CHAT_AGENTS[0]!;
 

@@ -15,9 +15,17 @@ import { describe, expect, it } from 'vitest';
 import { PERSONAS, systemPrompt, type Venue } from './personas.js';
 
 const TONE = 'Dry. Plain. No jokes about money.';
-const VENUE: Venue = { chain: 'Base', tradable: ['WETH', 'USDC', 'CBBTC', 'NVDAc'] };
+const VENUE: Venue = { chain: 'Base', route: '1inch', tradable: ['WETH', 'USDC', 'CBBTC', 'NVDAc'] };
 
 describe('the venue', () => {
+  it('on Monad names Uniswap and Perpl, and does not claim spot only', () => {
+    const monad: Venue = { chain: 'Monad Testnet', route: 'Uniswap v3, through the XorrDelegation contract', tradable: ['AUSD', 'WMON'], perps: 'BTC, ETH and MON perpetuals on Perpl' };
+    const p = systemPrompt(PERSONAS['earnings-desk'], TONE, monad);
+    expect(p).toContain('on Monad Testnet, routing through Uniswap v3');
+    expect(p).toContain('and BTC, ETH and MON perpetuals on Perpl.');
+    expect(p).not.toMatch(/Spot only|1inch|Base/);
+  });
+
   it('names the chain and every tradable symbol', () => {
     const p = systemPrompt(PERSONAS['momentum-scout'], TONE, VENUE);
     expect(p).toContain('Base');

@@ -12,6 +12,12 @@
  *       Yield Keeper    one steady buy a day of the index (SPY);
  *       Drawdown Guard  a sale of a holding marked ≥ 3% below its cost at the Chainlink price;
  *     (an agent someone made follows the style it was made in); no qualifying setup is a turn with no proposal, logged;
+ *   - on Monad (no Stock Token, dividend or index there) the same four trade MON, ETH and BTC:
+ *       Momentum Scout  the one whose own Chainlink rounds on Monad rose the most (≥ 0.25%);
+ *       Earnings Desk   the one where Perpl's shorts pay the longs (negative funding), the most generous first;
+ *       Yield Keeper    one steady buy of MON a day;
+ *       Drawdown Guard  a holding ≥ 3% under its cost at the Chainlink price on Monad (on Monad testnet, the desk's long
+ *                       at Perpl's mark);
  *   - then `convene`: the four seats vote on live inputs and an approved round executes — signed by THAT agent's own key
  *     (`evm/agents.ts`), charged to its own tally, named in the `Spent` event.
  */
@@ -26,6 +32,10 @@ import { fetchCorporateActions } from '../robinhood/api.js';
 import { chainlinkPrice } from '../robinhood/chain.js';
 import { convene } from './convene.js';
 import { trendOf, type Proposal } from './inputs.js';
+import { CHAIN_KEY, IS_MONAD } from '../evm/chains.js';
+import { feedFor, readFeed } from '../monad/chainlink.js';
+import { deskState } from '../monad/perpl-desk.js';
+import { MONAD_COUNCIL_SYMBOLS, fundingPctPerHour, monadTrend, perplMarketsNow } from './monad-inputs.js';
 
 export const COOLDOWN_MINUTES = 60;
 export const SHARE_OF_DAILY_CAP = 0.1;
@@ -34,7 +44,7 @@ export const MIN_TRADE_USD = 5;
 export const MIN_TREND_PCT = 0.25;
 /** Drawdown Guard sells a holding this far below its cost. */
 export const DRAWDOWN_PCT = 3;
-export const INDEX_SYMBOL = 'SPY';
+export const INDEX_SYMBOL = IS_MONAD ? 'MON' : 'SPY';
 
 export type Candidate = { symbol: string; changePct: number };
 export type Style = 'momentum-scout' | 'earnings-desk' | 'yield-keeper' | 'drawdown-guard';
@@ -43,7 +53,14 @@ export type Style = 'momentum-scout' | 'earnings-desk' | 'yield-keeper' | 'drawd
 export function pickCandidate(trends: Candidate[], enteredToday: Set<string>): Candidate | { none: string } {
   const rising = trends.filter((t) => t.changePct >= MIN_TREND_PCT && !enteredToday.has(t.symbol)).sort((a, b) => b.changePct - a.changePct);
   if (rising[0]) return rising[0];
-  return { none: trends.length === 0 ? 'no Stock Token trend could be read' : `nothing rising ≥ ${MIN_TREND_PCT}% that was not already entered today` };
+  return { none: trends.length === 0 ? `no ${IS_MONAD ? 'Chainlink' : 'Stock Token'} trend could be read` : `nothing rising ≥ ${MIN_TREND_PCT}% that was not already entered today` };
+}
+
+/** Earnings Desk on Monad: the market where Perpl's shorts pay the longs most, not entered today. Pure, for tests. */
+export function pickFunding(markets: { market: string; fundingPctPerHour: number }[], enteredToday: Set<string>): { symbol: string; fundingPctPerHour: number } | { none: string } {
+  const paid = markets.filter((m) => m.fundingPctPerHour < 0 && !enteredToday.has(m.market)).sort((a, b) => a.fundingPctPerHour - b.fundingPctPerHour);
+  if (paid[0]) return { symbol: paid[0].market, fundingPctPerHour: paid[0].fundingPctPerHour };
+  return { none: markets.length === 0 ? 'Perpl funding could not be read' : 'no Perpl market pays longs this interval (or it was already entered today)' };
 }
 
 /** A tenth of the agent's cap, bounded by what it has left today; null when that is under the minimum. */
@@ -68,6 +85,7 @@ type Tradable = { symbol: string };
 async function proposalFor(p: {
   style: Style;
   walletId: string;
+  owner: Address;
   usd: number;
   stocks: Tradable[];
   trends: Candidate[];
@@ -80,6 +98,16 @@ async function proposalFor(p: {
       return 'none' in pick ? pick : { side: 'buy', symbol: pick.symbol, usd: p.usd };
     }
     case 'earnings-desk': {
+      if (IS_MONAD) {
+        const markets = (await perplMarketsNow())
+          .filter((m) => (MONAD_COUNCIL_SYMBOLS as readonly string[]).includes(m.name))
+          .flatMap((m) => {
+            const f = fundingPctPerHour(m);
+            return f === null ? [] : [{ market: m.name, fundingPctPerHour: f }];
+          });
+        const pick = pickFunding(markets, p.enteredToday);
+        return 'none' in pick ? pick : { side: 'buy', symbol: pick.symbol, usd: p.usd };
+      }
       const actions = await fetchCorporateActions();
       const upcoming = actions
         .filter((a) => a.type.includes('CASH_DIVIDEND') && a.status !== 'CORPORATE_ACTION_STATUS_COMPLETED')
@@ -92,14 +120,23 @@ async function proposalFor(p: {
       if (p.enteredToday.has(INDEX_SYMBOL)) return { none: `already bought ${INDEX_SYMBOL} today` };
       return { side: 'buy', symbol: INDEX_SYMBOL, usd: p.usd };
     case 'drawdown-guard': {
+      if (CHAIN_KEY === 'monad-testnet') {
+        // The desk's longs, at Perpl's mark: what a Monad testnet agent holds.
+        const d = await deskState(p.owner);
+        const pick = pickDrawdown(d.positions.filter((x) => x.long).map((x) => ({ symbol: x.market, units: x.lots, costUsd: x.lots * x.entry, price: x.mark ?? x.entry })));
+        return 'none' in pick ? pick : { side: 'sell', symbol: pick.symbol, usd: Math.floor(pick.valueUsd * 100) / 100 };
+      }
       const rows = await query<{ symbol: string; units: string; cost_usd: string }>(
         `SELECT symbol, units, cost_usd FROM positions WHERE wallet_id = $1 AND side = 'long' AND units > 0 AND chain = ${THIS_CHAIN}`,
         [p.walletId],
       ).catch(() => query<{ symbol: string; units: string; cost_usd: string }>(`SELECT symbol, units, cost_usd FROM positions WHERE wallet_id = $1 AND side = 'long' AND units > 0`, [p.walletId]));
       const held = (
         await Promise.all(
-          rows.filter((r) => tradable.has(r.symbol)).map(async (r) => {
-            const cl = await chainlinkPrice(r.symbol).catch(() => null);
+          // On Monad a holding is WMON, WETH or WBTC; the agent trades it as MON, ETH or BTC.
+          rows.filter((r) => tradable.has(IS_MONAD ? r.symbol.replace(/^W(?=MON|ETH|BTC)/, '') : r.symbol)).map(async (r) => {
+            const cl = IS_MONAD
+              ? await (feedFor(r.symbol) ? readFeed(feedFor(r.symbol)!) : Promise.reject(new Error('no feed'))).then((f) => (f.stale ? null : f), () => null)
+              : await chainlinkPrice(r.symbol).catch(() => null);
             return cl ? { symbol: r.symbol, units: Number(r.units), costUsd: Number(r.cost_usd), price: cl.price } : null;
           }),
         )
@@ -108,6 +145,20 @@ async function proposalFor(p: {
       return 'none' in pick ? pick : { side: 'sell', symbol: pick.symbol, usd: Math.floor(pick.valueUsd * 100) / 100 };
     }
   }
+}
+
+/** The agent's own grant on XorrDelegation, if it is live. */
+async function agentRoom(owner: Address, personaId: string, now: Date) {
+  const policy = await readPolicy(owner, agentAddress(personaId)).catch(() => null);
+  if (!policy || policy.revoked || policy.expiresAt <= now.getTime()) return null;
+  return { dailyCapUsd: policy.dailyCapUsd, remainingTodayUsd: policy.remainingTodayUsd };
+}
+
+/** Monad testnet: the owner's Perpl desk, if it is open and xorr's operator is still on it. */
+async function deskRoom(owner: Address) {
+  const d = await deskState(owner).catch(() => null);
+  if (!d?.desk || !d.operatorActive || d.accountId === '0' || d.allowlistMissing.length > 0) return null;
+  return { dailyCapUsd: d.caps.maxDayUsd, remainingTodayUsd: Math.max(0, d.caps.maxDayUsd - d.caps.usedTodayUsd) };
 }
 
 export async function councilSweep(now: Date = new Date()): Promise<number> {
@@ -122,9 +173,11 @@ export async function councilSweep(now: Date = new Date()): Promise<number> {
   });
   if (agents.length === 0) return 0;
 
-  const stocks = await robinhoodStocks().catch(() => []);
+  // What the agents can trade here: Stock Tokens, or on Monad MON, ETH and BTC (each with a Chainlink feed on Monad).
+  const stocks: Tradable[] = IS_MONAD ? MONAD_COUNCIL_SYMBOLS.map((symbol) => ({ symbol })) : await robinhoodStocks().catch(() => []);
+  const trendFor = IS_MONAD ? (s: string) => monadTrend(s) : (s: string) => trendOf(s);
   const trends = (
-    await Promise.all(stocks.map((s) => trendOf(s.symbol).then((t) => ({ symbol: s.symbol, changePct: t.changePct })).catch(() => null)))
+    await Promise.all(stocks.map((s) => trendFor(s.symbol).then((t) => ({ symbol: s.symbol, changePct: t.changePct })).catch(() => null)))
   ).filter((t): t is Candidate => t !== null);
 
   let executed = 0;
@@ -137,10 +190,11 @@ export async function councilSweep(now: Date = new Date()): Promise<number> {
         [a.wallet_id, tag, String(COOLDOWN_MINUTES)],
       );
       if (recent) continue;
-      // The agent's OWN permission: no grant to this agent's wallet, no turn.
-      const policy = await readPolicy(a.address as Address, agentAddress(a.persona_id)).catch(() => null);
-      if (!policy || policy.revoked || policy.expiresAt <= now.getTime()) continue;
-      const usd = sizeFor(policy.dailyCapUsd, policy.remainingTodayUsd);
+      // The agent's OWN permission: no grant to this agent's wallet, no turn. On Monad testnet agents trade the owner's
+      // Perpl desk: no desk, or xorr's operator removed from it on chain, no turn; the desk's own daily cap sizes it.
+      const room = CHAIN_KEY === 'monad-testnet' ? await deskRoom(a.address as Address) : await agentRoom(a.address as Address, a.persona_id, now);
+      if (!room) continue;
+      const usd = sizeFor(room.dailyCapUsd, room.remainingTodayUsd);
       const style = (a.style ?? a.persona_id) as Style;
       if (usd === null && style !== 'drawdown-guard') continue;
       const entered = await query<{ symbol: string }>(
@@ -149,7 +203,7 @@ export async function councilSweep(now: Date = new Date()): Promise<number> {
             AND created_at >= date_trunc('day', now() AT TIME ZONE 'utc')`,
         [a.wallet_id, tag],
       );
-      const proposal = await proposalFor({ style, walletId: a.wallet_id, usd: usd ?? 0, stocks, trends, enteredToday: new Set(entered.map((r) => r.symbol)) });
+      const proposal = await proposalFor({ style, walletId: a.wallet_id, owner: a.address as Address, usd: usd ?? 0, stocks, trends, enteredToday: new Set(entered.map((r) => r.symbol)) });
       if ('none' in proposal) {
         log.info(`[council] ${a.wallet_id} ${a.persona_id}: no proposal — ${proposal.none}`);
         continue;

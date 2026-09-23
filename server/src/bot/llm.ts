@@ -7,7 +7,7 @@
  */
 import 'dotenv/config';
 import { PERSONAS, systemPrompt, type PersonaId, type Venue } from './personas.js';
-import { CHAIN_KEY } from '../evm/chains.js';
+import { IS_MONAD, IS_ROBINHOOD, chain } from '../evm/chains.js';
 import { TOKENS } from '../venues/tokens.js';
 
 const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
@@ -98,8 +98,12 @@ const REPAIR_HINT: Record<VoiceViolation, string> = {
  * error than describing a market that does not exist here at all.
  */
 const VENUE: Venue = {
-  chain: CHAIN_KEY === 'base-sepolia' ? 'Base Sepolia' : 'Base',
+  // The chain's own name ("Monad Testnet", "Robinhood Chain fork"): the prompt said Base on every build until 2026-09-24.
+  chain: chain.name,
+  route: IS_MONAD || IS_ROBINHOOD ? 'Uniswap v3, through the XorrDelegation contract' : '1inch',
   tradable: Object.keys(TOKENS),
+  // Monad: the agent also trades Perpl's perpetuals through the owner's desk (`monad/perpl-desk.ts`).
+  ...(IS_MONAD ? { perps: 'BTC, ETH and MON perpetuals on Perpl, through the owner’s own Perpl desk, which the agent can trade and never withdraw from' } : {}),
 };
 
 export async function speak(params: {
