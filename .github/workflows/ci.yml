@@ -1,8 +1,8 @@
 # What can be checked without a chain, a key or a paid API — on every push — and, on demand, what cannot.
 #
 # `checks` (typecheck, lint, unit tests, an iOS bundle) and `contracts` (forge build + every contract test) are
-# hermetic and run on every push and pull request. `robinhood-node` reaches public services — the hosted Robinhood
-# Chain node, Robinhood's REST API — so it runs only when asked for (Actions → ci → Run workflow).
+# hermetic and run on every push and pull request. `monad-fork` reaches public services — Monad mainnet's RPC, Perpl's
+# API — so it runs only when asked for (Actions → ci → Run workflow).
 name: ci
 
 on:
@@ -67,21 +67,54 @@ jobs:
         run: forge test -vv
         working-directory: contracts
 
-  # On demand: the contracts against a fork of real Base, through the BASE_RPC secret.
-  robinhood-node:
-    # The council and the stock guards against the hosted Robinhood Chain node and Robinhood's live APIs.
-    # Manual only: it reaches public services (Robinhood's REST API, Robinhood Chain RPC, GMX's API).
+  # On demand: the whole permission story on a fresh anvil fork of Monad mainnet, and the live Monad reads.
+  monad-fork:
+    # Manual only: it forks Monad mainnet through its public RPC and reads Kuru, Chainlink and Perpl live.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: xorr_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      XORR_CHAIN: monad-fork
+      FORK_RPC: http://127.0.0.1:8545
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/xorr_ci
+      MONAD_RPC: ${{ secrets.MONAD_RPC || 'https://rpc.monad.xyz' }}
+      # The executor refuses to import its routes without Privy configured; the proof never calls Privy, so CI
+      # satisfies the guard with values that authenticate nothing.
+      PRIVY_APP_ID: ci-not-a-privy-app
+      PRIVY_APP_SECRET: ci-not-a-secret
     steps:
       - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Install
         run: cd server && npm ci
-      - name: Stock round trips on the Robinhood node
-        run: cd server && FORK_RPC=https://robinhood-fork-production.up.railway.app npx tsx src/fork/swap-check-robinhood.ts
-      - name: Robinhood live data
-        run: cd server && LIVE=1 npx vitest run src/robinhood/robinhood.live.test.ts
+      - name: Build the contracts
+        run: forge build
+        working-directory: contracts
+      - name: Fork Monad mainnet
+        run: |
+          anvil --fork-url "$MONAD_RPC" --chain-id 143 --port 8545 --silent &
+          for i in $(seq 1 60); do cast chain-id --rpc-url "$FORK_RPC" >/dev/null 2>&1 && break; sleep 1; done
+          cast chain-id --rpc-url "$FORK_RPC"
+      - name: Bootstrap, migrate, prove
+        run: |
+          cd server
+          echo "DELEGATE_PRIVATE_KEY=$(cast wallet new --json | jq -r '.[0].private_key')" > .env.ci-delegate
+          set -a && . ./.env.ci-delegate && set +a
+          npx tsx src/fork-bootstrap-evm.ts
+          set -a && . ./.env.fork && set +a
+          npx tsx src/db/migrate.ts
+          npx tsx src/prove-monad.ts
+      - name: Monad live reads (Chainlink, Kuru, Uniswap, Perpl)
+        run: cd server && LIVE=1 npx vitest run src/monad/monad.live.test.ts
