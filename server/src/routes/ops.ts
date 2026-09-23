@@ -205,6 +205,10 @@ ops.get('/health', async (c) => {
 
   const down = deps.some((d) => d.status === 'down');
   const degraded = deps.some((d) => d.status === 'degraded');
+  // A 503 that does not say which dependency failed can only be diagnosed by reproducing it; say it where it happens.
+  if (down) {
+    console.warn(`[health] down: ${deps.filter((d) => d.status === 'down').map((d) => `${d.name} ${d.ms}ms ${d.detail}`).join('; ')}`);
+  }
   const status: DepStatus = down ? 'down' : degraded ? 'degraded' : 'up';
 
   return c.json(
