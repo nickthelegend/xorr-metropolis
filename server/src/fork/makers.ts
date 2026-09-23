@@ -7,7 +7,7 @@
 import { randomBytes } from 'node:crypto';
 import { bytesToBigInt, createPublicClient, createWalletClient, erc20Abi, http, parseUnits, type Address, type Hex } from 'viem';
 import { base } from 'viem/chains';
-import { IS_ARBITRUM, IS_ROBINHOOD } from '../evm/chains.js';
+import { IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD } from '../evm/chains.js';
 import { FORK_USDC_RESERVE } from './anvil.js';
 import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import {
@@ -29,11 +29,11 @@ export const WETH: Address = '0x4200000000000000000000000000000000000006';
  * The holder the fork faucet pays the settlement token from.
  *
  * Aave v3's aUSDC reserve: Base's, or Arbitrum One's (aArbUSDCn, ~20M native USDC) on an Arbitrum key. On a Robinhood
- * Chain key it is the fork-only reserve `FORK_USDC_RESERVE` (`fork/anvil.ts`), which holds 10,000,000 USDG on the hosted
+ * Chain or Monad key it is the fork-only reserve `FORK_USDC_RESERVE` (`fork/anvil.ts`), which holds 10,000,000 USDG on the hosted
  * node (written by `fork/swap-check-robinhood.ts`): the snapshot node has no upstream, so no real USDG holder's balance
  * is guaranteed to be loaded there, and taking USDG out of a Stock Token pool would move the prices the demo trades at.
  */
-export const WHALE: Address = IS_ROBINHOOD
+export const WHALE: Address = IS_ROBINHOOD || IS_MONAD
   ? FORK_USDC_RESERVE
   : IS_ARBITRUM
     ? '0x724dc807b04555b71ed48a6896b6F41593b8C637'

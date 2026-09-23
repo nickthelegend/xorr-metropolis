@@ -56,7 +56,7 @@ vi.mock('../evm/chains.js', () => ({
     return h.chainKey === 'base' || h.chainKey === 'base-fork';
   },
   ADDRESSES: { usdcBase: h.USDC },
-  chain: { id: 8453 },
+  chain: { id: 8453, nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 } },
   rpcUrl: 'http://127.0.0.1:1',
   explorerTx: (hash: string) => `fork:${hash}`,
 }));

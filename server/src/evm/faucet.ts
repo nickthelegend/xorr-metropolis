@@ -41,6 +41,7 @@ import { faucetAccount } from './gasDrip.js';
 import { readChain } from '../http/chain-read.js';
 import { markBroadcast } from '../http/request-id.js';
 import { WHALE as USDC_HOLDER, anvil } from '../fork/makers.js';
+import { FORK_USDC_RESERVE } from '../fork/anvil.js';
 
 const USDC = ADDRESSES.usdcBase;
 const USDC_DECIMALS = 6;
@@ -165,6 +166,12 @@ export async function readFaucetOffer(): Promise<FaucetOffer> {
   return CHAIN_KEY === 'base-sepolia' ? sepoliaOffer() : forkOffer();
 }
 
+/**
+ * Who the fork's USDC comes from, as a sentence names it: Aave's reserve on a fork of Base or Arbitrum One, where a real
+ * holder exists; on Monad and Robinhood Chain the fork-only reserve the bootstrap fills (`fork/makers.ts` WHALE).
+ */
+const HOLDER_NAME = USDC_HOLDER === FORK_USDC_RESERVE ? 'the fork’s USDC reserve' : 'Aave’s USDC reserve';
+
 async function forkOffer(): Promise<FaucetOffer> {
   const node = String(await readChain('which node this is', () => anvil(rpcUrl, 'web3_clientVersion', [])));
   if (!/^anvil\//i.test(node)) {
@@ -188,7 +195,7 @@ async function forkOffer(): Promise<FaucetOffer> {
     return {
       available: false,
       reason: 'holder_short',
-      detail: `Aave’s USDC reserve holds ${usdcShown(held)} USDC on this fork, less than the ${usdcShown(usdcRaw)} one request sends.`,
+      detail: `${HOLDER_NAME[0]!.toUpperCase()}${HOLDER_NAME.slice(1)} holds ${usdcShown(held)} USDC on this fork, less than the ${usdcShown(usdcRaw)} one request sends.`,
     };
   }
   return {
@@ -197,7 +204,7 @@ async function forkOffer(): Promise<FaucetOffer> {
     from: USDC_HOLDER,
     usdcRaw,
     ethFloorWei: parseEther(FORK_ETH_FLOOR),
-    detail: `${usdcShown(usdcRaw)} USDC moved from Aave’s USDC reserve on ${networkName(CHAIN_KEY)}, with the wallet’s ETH raised to ${FORK_ETH_FLOOR} for gas. Fork funds exist only on this node.`,
+    detail: `${usdcShown(usdcRaw)} USDC moved from ${HOLDER_NAME} on ${networkName(CHAIN_KEY)}, with the wallet’s ${chain.nativeCurrency.symbol} raised to ${FORK_ETH_FLOOR} for gas. Fork funds exist only on this node.`,
   };
 }
 

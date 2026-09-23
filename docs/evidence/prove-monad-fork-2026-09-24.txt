@@ -1,0 +1,35 @@
+xorr proof on monad-fork — http://127.0.0.1:8547  (chain 143, block 107405861)
+
+1. Fresh owner 0x56CCB3e6aa09D233907e856f331Ff49E93760b8B: USDC from the fork faucet, MON for gas
+   faucet USDC transfer               0xd847dfb3aeac40d1c1efafabe684197c65bf5be63e989ea66dbbeba627a04b7b
+   owner holds 1000 USDC (Circle's, at 0x754704Bc059F8C67012fEd69BC8A327a5aafb603)
+
+2. Owner approves USDC + WMON to XorrDelegation 0xa4ad9c9ce3c22b10f22deecaa84ef915148ef76c and grants a $100/day cap
+   approve USDC                       0xa11a8d8e769de838b8c4c811f07a3edbf772ca3ffaf1ca7a63cdb214e9204405
+   approve WMON                       0x4a7a9bd4298ec2e09f9aad116c642cf93cb76662b18198da29d59e397005e02a
+   grant($100/day, venues)            0xd082371e69e0695bf258c35048f3e2415e88a9844f0da6cef58c8e40fa653fa6
+   venues granted: 0xfe31f71c1b106eac32f1a19239c9a9a72ddfb900 (Uniswap SwapRouter02 on Monad 0xfe31f71c1b106eac32f1a19239c9a9a72ddfb900)
+   on-chain policy: cap $100, remaining today $100, revoked false
+
+3. placeOrder(owner, WMON, $50) — Uniswap v3 on Monad through spend()
+   spend() → Uniswap v3 USDC→WMON     0xa4138b0c24a776322668536dc007b5690d165611f3386d3af7477ba2df2aa5ed
+   filled 2065.8201 WMON at $0.024160 (USDC 1000 → 950)
+   OWNER holds 2065.820095597506890027 WMON; the contract holds 0
+   strategy_runs: filled via uniswap-v3
+
+4. A second buy of $60 (only $50 of the $100 cap is left)
+   executor: blocked — daily_cap: That would take today past your $100 cap. $50.00 is left.
+   raw spend($60) mined: reverted     0xf077f7f4f0af0cf744077267575566f17a3143ad57d55927c42da104fa5a8432
+   the contract's refusal: DailyCapExceeded(60000000, 50000000)
+
+5. closeHolding(owner, WMON, 100%) — the /positions/close path, through closePosition()
+   closePosition() → Uniswap v3 WMON→USDC 0.3% 0x1c4966bb81dc04a595a5122db3e814f7fd196a10b8189b814e4f4add02ce257d
+   sold 2065.8201 WMON for 49.700451 USDC into the owner's wallet; WMON left 0
+
+6. The owner revokes; the next order is refused
+   revoke()                           0x1d5a498755948aae64229154c0e4de1d4ee2114e81e3ade6e0edb86f44ce8622
+   executor: refused — no_delegation: No active trading permission on-chain. Grant one before placing an order.
+   raw spend($10) mined: reverted     0xe5052846f83dc48d325364006f22cf7ca9b139e748082dccdd9da9c36719f996
+   the contract's refusal: PolicyRevoked()
+
+PROOF PASSED on monad-fork: 3 audit rows for 0x56CCB3e6aa09D233907e856f331Ff49E93760b8B.
