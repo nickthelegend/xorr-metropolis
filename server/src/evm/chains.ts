@@ -401,7 +401,7 @@ const EXPLORER_TX: Record<ChainKey, (hash: string) => string> = {
   'robinhood-testnet': (hash) => `https://explorer.testnet.chain.robinhood.com/tx/${hash}`,
   'robinhood-fork': (hash) => `fork:${hash}`,
   monad: (hash) => `https://monadscan.com/tx/${hash}`,
-  'monad-testnet': (hash) => `https://testnet.monadexplorer.com/tx/${hash}`,
+  'monad-testnet': (hash) => `https://testnet.monadvision.com/tx/${hash}`,
   'monad-fork': (hash) => `fork:${hash}`,
 };
 
