@@ -73,6 +73,10 @@ import { actionSentence, type CorporateActionNotice } from '@/markets/corporateA
 import { DUST_USD } from '@/markets/ticket';
 import { useLiveRead } from '@/markets/useLiveRead';
 import { useNow } from '@/state/useNow';
+import { onMonad } from '@/chain';
+
+/** One of MON's three prices as `/monad/crosscheck` answers it: a price, or the reason there is none. */
+type MonSource = { ok: true; price: number } | { ok: false; error: string };
 
 /**
  * The ranges, each as long as its label.
@@ -254,6 +258,18 @@ export default function AssetDetail() {
       ),
     [symbol],
   );
+  /*
+   * MON on Monad, three independent ways (FEATURES-100 #41): Uniswap v3's pool, Kuru's on-chain book and Chainlink, all
+   * read on Monad mainnet (`/monad/crosscheck`). One quiet line, always — these are the sources the council votes on.
+   */
+  const isMon = onMonad && (symbol?.toUpperCase() === 'MON' || symbol?.toUpperCase() === 'WMON');
+  const monThree = useAsync(
+    () =>
+      isMon
+        ? api.get<{ uniswap: MonSource; kuru: MonSource; chainlink: MonSource; maxGapBps: number | null }>('/monad/crosscheck')
+        : Promise.resolve(null),
+    [isMon],
+  );
 
   // The hero reads live SPOT, not the last candle close — a candle series is a history and
   // the number at the top of this screen is a price.
@@ -375,6 +391,20 @@ export default function AssetDetail() {
             style={{ marginTop: space.s6, paddingHorizontal: space.gutter }}
           >
             {cross.data.note}
+          </Text>
+        ) : null}
+        {monThree.data ? (
+          <Text variant="footnote" color={colors.ink55} align="center" style={{ marginTop: space.s6, paddingHorizontal: space.gutter }}>
+            {(
+              [
+                ['Uniswap', monThree.data.uniswap],
+                ['Kuru', monThree.data.kuru],
+                ['Chainlink', monThree.data.chainlink],
+              ] as const
+            )
+              .map(([name, src]) => `${name} ${src.ok ? fmtPrice(src.price) : '—'}`)
+              .join(' · ')}
+            {monThree.data.maxGapBps !== null ? ` · ${monThree.data.maxGapBps.toLocaleString('en-US', { maximumFractionDigits: 1 })} bps apart` : ''}
           </Text>
         ) : null}
       </View>
