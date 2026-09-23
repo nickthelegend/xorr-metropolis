@@ -35,6 +35,7 @@ import {
 } from '@/ui';
 import { Sparkline } from '@/ui/charts';
 import { Icon } from '@/design/Icon';
+import { PERPS_ROUTE } from '@/nav/buildRoutes';
 import { repos } from '@/data';
 import { useAsync } from '@/data/useAsync';
 import { logoProps, useLogos } from '@/data/useLogos';
@@ -197,14 +198,14 @@ export default function MarketsScreen() {
               CHAIN_KEY.startsWith('monad') ? (
                 // Perps on Monad are Perpl's, traded by your agent from a desk only you can withdraw from.
                 <Press
-                  onPress={() => router.push('/perps')}
+                  onPress={() => router.push(PERPS_ROUTE)}
                   accessibilityRole="button"
                   accessibilityLabel="Perps on Perpl"
                   hitHeight={size.hit}
                   style={{ paddingVertical: space.s10 }}
                 >
                   <Text variant="control" color={colors.ink65}>
-                    Perps on Perpl — your agent trades, only you withdraw ›
+                    {PERPS_ROUTE === '/perps' ? 'Perps on Perpl — your agent trades, only you withdraw ›' : 'Perps on Perpl — live markets and funding ›'}
                   </Text>
                 </Press>
               ) : null

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TRADE_ROUTE, buildRedirect, hiddenOn, shownHere } from './buildRoutes';
+import { PERPS_ROUTE, TRADE_ROUTE, buildRedirect, hiddenOn, shownHere } from './buildRoutes';
 
 describe('the screens this build has', () => {
   it('hides a Base or Hyperliquid route and everything under it', () => {
@@ -29,6 +29,9 @@ describe('the screens this build has', () => {
       expect(hiddenOn(p), p).toBe(true);
     }
     expect(TRADE_ROUTE).toBe('/markets');
-    expect(hiddenOn('/perps'), '/perps is Monad\'s').toBe(false);
+    // The desk needs Perpl on the chain itself, which a fork has not: the live read-only view stands in for it there.
+    expect(hiddenOn('/perps'), 'no Perpl desk on a fork').toBe(true);
+    expect(hiddenOn('/perpl'), 'Perpl live is every Monad build').toBe(false);
+    expect(PERPS_ROUTE).toBe('/perpl');
   });
 });

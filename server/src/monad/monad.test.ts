@@ -58,10 +58,11 @@ describe('Chainlink, one feed', () => {
 });
 
 describe('Perpl, the public context', () => {
-  it('scales mark, book and open interest by the market decimals, and passes funding through unconverted', () => {
+  it('scales mark, book and open interest by the market decimals, keeps raw funding, and states it per hour', () => {
     const m = parseMarket({
       id: 1,
       name: 'BTC',
+      funding_interval_sec: 2580,
       config: { is_open: true, price_decimals: 1, size_decimals: 5 },
       state: { at: { t: 1_790_192_836_000 }, mrk: 844_583, bid: 844_651, ask: 844_652, oi: 842_670 },
       funding: { rate: -40 },
@@ -69,11 +70,14 @@ describe('Perpl, the public context', () => {
     expect(m).toMatchObject({ name: 'BTC', open: true, mark: 84_458.3, bid: 84_465.1, ask: 84_465.2, fundingRateRaw: -40 });
     expect(m.openInterest).toBeCloseTo(8.4267, 6);
     expect(m.at).toBe('2026-09-23T19:47:16.000Z');
+    // −40 millionths per 2,580 s: shorts pay longs 0.00558% an hour.
+    expect(m.fundingIntervalSec).toBe(2580);
+    expect(m.fundingPctPerHour).toBeCloseTo(-0.00558, 5);
   });
 
   it('leaves what is missing unknown, and keeps the geo block list', () => {
     const c = parseContext({ markets: [{ id: 9, name: 'MON' }], geo_block: ['US', 'GB'] });
-    expect(c.markets[0]).toMatchObject({ open: false, mark: null, openInterest: null, fundingRateRaw: null, at: null });
+    expect(c.markets[0]).toMatchObject({ open: false, mark: null, openInterest: null, fundingRateRaw: null, fundingPctPerHour: null, at: null });
     expect(c.geoBlock).toEqual(['US', 'GB']);
   });
 });

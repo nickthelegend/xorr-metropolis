@@ -92,7 +92,26 @@ export type TypedCreate = {
   message: { owner: Address; operator: Address; nonce: string; deadline: string };
 };
 
+/** A Perpl mainnet market as `/monad/perpl` reads it (Perpl's public context, live). */
+export type PerplLiveMarket = {
+  id: number;
+  name: string;
+  open: boolean;
+  mark: number | null;
+  bid: number | null;
+  ask: number | null;
+  /** In the market's own units (BTC for BTC). */
+  openInterest: number | null;
+  fundingRateRaw: number | null;
+  fundingIntervalSec?: number | null;
+  /** Percent per hour; positive, longs pay shorts. */
+  fundingPctPerHour?: number | null;
+  at: string | null;
+};
+
 export const perps = {
+  /** Perpl on Monad mainnet, read live and public: every open market, and where Perpl does not offer trading. */
+  live: () => api.get<{ markets: PerplLiveMarket[]; geoBlock: string[] }>('/monad/perpl'),
   markets: () => api.get<{ network: string; markets: PerpMarket[] }>('/perps/markets'),
   desk: () => api.get<Desk>('/perps/desk'),
   createData: () => api.post<TypedCreate>('/perps/desk/create-data', {}),

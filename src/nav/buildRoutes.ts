@@ -21,6 +21,9 @@ const ON_MONAD = CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-testnet' || CHAIN
  */
 export const TRADE_ROUTE = ON_MONAD ? '/markets' : '/xstocks';
 
+/** Where "Perps on Perpl" goes: the desk where Perpl runs on this chain, the live markets view on a fork. */
+export const PERPS_ROUTE = CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-testnet' ? '/perps' : '/perpl';
+
 /** Route prefixes with nothing behind them on this build. A prefix matches itself and anything under it. */
 export const HIDDEN_HERE: readonly string[] = [
   // Perpetuals: Hyperliquid data. GMX V2 perps get their own screens (PLAN.md P4.5).
@@ -54,8 +57,10 @@ export const HIDDEN_HERE: readonly string[] = [
    */
   // `/oracle` is the Stock Tokens' recorded prices (linked only from the stock list); Monad has no equity to record.
   ...(ON_MONAD ? ['/hedge', '/xstocks', '/xstock', '/earnings', '/oracle'] : []),
-  // Perpl perps are Monad's (Perpl's DelegatedAccount desk); no other build has them.
-  ...(ON_MONAD ? [] : ['/perps']),
+  // Perpl perps are Monad's (Perpl's DelegatedAccount desk); no other build has them. The desk needs Perpl on the chain
+  // itself — mainnet or testnet — and a fork has no Perpl keeper, so there the live read-only view (`/perpl`) stands in.
+  ...(ON_MONAD ? [] : ['/perpl']),
+  ...(CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-testnet' ? [] : ['/perps']),
 ];
 
 /** Whether `path` has no screen on this build. */

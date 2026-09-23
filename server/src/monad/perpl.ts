@@ -7,8 +7,9 @@
  * integers scaled by those decimals. Read 2026-09-24: BTC mark 844583 at 1 price decimal = $84,458.3; markets BTC, MON,
  * ETH, SOL and more; no stock perps.
  *
- * The funding block's `rate` is passed through as `fundingRateRaw` and not converted: its unit is not stated in the
- * response, and a funding rate with a guessed unit is a number the council would reason from as if it were true.
+ * The funding block's `rate` is passed through as `fundingRateRaw`, and converted beside it: it is in millionths per
+ * funding interval (the desk's reading, `perpl-chain.ts`, which Perpl's Exchange settles by: 40 → 0.004% per 2,580 s
+ * interval). `fundingPctPerHour` is that, per hour; it is null where the market states no rate or no interval.
  *
  * Perpl's `geo_block` list (BY, CU, GB, IR, KP, RU, SY, UA, US on 2026-09-24) is returned with the markets, so a screen
  * can say where trading is not offered rather than letting an order fail.
@@ -20,6 +21,7 @@ export const PERPL_API = process.env.PERPL_API ?? 'https://app.perpl.xyz/api';
 type RawMarket = {
   id: number;
   name: string;
+  funding_interval_sec?: number;
   config?: { is_open?: boolean; price_decimals?: number; size_decimals?: number; initial_margin?: number; maintenance_margin?: number };
   state?: { at?: { b?: number; t?: number }; mrk?: number; bid?: number; ask?: number; lst?: number; oi?: number };
   funding?: { at?: { t?: number }; rate?: number };
@@ -36,6 +38,10 @@ export type PerplMarket = {
   /** Open interest in the market's own size units (BTC for BTC). */
   openInterest: number | null;
   fundingRateRaw: number | null;
+  /** Seconds between funding payments, as the market states it. */
+  fundingIntervalSec: number | null;
+  /** Funding per hour in percent: positive, longs pay shorts. */
+  fundingPctPerHour: number | null;
   /** When Perpl last updated the state, ISO. */
   at: string | null;
 };
@@ -55,6 +61,11 @@ export function parseMarket(m: RawMarket): PerplMarket {
     ask: scaled(m.state?.ask, pd),
     openInterest: scaled(m.state?.oi, sd),
     fundingRateRaw: typeof m.funding?.rate === 'number' ? m.funding.rate : null,
+    fundingIntervalSec: typeof m.funding_interval_sec === 'number' && m.funding_interval_sec > 0 ? m.funding_interval_sec : null,
+    fundingPctPerHour:
+      typeof m.funding?.rate === 'number' && typeof m.funding_interval_sec === 'number' && m.funding_interval_sec > 0
+        ? (m.funding.rate / 1e6) * 100 * (3600 / m.funding_interval_sec)
+        : null,
     at: typeof m.state?.at?.t === 'number' ? new Date(m.state.at.t).toISOString() : null,
   };
 }

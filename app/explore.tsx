@@ -66,6 +66,7 @@ const GROUPS: Group[] = [
       { route: '/council', title: 'Council', detail: 'Every vote, beside its transaction' },
       { route: '/hedge', title: 'Hedge', detail: 'GMX perps, funding and your positions' },
       { route: '/perps', title: 'Perps', detail: 'Perpl, traded by your agent — it can never withdraw' },
+      { route: '/perpl', title: 'Perpl live', detail: 'Every market: open interest, funding, the book' },
       { route: '/proposals', title: 'Proposals', detail: 'Asked and answered' },
       { route: '/catchup', title: 'Since you looked', detail: 'While you were away' },
       { route: '/schedule', title: 'What runs next', detail: 'Upcoming runs' },
