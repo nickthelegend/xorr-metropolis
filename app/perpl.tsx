@@ -40,6 +40,16 @@ function whoPays(pctPerHour: number | null | undefined): { text: string; tone: s
   return { text: pctPerHour > 0 ? `Longs pay ${rate}` : `Shorts pay ${rate}`, tone: colors.ink65 };
 }
 
+/** Perpl's reference prices are refused past 60 s (`refPriceMaxAgeSec`); a mark older than that is said to be. */
+const STALE_AFTER_SEC = 60;
+
+function ageOf(at: string | null, now: number): { text: string; stale: boolean } | null {
+  if (!at) return null;
+  const sec = Math.max(0, Math.round((now - Date.parse(at)) / 1000));
+  const text = sec < 60 ? `${sec}s ago` : sec < 3600 ? `${Math.round(sec / 60)} min ago` : `${Math.round(sec / 3600)} h ago`;
+  return { text, stale: sec > STALE_AFTER_SEC };
+}
+
 const oiUsd = (m: PerplLiveMarket) => (m.openInterest !== null && m.mark !== null ? m.openInterest * m.mark : null);
 const spreadBps = (m: PerplLiveMarket) =>
   m.bid !== null && m.ask !== null && m.bid > 0 && m.ask >= m.bid ? ((m.ask - m.bid) / ((m.ask + m.bid) / 2)) * 10_000 : null;
@@ -57,6 +67,7 @@ export default function PerplLive() {
   const longsPay = markets.filter((m) => (m.fundingPctPerHour ?? 0) > 0).length;
   const shortsPay = markets.filter((m) => (m.fundingPctPerHour ?? 0) < 0).length;
   const blocked = (live.data?.geoBlock ?? []).map((c) => COUNTRY[c] ?? c);
+  const now = Date.now();
 
   return (
     <Screen gutter="none">
@@ -88,6 +99,7 @@ export default function PerplLive() {
           const pays = whoPays(m.fundingPctPerHour);
           const oi = oiUsd(m);
           const spread = spreadBps(m);
+          const age = ageOf(m.at, now);
           return (
             <SheetCard key={m.id} bordered borderRadius={radius.panel} padding={space.s14}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -102,6 +114,11 @@ export default function PerplLive() {
                   {`${oi !== null ? `${money(oi, { decimals: 0 })} open` : 'Open interest not stated'}${spread !== null ? ` · ${spread.toLocaleString('en-US', { maximumFractionDigits: 1 })} bps wide` : ''}`}
                 </Text>
               </View>
+              {age ? (
+                <Text variant="footnoteSm" color={age.stale ? colors.warn : colors.ink40} style={{ marginTop: space.s4 }}>
+                  {age.stale ? `Stale: Perpl last updated this ${age.text}` : `Updated ${age.text}`}
+                </Text>
+              ) : null}
             </SheetCard>
           );
         })}
