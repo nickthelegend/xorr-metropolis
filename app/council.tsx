@@ -10,6 +10,7 @@
 import React, { useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 import { useGoBack } from '@/nav/useGoBack';
+import { Rise } from '@/ui/Rise';
 import {
   Button,
   EmptyState,
@@ -84,8 +85,21 @@ function TxLine({ round }: { round: CouncilRound }) {
 /** The roster, for naming the agent that proposed a round and the wallet that signed it. */
 type Roster = readonly Pick<Agent, 'id' | 'personaId' | 'name' | 'wallet'>[] | undefined;
 
+/** A round this fresh was just convened on this screen: its seats are revealed one by one (FEATURES-100 #25). */
+const REVEAL_WITHIN_MS = 60_000;
+
 function RoundCard({ round, roster }: { round: CouncilRound; roster: Roster }) {
   const p = round.proposal;
+  // Each seat arrives in turn and the outcome after them, so a person watches the vote happen. Older rounds are still.
+  const fresh = Date.now() - Date.parse(round.createdAt) < REVEAL_WITHIN_MS;
+  const beat = (at: number, key: string, node: React.ReactNode) =>
+    fresh ? (
+      <Rise key={key} index={at}>
+        {node}
+      </Rise>
+    ) : (
+      <React.Fragment key={key}>{node}</React.Fragment>
+    );
   // An executed agent round was signed by that agent's own wallet (individual agents, 2026-09-23).
   const signer = round.outcome === 'executed' && round.txHash ? roundSigner(round.convenedBy, roster) : undefined;
   return (
@@ -99,24 +113,34 @@ function RoundCard({ round, roster }: { round: CouncilRound; roster: Roster }) {
         </Text>
       </View>
       <View style={{ marginTop: space.s10, gap: space.s8 }}>
-        {round.votes.map((v) => (
-          <View key={v.persona} style={{ flexDirection: 'row', gap: space.s8, alignItems: 'flex-start' }}>
-            <Tag label={v.vote} tone={voteTone(v.vote)} small />
-            <View style={{ flex: 1 }}>
-              <Text variant="secondarySm" color={colors.ink}>
-                {SEAT_NAMES[v.persona]}
-              </Text>
-              <Text variant="footnote" color={colors.ink55}>
-                {v.reason}
-              </Text>
-            </View>
-          </View>
-        ))}
+        {round.votes.map((v, i) =>
+          beat(
+            i + 1,
+            v.persona,
+            <View style={{ flexDirection: 'row', gap: space.s8, alignItems: 'flex-start' }}>
+              <Tag label={v.vote} tone={voteTone(v.vote)} small />
+              <View style={{ flex: 1 }}>
+                <Text variant="secondarySm" color={colors.ink}>
+                  {SEAT_NAMES[v.persona]}
+                </Text>
+                <Text variant="footnote" color={colors.ink55}>
+                  {v.reason}
+                </Text>
+              </View>
+            </View>,
+          ),
+        )}
       </View>
-      <Text variant="footnote" color={colors.ink65} style={{ marginTop: space.s10 }}>
-        {outcomeLine(round)}
-      </Text>
-      <TxLine round={round} />
+      {beat(
+        round.votes.length + 1,
+        'outcome',
+        <>
+          <Text variant="footnote" color={colors.ink65} style={{ marginTop: space.s10 }}>
+            {outcomeLine(round)}
+          </Text>
+          <TxLine round={round} />
+        </>,
+      )}
       {signer ? (
         <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }} selectable>
           signed by {shortAddress(signer)}
