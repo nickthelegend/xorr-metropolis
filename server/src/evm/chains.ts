@@ -274,6 +274,11 @@ export const APPROVABLE_TOKENS: readonly { symbol: string; address: `0x${string}
   ...(CHAIN_KEY === 'arbitrum-sepolia' || IS_ROBINHOOD || CHAIN_KEY === 'monad-testnet'
     ? []
     : [{ symbol: IS_ARBITRUM || IS_MONAD ? 'WBTC' : 'CBBTC', address: ADDRESSES.cbbtcBase }]),
+  /*
+   * WMON on Monad mainnet and its fork: the token an agent buys most (the app's default buy), so the one a sale most
+   * often pulls back through `closePosition()`. It was missing, so a WMON sale had no allowance to pull (2026-09-24).
+   */
+  ...(CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-fork' ? [{ symbol: 'WMON', address: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A' as const }] : []),
 ];
 
 /**

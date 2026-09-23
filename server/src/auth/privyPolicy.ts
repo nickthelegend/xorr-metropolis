@@ -23,7 +23,7 @@
  * rather than pretending the engineering was the only motive.)
  */
 import type { Address } from 'viem';
-import { ADDRESSES, CHAIN_KEY, IS_BASE_MAINNET_STATE } from '../evm/chains.js';
+import { ADDRESSES, APPROVABLE_TOKENS, CHAIN_KEY, IS_BASE_MAINNET_STATE } from '../evm/chains.js';
 import { DELEGATION_ADDRESS, delegatePublicKey } from '../evm/delegation.js';
 import { STOCKS } from '../venues/stocks.js';
 import { one, query } from '../db/index.js';
@@ -205,11 +205,8 @@ const REVOKE_ABI = [{ type: 'function', name: 'revoke', stateMutability: 'nonpay
  * same change — and a token that is not tradable never is.
  */
 function approvableTokens(): { symbol: string; address: string }[] {
-  const out: { symbol: string; address: string }[] = [
-    { symbol: 'USDC', address: ADDRESSES.usdcBase },
-    { symbol: 'WETH', address: ADDRESSES.wethBase },
-    { symbol: 'cbBTC', address: ADDRESSES.cbbtcBase },
-  ];
+  // The chain's own list (`evm/chains.ts`), named as that chain names them: AUSD, WMON and WBTC on Monad, not Base's.
+  const out: { symbol: string; address: string }[] = APPROVABLE_TOKENS.map((t) => ({ symbol: t.symbol, address: t.address }));
   if (IS_BASE_MAINNET_STATE) {
     for (const s of Object.values(STOCKS)) out.push({ symbol: s.symbol, address: s.address });
   }

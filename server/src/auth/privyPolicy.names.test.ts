@@ -18,6 +18,11 @@ vi.mock('../evm/chains.js', () => ({
     wethBase: '0x4200000000000000000000000000000000000006',
     cbbtcBase: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf',
   },
+  APPROVABLE_TOKENS: [
+    { symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+    { symbol: 'WETH', address: '0x4200000000000000000000000000000000000006' },
+    { symbol: 'CBBTC', address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' },
+  ],
   CHAIN_KEY: 'base-fork',
   IS_BASE_MAINNET_STATE: true,
   IS_ARBITRUM: false,

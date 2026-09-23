@@ -19,6 +19,12 @@ const STRANGER = '0x000000000000000000000000000000000000dEaD';
 vi.mock('../evm/delegation.js', () => ({ DELEGATION_ADDRESS: DELEGATION, delegatePublicKey: DELEGATE }));
 vi.mock('../evm/chains.js', () => ({
   ADDRESSES: { usdcBase: USDC, wethBase: WETH, cbbtcBase: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' },
+  // The policy approves the chain's own list (what `evm/chains.ts` builds for base-sepolia).
+  APPROVABLE_TOKENS: [
+    { symbol: 'USDC', address: USDC },
+    { symbol: 'WETH', address: WETH },
+    { symbol: 'CBBTC', address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' },
+  ],
   AAVE_V3_POOL: AAVE,
   CHAIN_KEY: 'base-sepolia',
   IS_BASE_MAINNET_STATE: false,
