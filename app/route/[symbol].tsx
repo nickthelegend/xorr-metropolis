@@ -49,6 +49,8 @@ import { FILL_PATH, PAYS_WITH, routesInto } from '@/markets/route';
 const SIZES = [100, 500, 2_500, 10_000] as const;
 
 const fillPath = (venue: string) => FILL_PATH[venue] ?? venue;
+/** Who gave each quote, by the provider's own name, for the footnote. */
+const QUOTED_BY: Readonly<Record<string, string>> = { '1inch': '1inch', 'uniswap-v3': 'Uniswap v3', aqua: '1inch Aqua', swapvm: '1inch SwapVM' };
 
 export default function RouteInspector() {
   const goBack = useGoBack();
@@ -253,8 +255,9 @@ function FillComparison({
             ? `Only the ${fillPath(data.best).toLowerCase()} can fill this size.`
             : 'Nothing can fill this size right now.'}
       </Text>
+      {/* The venues that answered, by name: this read "Quotes from 1inch" beside a Uniswap-only list on Monad. */}
       <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s10 }}>
-        Quotes from 1inch.
+        {`Quotes from ${[...new Set(data.quotes.map((q) => QUOTED_BY[q.venue] ?? q.venue))].join(' and ') || 'no venue'}.`}
       </Text>
     </SheetCard>
   );

@@ -31,12 +31,16 @@ import {
 import { useAsync } from '@/data/useAsync';
 import { system } from '@/data/system';
 import { SETTLES_AS, settlementSymbol } from '@/data/tradable';
+import { onMonad } from '@/chain';
+import { assetClasses } from '@/data/fixtures/markets';
 
 export default function Coverage() {
   const goBack = useGoBack();
   const symbols = useAsync(() => system.symbols(), []);
   const stocks = useAsync(() => system.stocks(), []);
   const tradable = useAsync(() => system.tradable(), []);
+  // Monad: what this build holds in its registry (AUSD included, which is held but not bought).
+  const watchable = useAsync(() => (onMonad ? system.watchable() : Promise.resolve([])), []);
 
   const groups = useMemo(() => {
     /*
@@ -47,10 +51,18 @@ export default function Coverage() {
      * under "Tradable only", described as a token nothing prices. An equity whose probe has no
      * price right now is not counted as priced, because right now it is not.
      */
-    const priced = new Set([
-      ...(symbols.data ?? []),
-      ...(stocks.data ?? []).filter((s) => s.price !== null).map((s) => s.symbol),
-    ]);
+    /*
+     * On Monad, what this build shows: its markets (MON, ETH, BTC) and its own tokens. The executor's feed list spans
+     * every build — cbBTC, GMX, USDG — and "priced only" listed those as if Monad had them (crawl, 2026-09-24).
+     */
+    const here = onMonad
+      ? new Set([...assetClasses.flatMap((c) => c.instruments.map((i) => i.sym.toUpperCase())), ...(watchable.data ?? []).map((t) => t.symbol.toUpperCase())])
+      : null;
+    const priced = new Set(
+      [...(symbols.data ?? []), ...(stocks.data ?? []).filter((s) => s.price !== null).map((s) => s.symbol)].filter(
+        (s) => !here || here.has(s.toUpperCase()),
+      ),
+    );
     const settles = new Set((tradable.data ?? []).map((t) => t.symbol.toUpperCase()));
 
     /*
@@ -86,7 +98,7 @@ export default function Coverage() {
       pricedOnly: pricedOnly.sort(),
       settlesOnly: settlesOnly.sort(),
     };
-  }, [symbols.data, stocks.data, tradable.data]);
+  }, [symbols.data, stocks.data, tradable.data, watchable.data]);
 
   // Any one read failing leaves the groups unsortable, so any one failure is the screen's, and the retry asks all three.
   const error = symbols.error ?? stocks.error ?? tradable.error;
