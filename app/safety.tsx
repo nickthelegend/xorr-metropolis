@@ -637,8 +637,16 @@ export default function Safety() {
                         number the executor actually sent — `Number(null)` is 0, which read "Up to 0.0000".
                       */}
                       <Text variant="footnote" color={colors.ink55}>
+                        {/*
+                          A sell-side allowance is unlimited because an exit must sell whatever was bought; what bounds it is
+                          the contract: `closePosition` needs a live grant and an allowed venue, and reverts unless the
+                          proceeds land in this wallet (`_callVenue`'s minOut check). Said, since "No limit" alone read as
+                          the opposite of a product about limits (judge, 2026-09-24).
+                        */}
                         {t.unlimited
-                          ? 'No limit'
+                          ? t.symbol === settlementSymbol
+                            ? 'No limit'
+                            : 'No limit on the amount. Only sold back into your wallet, while trading is on.'
                           : typeof t.display === 'string' && t.display.trim() !== '' && Number.isFinite(Number(t.display))
                             ? `Up to ${quantity(Number(t.display), Number(t.display) >= 1 ? 2 : 4)}`
                             : 'Limited'}
@@ -728,7 +736,8 @@ export default function Safety() {
             />
           ) : (
             <HoldButton
-              label={killCta(killed, unusable, granted, expired)}
+              // The gesture in the label (judge, 2026-09-24): a tap on "Stop all trading" did nothing and said nothing.
+              label="Hold to stop all trading"
               accessibilityHint="Hold to stop"
               height={size.buttonLg}
               loading={busy || !canSign}

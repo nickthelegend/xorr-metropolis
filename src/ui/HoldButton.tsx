@@ -93,6 +93,9 @@ export function HoldButton({
   const screenReader = useScreenReader();
   const off = disabled || loading;
   const fill = useSharedValue(0);
+  // Let go before the commit: the label says to keep holding for a moment, so a tap is never met with silence.
+  const [early, setEarly] = useState(false);
+  const earlyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const machine = useRef<HoldState>(HOLD_IDLE);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // The handler and the motion setting as of the latest render, for a timer an earlier render armed.
@@ -118,10 +121,18 @@ export function HoldButton({
       } else if (before.phase === 'holding') {
         clearTimeout(timer.current);
         // Let go too soon, or switched off: the fill runs back, and nothing was sent.
-        if (state.phase === 'idle') fill.value = withTiming(0, timing(duration.fast, stillness));
+        if (state.phase === 'idle') {
+          fill.value = withTiming(0, timing(duration.fast, stillness));
+          if (event.type === 'up') {
+            setEarly(true);
+            clearTimeout(earlyTimer.current);
+            earlyTimer.current = setTimeout(() => setEarly(false), 2000);
+          }
+        }
       }
 
       if (!commit) return;
+      setEarly(false);
       heavyTap();
       const result = latest.current.onCommit();
       void Promise.resolve(result).finally(() => {
@@ -138,7 +149,11 @@ export function HoldButton({
   }, [off, send]);
   useEffect(() => {
     const pending = timer;
-    return () => clearTimeout(pending.current);
+    const hint = earlyTimer;
+    return () => {
+      clearTimeout(pending.current);
+      clearTimeout(hint.current);
+    };
   }, []);
 
   const fillStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
@@ -175,7 +190,7 @@ export function HoldButton({
       </View>
       {loading ? <ActivityIndicator size="small" color={ink} /> : null}
       <Text variant="button" color={ink} numberOfLines={1}>
-        {label}
+        {early ? 'Keep holding' : label}
       </Text>
     </Press>
   );
