@@ -24,12 +24,29 @@ real Uniswap v3 pools and the real router (`docs/evidence/prove-monad-fork-2026-
 5. **The position is closed** back to 49.70 USDC in the owner's wallet.
 6. **The owner revokes.** The executor refuses the next order; a raw spend reverts with `PolicyRevoked()`.
 
+**On Monad testnet, for real** (chain 10143, `docs/evidence/prove-perpl-desk-testnet-2026-09-24.txt`): `XorrDelegation`
+is deployed and Sourcify-verified, settling in Agora's AUSD. Agents trade **Perpl** perps through **Perpl's own
+`DelegatedAccount`**: the owner owns the desk and alone can withdraw; xorr's agent key is its operator, which can trade
+and can never withdraw.
+
+7. **A desk is created** from the owner's EIP-712 signature (`0xa21F…98b5`), funded with 150 AUSD, Perpl account #692.
+8. **The agent opens and closes a $100 MON long at 2x** through the desk (`0xa2e9cb77…`, `0x3f0b0aa6…`).
+9. **The owner removes the operator.** The executor refuses the next order, and a raw operator order is mined as a
+   revert (`OnlyOwnerOrOperator`). The owner withdraws 149.32 AUSD.
+10. The same flow ran from the app (desk `0x3323…11b8`): fund, create, long 2,066 MON, hold to stop, resume, close,
+    withdraw 149.80 AUSD.
+
+**The council votes on Monad's own numbers.** Round #2 on the fork, from the Council screen: the price desk set Chainlink
+MON/USD ($0.02393) against the Uniswap fill ($0.02409) and Kuru's mid ($0.02394), 66 bps apart; the risk keeper checked the
+on-chain cap; the perps desk read Perpl funding (MON and ETH longs paying 0.0056%/h) and voted no. Approved 2–1 and
+executed: 1,037.94 WMON to the owner (`0x6289f268…c9c121`). On testnet an approved round opens a 1x long on the desk.
+
 **MON priced three independent ways**, live from Monad mainnet (`GET /monad/crosscheck`): Uniswap v3's pool, the mid of
 Kuru's on-chain order book, and Chainlink's MON/USD feed — $0.024112, $0.024117 and $0.024118 when last read, 2.2 bps
 apart. Perpl's perpetual markets (`GET /monad/perpl`): mark, book, open interest and funding for BTC, MON, ETH, SOL and more.
 
-What is next, phase by phase — Kuru fills, Perpl orders from agents, Mera passkey accounts with an AUSD balance, Envio
-indexing, a Chainlink CRE workflow — is in [`PLAN.md`](PLAN.md). The hackathon research and the bounties we build for are
+What is next, phase by phase — Kuru fills, Mera passkey accounts with an AUSD balance, Envio indexing, a Chainlink CRE
+workflow — is in [`PLAN.md`](PLAN.md); the ranked 100 and what is built is [`docs/FEATURES-100.md`](docs/FEATURES-100.md). The hackathon research and the bounties we build for are
 in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 
 ## Monad, and exactly how it is used
@@ -38,18 +55,19 @@ in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 |---|---|---|
 | **Monad** (143 / 10143) | the chain the permission lives on and every fill settles on; a fork of mainnet for real fills with test money | `server/src/evm/chains.ts`, `infra/monad-fork/` |
 | **Uniswap v3 on Monad** | spot venue: QuoterV2 quotes, SwapRouter02 fills through `XorrDelegation.spend()` | `server/src/venues/uniswap.ts` |
-| **Kuru** | MON/USDC and MON/AUSD order books read on-chain (`bestBidAsk`); the fill path is next | `server/src/monad/kuru.ts` |
-| **Chainlink** | MON/USD, ETH/USD, USDC/USD, AUSD/USD feeds; staleness refused | `server/src/monad/chainlink.ts` |
-| **Perpl** | perpetual markets for the council and the risk screens; agent orders are next | `server/src/monad/perpl.ts` |
-| **Agora AUSD** | held and shown; Perpl's margin currency | `server/src/venues/tokens.ts` |
+| **Perpl** | agents trade perps through Perpl's `DelegatedAccount` (operator trades, never withdraws); funding read by the council | `server/src/monad/perpl-desk.ts`, `app/perps.tsx` |
+| **Kuru** | MON/USDC book read on-chain (`bestBidAsk`) by the council's price desk and the verifier; the fill path is next | `server/src/monad/kuru.ts` |
+| **Chainlink** | MON/USD, ETH/USD, BTC/USD, USDC/USD, AUSD/USD on Monad; the council's reference and trend; staleness refused | `server/src/monad/chainlink.ts` |
+| **Agora AUSD** | the testnet settlement token, the desk's margin, Agora's faucet in the app's test-funds button | `server/src/evm/chains.ts`, `server/src/monad/perpl-routes.ts` |
 | **Sourcify (MonadVision)** | contract verification on deploy | `contracts/deploy-testnet.sh` |
 
 ## Deployments
 
 | | Address |
 |---|---|
-| Monad testnet `XorrDelegation` | pending — `contracts/deploy-testnet.sh monad-testnet` is ready and waits on test MON for the deployer |
-| Monad testnet `XorrAuditAnchor` | pending (same script) |
+| Monad testnet `XorrDelegation(AUSD)` | [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) — Sourcify-verified |
+| Monad testnet `XorrAuditAnchor` | [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
+| Perpl testnet desk (proof) | [`0xa21Fa8708008890565817c9d73538Cabc3d098b5`](https://testnet.monadvision.com/address/0xa21Fa8708008890565817c9d73538Cabc3d098b5), Perpl account #692 |
 | Hosted Monad fork, executor, web | pending (`PLAN.md` P0.6) |
 
 ## Run it
@@ -82,12 +100,14 @@ Deploy to Monad testnet (needs test MON in the deployer named in `server/.env.de
 
 ## Honest limits
 
-- **Fills are on a fork.** Trades fill against Monad mainnet's real state on an anvil fork; nothing here spends real funds.
+- **Spot fills are on a fork; perps are on testnet.** Spot trades fill against Monad mainnet's real state on an anvil fork
+  (Uniswap's testnet addresses hold no code); Perpl orders fill on Perpl's testnet. Nothing here spends real funds.
   Reference prices (Chainlink, Kuru, Perpl) are read from mainnet live, because a fork's feeds stop at the fork block.
 - **Monad has no tokenized stocks** (official token list, 2026-09-24), so the Stock Token screens of the Arbitrum build
   are hidden here, and the agents trade MON and the majors.
 - **Sign-in is still Privy** until Mera replaces it (`PLAN.md` P4).
-- The testnet deployment waits on test MON.
+- **Test MON is scarce.** The faucet is rate-limited, and the testnet flows above used most of what was claimed; more
+  testnet runs wait on the deployer being topped up at faucet.monad.xyz.
 
 ## Disclosures (Metropolis rules)
 
