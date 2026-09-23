@@ -791,7 +791,8 @@ export function warmMarketCache(): void {
   // The equities first: the slowest answer the Markets screen waits on, and one probe serves everyone. Base's tokenized
   // equities, priced through 1inch — on Solana the stocks are xStocks, priced through Jupiter, and there is nothing of
   // Base's to warm (it only tripped the 1inch breaker and marked the executor degraded, 2026-09-19).
-  if (!ON_SOLANA) void refreshStocks().catch(() => undefined);
+  // Not on Monad either: it lists no tokenized equity, and warming Base's through 1inch only spent a breaker.
+  if (!ON_SOLANA && !IS_MONAD) void refreshStocks().catch(() => undefined);
 
   // Ordered by what a cold user hits first: the market list, then the default 1D chart, then the
   // rest of the timeframe pills. The upstream serves these one at a time behind a rate limit, so
@@ -801,7 +802,10 @@ export function warmMarketCache(): void {
   // The window every asset screen opens on, for EVERY symbol with a feed. Warming only three
   // symbols meant opening LINK or AAVE waited on a cold fetch behind a rate limiter, and the
   // screen showed its warming state for someone who had done nothing unusual.
-  const ids = [...new Set(Object.values(COINGECKO_IDS))];
+  // This chain's own tokens first (Monad: WMON, MON, WETH, WBTC): they are what its screens open on, and at the back
+  // of a 1.1s-spaced queue a first visit to /asset/WMON met a cold 503 (crawl, 2026-09-24).
+  const own = [...Object.keys(TOKENS), ...(IS_MONAD ? ['MON'] : [])].flatMap((s) => (COINGECKO_IDS[s] ? [COINGECKO_IDS[s]!] : []));
+  const ids = [...new Set([...own, ...Object.values(COINGECKO_IDS)])];
   for (const id of ids) {
     urls.push(`${COINGECKO}/coins/${id}/ohlc?vs_currency=usd&days=1`);
   }
@@ -810,7 +814,7 @@ export function warmMarketCache(): void {
   // window for every symbol would be 48 requests through a 1.1s-spaced queue, which starves the
   // very first request it is meant to help.
   for (const days of [30, 7, 90]) {
-    for (const symbol of ['BTC', 'ETH', 'WETH']) {
+    for (const symbol of IS_MONAD ? ['WMON', 'WETH', 'WBTC'] : ['BTC', 'ETH', 'WETH']) {
       const id = COINGECKO_IDS[symbol];
       if (id) urls.push(`${COINGECKO}/coins/${id}/ohlc?vs_currency=usd&days=${days}`);
     }
