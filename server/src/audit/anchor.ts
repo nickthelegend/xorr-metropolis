@@ -307,8 +307,14 @@ export async function agreement(walletId: string, owner: Address): Promise<Ancho
 /** Every wallet that has audit rows — the set worth anchoring. */
 export async function anchorableWallets(): Promise<{ id: string; address: Address }[]> {
   const rows = await query<{ id: string; address: string }>(
+    /*
+     * Only this chain's wallets. Unscoped, the Monad testnet executor's first sweep anchored the trails of every wallet in
+     * a database it shares with the Monad fork — six transactions on testnet about wallets that never touched it, paid
+     * from the delegate's gas (2026-09-24). An anchor on this chain is only about a wallet on this chain.
+     */
     `SELECT w.id, w.address FROM wallets w
-      WHERE EXISTS (SELECT 1 FROM audit_log a WHERE a.wallet_id = w.id)`,
+      WHERE w.cluster = current_setting('xorr.chain_key')
+        AND EXISTS (SELECT 1 FROM audit_log a WHERE a.wallet_id = w.id)`,
     [],
   );
   return rows.map((r) => ({ id: r.id, address: r.address as Address }));

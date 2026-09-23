@@ -31,9 +31,15 @@ vi.mock('../db/index.js', () => ({
     }
     return undefined;
   },
-  query: async () => [],
+  query: async (sql: string) => {
+    lastQuery = sql;
+    return [];
+  },
   tx: async (fn: (c: unknown) => unknown) => fn({}),
 }));
+
+/** The last SQL handed to `query`, for the tests that care what was asked. */
+let lastQuery = '';
 
 /** What the chain says, swapped per test. */
 let onChain: { head: Hex; entryCount: number; at: number; blockNo: number } | undefined;
@@ -55,7 +61,14 @@ vi.mock('../evm/client.js', () => ({
 }));
 
 process.env.ANCHOR_ADDRESS = '0x00000000000000000000000000000000000000B1';
-const { agreement } = await import('./anchor.js');
+const { agreement, anchorableWallets } = await import('./anchor.js');
+
+describe('which wallets the sweep anchors', () => {
+  it("only this chain's wallets — never a wallet whose trail belongs to another chain in the same database", async () => {
+    await anchorableWallets();
+    expect(lastQuery).toMatch(/w\.cluster = current_setting\('xorr\.chain_key'\)/);
+  });
+});
 
 const OWNER = '0x00000000000000000000000000000000000000C1' as const;
 const chainAnchor = (head: string, entryCount: number) => ({
