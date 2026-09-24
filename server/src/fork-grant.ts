@@ -10,12 +10,20 @@
  */
 import 'dotenv/config';
 import { createPublicClient, createWalletClient, http, parseUnits, erc20Abi, type Address } from 'viem';
-import { base } from 'viem/chains';
+import { CHAIN_KEY, chain as registryChain, ADDRESSES } from './evm/chains.js';
 
 const RPC = process.env.FORK_RPC ?? 'http://127.0.0.1:8545';
-const USDC: Address = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+/*
+ * The chain and its settlement token come from the registry XORR_CHAIN selects, as in `fork-bootstrap-evm.ts`.
+ *
+ * Both were Base's literals (chain 8453, Base's USDC), inherited from the Base build: on the Monad fork, viem refused
+ * the grant before sending it ("the current chain of the wallet (id: 143) does not match the target chain … 8453"), so
+ * `npm run rebuild:fork` stopped half way on every chain but Base (2026-09-24).
+ */
+if (!CHAIN_KEY.endsWith('-fork')) throw new Error(`XORR_CHAIN=${CHAIN_KEY} is not a fork key; impersonation only works on a fork.`);
+const USDC: Address = ADDRESSES.usdcBase;
 
-const chain = { ...base, rpcUrls: { default: { http: [RPC] }, public: { http: [RPC] } } };
+const chain = { ...registryChain, rpcUrls: { default: { http: [RPC] }, public: { http: [RPC] } } };
 const pub = createPublicClient({ chain, transport: http(RPC) });
 
 const ABI = [
