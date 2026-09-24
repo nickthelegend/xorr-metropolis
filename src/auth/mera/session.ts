@@ -187,6 +187,15 @@ export async function signingAccount(): Promise<LocalAccount> {
   return account;
 }
 
+/** The relying party and the signed-in passkey, for another PRF evaluation of the same passkey under another salt. */
+export function passkeyTarget(): { rpId: string; credential?: { credentialId: string; transports?: string[] } } {
+  if (!stored) throw new Error('Not signed in with a passkey.');
+  return {
+    rpId: rp().id,
+    credential: stored.credentialId ? { credentialId: stored.credentialId, transports: stored.transports } : undefined,
+  };
+}
+
 export function signOutPasskey(): void {
   lockSigning();
   stored = null;

@@ -6,11 +6,12 @@
  * verbatim rather than mapped to a friendly sentence. "daily cap" and "no live market for WETH"
  * are different problems with different fixes, and a single "could not run" hides both.
  */
-import React from 'react';
-import { ScrollView, View } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
 import {
+  Button,
   ErrorState,
   Fill,
   HeaderBar,
@@ -28,6 +29,12 @@ import { useAsync } from '@/data/useAsync';
 import { system, type StrategyRunRow } from '@/data/system';
 import { kindLabel, labelFigure } from '@/strategies/ladder';
 import { FillReceipt } from '@/ui/FillReceipt';
+import { api } from '@/data/api';
+import { ApiError, errorText } from '@/data/apiError';
+import { useMera } from '@/auth/mera/session';
+import { notesKey } from '@/auth/mera/notes-key';
+import { openNote, sealNote, type SealedNote } from '@/auth/mera/notes';
+import { passkeyFailure } from '@/auth/mera/failure';
 
 function toneFor(status: StrategyRunRow['status']): string {
   if (status === 'filled') return colors.up;
@@ -113,6 +120,9 @@ export default function RunDetail() {
             {run.signature ? (
               <FillReceipt signature={run.signature} venue={run.venue} animate={false} />
             ) : null}
+
+            {/* A note only the owner's passkey opens (Mera: a second key from the same passkey, `auth/mera/notes.ts`). */}
+            <PrivateNote runId={run.id} />
           </ScrollView>
         )}
       </Fill>
@@ -130,6 +140,93 @@ function Field({ label, value, figure }: { label: string; value: string; figure:
       <Text variant="rowPrimary" style={{ marginTop: space.s4 }} figure={figure}>
         {value}
       </Text>
+    </SheetCard>
+  );
+}
+
+/**
+ * A private note on a run, sealed on this device with a key from the owner's passkey under its own PRF salt — not the
+ * wallet's key — so xorr's server keeps ciphertext it cannot read, and the same passkey opens it on any device.
+ * Only for a passkey account: an email sign-in has no passkey to derive the key from.
+ */
+function PrivateNote({ runId }: { runId: string }) {
+  const mera = useMera();
+  const [mode, setMode] = useState<'locked' | 'opening' | 'open' | 'saving'>('locked');
+  const [text, setText] = useState('');
+  const [status, setStatus] = useState<string>();
+  const [failure, setFailure] = useState<string>();
+  if (!mera.signedIn) return null;
+
+  const subject = `/notes/${encodeURIComponent(`run:${runId}`)}`;
+  const fail = (e: unknown) => setFailure(e instanceof ApiError ? errorText(e) : passkeyFailure(e) || undefined);
+
+  async function unlock() {
+    setMode('opening');
+    setFailure(undefined);
+    try {
+      const key = await notesKey();
+      const { note } = await api.get<{ note: (SealedNote & { updatedAt: string }) | null }>(subject);
+      setText(note ? await openNote(key, note) : '');
+      setStatus(note ? `Saved ${when(Date.parse(note.updatedAt))}.` : undefined);
+      setMode('open');
+    } catch (e) {
+      fail(e);
+      setMode('locked');
+    }
+  }
+
+  async function save() {
+    setMode('saving');
+    setFailure(undefined);
+    try {
+      const sealed = await sealNote(await notesKey(), text);
+      const r = await api.put<{ updatedAt: string }>(subject, sealed);
+      setStatus(`Saved ${when(Date.parse(r.updatedAt))} — encrypted on this device.`);
+    } catch (e) {
+      fail(e);
+    } finally {
+      setMode('open');
+    }
+  }
+
+  return (
+    <SheetCard bordered borderRadius={radius.panel} padding={space.s14} style={{ marginTop: space.s16 }}>
+      <Text variant="rowPrimary">Private note</Text>
+      <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>
+        Encrypted with a key from your passkey — its own, not your wallet’s. xorr’s server stores only ciphertext.
+      </Text>
+      {mode === 'locked' || mode === 'opening' ? (
+        <Button
+          label="Unlock with your passkey"
+          variant="secondary"
+          loading={mode === 'opening'}
+          onPress={() => void unlock()}
+          style={{ marginTop: space.s10 }}
+          testID="note-unlock"
+        />
+      ) : (
+        <>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            multiline
+            placeholder="Why this trade, what you would do differently…"
+            placeholderTextColor={colors.ink40}
+            accessibilityLabel="Private note"
+            style={{ marginTop: space.s10, minHeight: 90, color: colors.ink, backgroundColor: colors.inputBg, borderRadius: radius.tile, padding: space.s10, textAlignVertical: 'top' }}
+          />
+          <Button label="Save note" loading={mode === 'saving'} onPress={() => void save()} style={{ marginTop: space.s10 }} testID="note-save" />
+        </>
+      )}
+      {failure ? (
+        <Text variant="footnote" color={colors.down} style={{ marginTop: space.s8 }}>
+          {failure}
+        </Text>
+      ) : status ? (
+        <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s8 }}>
+          {status}
+        </Text>
+      ) : null}
     </SheetCard>
   );
 }
