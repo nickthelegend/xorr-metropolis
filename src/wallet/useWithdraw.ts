@@ -57,6 +57,8 @@ export function useWithdraw() {
    * @param entry     The chosen destination. Must be on the list, and usable by the executor's clock.
    * @param allowlist The usable entries the screen offered.
    * @param amount    The amount as typed, in the token's own units.
+   * @param onLanded  Called once the executor has seen the transfer mined (or given up waiting), for a screen that shows a
+   *                  balance: read then, not at the broadcast, which returned before the block did.
    */
   const withdraw = useCallback(
     async (params: {
@@ -64,6 +66,7 @@ export function useWithdraw() {
       entry: AllowlistEntry | undefined;
       allowlist: AllowlistEntry[];
       amount: string;
+      onLanded?: () => void;
     }) => {
       setBusy(true);
       setError(undefined);
@@ -98,7 +101,10 @@ export function useWithdraw() {
          * address was usable — with the portfolio snapshot after it (PLAN.md 2.10). Not awaited: the
          * executor waits for the transaction itself, and a record that fails is not the send failing.
          */
-        void withdrawals.record(hash).catch(() => undefined);
+        void withdrawals
+          .record(hash)
+          .catch(() => undefined)
+          .then(() => params.onLanded?.());
         return hash;
       } catch (e) {
         /*

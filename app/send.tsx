@@ -328,8 +328,12 @@ export default function Send() {
         disabled={!ready || busy}
         onPress={() => {
           if (!token) return;
-          // The balance on screen is read again once the send lands, rather than left showing what was there before.
-          void withdraw({ token, entry, allowlist: usable, amount }).then(() => balance.reload(), () => undefined);
+          /*
+           * The balance on screen is read again once the send lands, rather than left showing what was there before.
+           * Landed means mined: this reloaded when `withdraw` returned, which is at the broadcast, so the executor read
+           * the chain a block early and Send kept showing 25,000.0000 USDC after 5 had left (2026-09-24).
+           */
+          void withdraw({ token, entry, allowlist: usable, amount, onLanded: () => balance.reload() }).catch(() => undefined);
         }}
       />
       <Press
