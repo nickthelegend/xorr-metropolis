@@ -1,237 +1,270 @@
 # Sponsor audit — is the tech we aimed for actually used? (Monad Metropolis)
 
-Audited 2026-09-24 against commit `9b00b8b`, on the real running stack: an anvil fork of Monad mainnet
-(`infra/monad-fork`, chain 143, block ~107.41M), the executor on it (`/health` all up), and the Expo web app, signed in
-through Privy's real email-code flow as `test-8958@privy.io` (wallet `0x95A0…e615`). UI flows were driven in Claude in
-Chrome with its network and console logs read on every screen; the code was traced by hand, not by package name.
+**Re-audited 2026-09-24, evening**, at commit `47b3389`, replacing the morning's audit (`47edeea`, against `9b00b8b`) —
+a day's work sits between them. Measured on the running stacks, not by reading code:
 
-Sponsors audited: the ones `docs/METROPOLIS.md` targets — **Agora (AUSD), Perpl, Kuru, Mera, Chainlink (feeds + CRE),
-Envio, Nansen, MetaMask Agent Wallet** — plus Monad itself and Privy (a sponsor we chose not to target, but the one
-actually running).
+- **Fork** — anvil fork of Monad mainnet (chain 143, block ~107.48M, taken again after a restart), XorrDelegation
+  `0xaaa0…196e`, the executor on :8787, the web build on :8082, signed in through Privy's real email-code form as
+  `test-0356@privy.io` (wallet `0xB85A…0E897`).
+- **Monad testnet** (10143) — XorrDelegation `0x5995…0bd4b` (Sourcify-verified), the executor on :8788, the web build on
+  :8081, signed in as `test-4668@privy.io` (wallet `0x0EAc…3c16`, Perpl desk `0x3323…11b8`).
+- Every UI claim below was checked in a real Chromium (Playwright, headless) with every executor request, its status
+  and its answer logged per screen, and zero console errors unless stated. Every on-chain claim was checked by reading
+  the receipt. Capability research was re-checked against the sponsors' docs, npm, GitHub and live endpoints the same
+  day; sources are linked in §2.
 
-Legend: **USED** = a real call in a real flow a judge can trigger and see · **UNWIRED** = a real call that works, but no
-product flow or screen reaches it · **IMPORTED-UNUSED** · **FAKED** · **MISSING**.
+Sponsors: the ones `docs/METROPOLIS.md` targets — **Agora (AUSD), Perpl, Kuru, Mera, Chainlink (feeds + CRE), Envio,
+Nansen, MetaMask Agent Wallet** — plus Monad itself and Privy (not targeted, but the account layer that is running).
+
+Legend: **USED** = a real call in a real flow a judge can trigger and see work · **UNWIRED** = real code, but no flow has
+ever run it · **IMPORTED-UNUSED** · **FAKED** · **MISSING**.
 
 ## 1. The honest status, first
 
-**Of the eight sponsors we aimed for, not one is used in a flow a judge can see.** Three are called for real from the
-executor (Kuru, Perpl, Chainlink on Monad) behind two endpoints no screen requests. AUSD is read into a total and never
-named. Five (Mera, Envio, Chainlink CRE, Nansen, MetaMask Agent Wallet) have zero lines of code. Nothing is faked — no
-mocked Kuru or Perpl response exists anywhere — but the Monad build still shows another chain's data where a Monad judge
-will look first, which reads worse than fake.
+**Four sponsors are genuinely used in flows a judge can trigger: Perpl, Agora AUSD, Chainlink Data Feeds and Kuru.** Two
+of those are deep: Perpl (real orders on testnet through Perpl's own delegated account) and Chainlink (a price gate that
+vetoes council trades). Kuru is read-only: it prices, it never fills. **Five are absent: Mera, Chainlink CRE, Envio,
+Nansen, MetaMask Agent Wallet** — zero lines of code, and no credentials for any of them in the repo or env. **Nothing
+is faked**: no mocked sponsor response exists anywhere, and the morning's wrong-chain contradictions (Robinhood Chain
+feeds in the council, a stock-token pitch) are gone — the full crawl of 91 routes finds none.
 
-| Sponsor | Status | Depth | Exactly where |
+| Sponsor | Status | Depth | Where, and the proof |
 |---|---|---|---|
-| **Monad** (the chain) | **USED** | Core | Contracts deployed on the fork; `prove-monad.ts` fills, cap refusal mined, revoke (`docs/evidence/prove-monad-fork-2026-09-24.txt`); app's Network screen reads chain 143 live (block 107,412,912, gas 9.9994 MON). **Not yet on Monad testnet** (deployer unfunded). |
-| **Kuru** | **UNWIRED** | 1 view call | `server/src/monad/kuru.ts:78` `bestBidAsk()` via `GET /monad/crosscheck` — live: MON/USDC bid 0.024024 / ask 0.024033. **0 callers** outside `server/src/monad/`; **0 app requests** (Chrome network log, Home/Markets/Council/Network/Portfolio). No order, no swap, no KuruFlow, no depth, no vault. And it reads resting orders only: MON/AUSD's CLOB is empty on-chain while Kuru's API quotes it two-sided at $0.0206 (vault liquidity) — `kuru.ts` cannot see that. |
-| **Perpl** | **UNWIRED** | 1 public GET | `server/src/monad/perpl.ts:92` `GET app.perpl.xyz/api/v1/pub/context` via `GET /monad/perpl` — live: 9 markets, BTC $84,316, MON $0.024064. 0 callers, 0 app requests. No API key, no order, no position, no websocket. `fundingRateRaw` is passed through unconverted although Perpl documents the unit (micros per interval: `-40` = −0.004%) — the "unknown unit" comment is now wrong. |
-| **Agora AUSD** | **READ, NOT DISPLAYED** | Balance read | Registry `server/src/venues/tokens.ts:97`; price id `server/src/market/ids.ts:42`. Test: 25 real AUSD moved on the fork from Perpl's Exchange (tx `0x16814cb7…79af4`) → Home and Portfolio total **$25.00**, but Positions "0 open", Cash **$0.00**, and the word AUSD appears nowhere. No faucet, no Perpl margin, no permit. The fork faucet cannot give AUSD (its balance slot is not found by `dealErc20`; 41 slots probed). |
-| **Chainlink — Data Feeds on Monad** | **UNWIRED** | View calls | `server/src/monad/chainlink.ts` (MON, ETH, USDC, AUSD) via `/monad/crosscheck` — live MON $0.024027, 22 s old. 0 callers. |
-| **Chainlink — as the app uses it** | **USED, WRONG CHAIN** | Core to the council | The Monad build's Council (`/council`, `server/src/council/inputs.ts:20,85`) reads **Robinhood Chain** Chainlink feeds and **GMX on Arbitrum**. Live round on this build: "Chainlink $225.55 (133 min old), pool $225.72" for **NVDA** — a real number from another chain. The Sources screen (`app/sources.tsx:58`) describes Robinhood Chain feeds and "the v3 pool against USDG". A technical judge would catch this in under a minute. |
+| **Monad** (the chain) | **USED** | Core | Testnet: XorrDelegation `0x5995…0bd4b` + anchor, Sourcify-verified (`contracts/deployments/monad-testnet.json`). Fork of mainnet: grant, fills, `DailyCapExceeded`, revoke (`docs/evidence/prove-monad-fork-2026-09-24.txt`); today, on the re-taken fork, a Privy-signed grant (nonce 1→6), a $5 USDC send (25,000 → 24,995, on chain) and an agent's own-wallet buy (`0x63eeb9e3…`, status 1). Spot fills exist **only on the fork**: Monad testnet has no spot venue we settle through. |
+| **Perpl** | **USED** | Core (testnet) | `server/src/monad/perpl-desk.ts`, `perpl-chain.ts`, `perpl-routes.ts` (`/perps/desk`, `/markets`, `/orders`, `/order`, `/caps`, `/desk/create`, `/desk/consent`, `/fund-test`). The owner's desk is Perpl's own **DelegatedAccount** (factory `createWithSignature`; xorr's operator key trades, never withdraws). On chain: 6 filled MON orders — 2 by the owner (`0x78052dff…`, `0x7ee2180b…`, status 1, from operator `0x0b21…453f` to desk `0x3323…11b8`) and **4 by an agent**, Momentum Scout (status 1, operator `0xb388…` → desk `0xa21f…`), plus 1 refused by its caps. The Perps screen (testnet) live: "Agent can trade · can't withdraw", "Wallet: 499.80 AUSD", desk, limits; requests `/perps/desk|markets|orders`, all 200. Public `/v1/pub/context` feeds the **council's macro seat** (live round tonight: "MON longs pay 0.0056%/h") and the fork's `/perpl` screen ($1.85M OI, 9 markets, updated 1 s ago). |
+| ↳ Perpl — **live blocker** | **BROKEN RIGHT NOW** | — | The next order would fail for gas. One order ≈ 426k gas × 1.1 × 102 gwei = **0.048 MON**; the operator key holds **0.021 MON**, and the delegate key that tops operators up (`0xEe7d…c49f`) holds **0.0006 MON**. The faucet key (`0x5C19…2D938`) holds 0.0074 MON, so "Get test funds" cannot send gas either. A judge pressing Long tonight gets a refusal, not a trade. Owner action: fund those keys from faucet.monad.xyz. |
+| ↳ Perpl — never run | **UNWIRED** | — | Council-voted Perpl orders: `server/src/executor/council-executor.ts:86` routes an approved round to Perpl on testnet, but **no council round has ever been convened on testnet** (0 rows). Perpl's authenticated API, WebSocket, TP/SL triggers and builder codes: **MISSING**. |
+| **Agora AUSD** | **USED** | Deep (testnet) | Perpl margin: the desk is funded and withdrawn in AUSD (earlier today: withdrew 149.80 AUSD). Portfolio (testnet) live: "CASH · AUSD $499.80 · 1 AUSD = $0.9998 · Chainlink" — the chain holds 499.800293 AUSD; requests `/wallet/balance` and `/monad/feed/AUSD`, both 200. `/perps/fund-test` asks **Agora's faucet** `requestFunds` — which is **empty tonight** (`InsufficientFunds()`), so it falls back to the deployment's own reserve (8,850 AUSD, real transfers). **Not named on Home or Deposit**; permit / EIP-3009 unused. |
+| **Chainlink — Data Feeds on Monad** | **USED** | Core | `server/src/monad/chainlink.ts` → the council's price desk vetoes a round whose fill is > 150 bps from Chainlink or whose round is stale (`server/src/council/monad-inputs.ts`). Live round tonight: "Chainlink $0.02396 (1 min old), fill $0.02372 on Uniswap v3 …, Kuru mid $0.02396, 98.2 bps apart (limit 150)". Also the trend seat (Chainlink over 8 rounds), the asset screen's three-way MON price, and the AUSD peg on Portfolio (`GET /monad/feed/:symbol`, public). **Not in the contract** — a manual order is not price-gated (PLAN P2.2 in progress). |
+| **Kuru** | **USED (reads only)** | Surface–Deep | `server/src/monad/kuru.ts` `bestBidAsk` on MON/USDC → the council's price desk (above) and the asset screen ("Uniswap $0.02399 · Kuru $0.02396 · Chainlink $0.02395 · 15.7 bps apart", `GET /monad/crosscheck` 200). **No order has ever gone through Kuru**: no market order, limit order, KuruFlow, depth, vault or stream. The Kuru bounty asks for trades *routed through Kuru's book* — **not met**. Kuru's testnet V2 router exists and is unused (`app/(tabs)/index.tsx:615` says so). |
+| **Mera** | **MISSING** | — | 0 references (the only "passkey" is a comment in `src/auth/PrivyProvider.native.tsx:4`). Sign-in is Privy. This leaves **the Agora $10K bounty's first requirement unmet**, and both Mera bounties. |
 | **Chainlink CRE** | **MISSING** | — | 0 references. |
-| **Chainlink wrapped-xStock feeds on Monad** | **MISSING** (and a correction) | — | Live on 143: wNVDAx $225.84, wTSLAx $380.16, wSPYx $771.78, wQQQx $743.37 (Chainlink directory, "Calculated"). `docs/METROPOLIS.md` said Monad has no tokenized stocks; that holds for Monad's official token list, but Chainlink prices wrapped xStocks on Monad, so the tokens likely exist there. Their contracts were not located (not in the 114-token list; rate limits blocked CoinGecko and GitHub search). |
-| **Mera** | **MISSING** | — | 0 references. Sign-in is Privy. |
-| **Envio** | **MISSING** | — | 0 references. `subgraph/` and `subgraph-aqua/` are The Graph for Base — dead weight here. |
-| **Nansen** | **MISSING** | — | 0 references. |
-| **MetaMask Agent Wallet** | **MISSING** | — | "metamask" appears only as a login-wallet option inside Privy's modal (`src/auth/PrivyProvider.web.tsx:47`) — unrelated to the Agent Wallet or its plugins. |
-| **Privy** (not targeted) | **USED** | Core | Real email-code sign-in (verified live), embedded wallet. We decided to replace it with Mera (D1). |
+| **Envio** | **MISSING** | — | 0 references. History reads our contract's logs straight from the RPC (`server/src/routes/history.ts`, 1.7 s after today's fix). |
+| **Nansen** | **MISSING** | — | 0 references; no key. |
+| **MetaMask Agent Wallet** | **MISSING** | — | 0 references. |
+| **Privy** (not targeted) | **USED** | Core | Real email-code sign-in and the embedded wallet that signs every grant, desk and send — verified today in F1, F3, F14, F17, F19 (`docs/TESTPLAN-MONAD.md`). We decided to replace it with Mera (D1); not done. |
 
-**Faked:** nothing sponsor-related. But three product surfaces on the Monad build contradict the chain and would read as
-fake to a judge: the welcome line ("Tokenized US stocks, traded by agents", `src/design/brand.ts:24`), the Council's
-NVDA/TSLA/AAPL/SPY pills voting on Robinhood Chain and GMX data, and Markets listing BTC/ETH/AAVE/LINK from CoinGecko
-with **MON absent** — the one asset with the deep pool and three live on-chain prices.
+**Against the bounties, today:**
 
-## 2. What each sponsor actually offers (researched, not guessed) — and our use of each capability
+| Bounty | Status |
+|---|---|
+| Agora — Best Mobile Trading App ($10K): Mera auth + AUSD held and shown + a Perpl trade | 2 of 3. **No Mera.** AUSD and Perpl real on testnet (Perpl gas-blocked tonight). Mobile: the Perps signer exists natively (`src/auth/useGrantDelegation.native.ts`), **not run on a device** in this audit. |
+| Perpl — Best use of the API ($5K): a production-ready bot on Perpl | Real agent orders inside caps, on Perpl's own delegated account. Missing: the council path run, TP/SL, WebSocket, a live gas budget. |
+| Kuru — Consumer Trading App ($5K): trades routed through Kuru's book | **Not met** (reads only). |
+| Mera ×2 ($2.5K each) | **Not met.** |
+| Perpl — Risk tool ($3K) | Partly: positions with entry, mark, PnL, liquidation price (testnet); protocol-wide OI and funding (`/perpl`). No funding history, skew, alerts. |
+| Chainlink CRE ($3K) | **Not met.** (Feeds are used; the bounty is for CRE.) |
+| Envio ($1K) · Nansen ($5K pool) · MetaMask plugin ($2.5K) | **Not met.** |
 
-Sources are the sponsors' docs, SDK source read from npm/GitHub, and live calls on 2026-09-24.
+**Polish a judge would notice (not sponsor-specific):** the WMON asset screen says a fill "would happen nearer $0.02",
+rounding a sub-cent price; the market catalog lives in a folder named `src/data/fixtures/` though it holds no prices — a
+grep for "fixtures" invites the wrong question.
 
-### Perpl — fully on-chain perps CLOB on Monad, AUSD margin, isolated only
+## 2. What each sponsor actually offers — and our use of each capability
+
+Re-checked 2026-09-24 against live docs, npm, GitHub and on-chain reads; corrections to the morning's research are
+marked ✱.
+
+### Perpl — on-chain perps CLOB on Monad, AUSD margin, isolated only
 | Capability | Ours |
 |---|---|
-| Public REST `/v1/pub/context`, candles, announcements | `/pub/context` **UNWIRED** |
-| **API keys**: Ed25519, enrolled with an EIP-712 wallet signature; `scope_mask` 1 read / 2 trade; **can never withdraw or transfer out**; `expires_at`; up to 4 IP CIDRs; revoke in Perpl's UI | MISSING |
-| Authenticated REST: account-history, fills, order-history, position-history | MISSING |
-| WebSocket market data (market-state, funding, order-book, trades, candles) and trading (`mt:29` sign-in, orders `mt:22`, positions/orders/wallet streams) | MISSING |
-| Orders: Open/Close Long/Short, GTC/PostOnly/FOK/IOC; TP/SL triggers; reduce-only via Close | MISSING |
-| On-chain Exchange: `createAccount` (min $10), `depositCollateral`, `withdrawCollateral`, `execOrders` | MISSING |
-| Funding every 8,571 blocks, `rate` in micros/interval; liquidation at 5% maintenance for MON | Funding read raw, unit mislabelled |
+| **DelegatedAccount** (github.com/PerplFoundation/delegated-account): owner owns; operators may `execOrder(s)`, `increasePositionCollateral`, `requestDecreasePositionCollateral`, `depositCollateral`, `allowOrderForwarding`; may **not** withdraw, create accounts, rescue tokens or manage operators; operator added by EIP-712 consent; no expiry or size cap (caps must be ours); Perpl's beacon can upgrade all accounts. Factory mainnet `0xc535…907a`, testnet `0xf425…7209` | **USED** — `createWithSignature`, `execOrder`, `getPosition`, operator consent/resume; our caps (per order, per day, leverage) enforced before every order |
+| Public REST `/v1/pub/context` (mark, book top, OI, funding, leverage), candles, announcements; ✱ funding history `GET /api/v1/market-data/:id/funding/:from-:to` | `/pub/context` **USED** (council seat, `/perpl`, Perps); candles, announcements, funding history MISSING |
+| API keys: Ed25519, EIP-712 enrolment, `scope_mask` 1 read / 2 trade, `expires_at`, ≤ 4 IP CIDRs, ✱ ≤ 16 active per profile, a revoked key can never return; delegated accounts via `target_profile`; enrolment needs a Perpl-whitelisted Origin | MISSING |
+| WebSocket market data and trading; ✱ API/WS orders fail with reason 34 `OrderForwardingNotAllowed` until the account calls `allowOrderForwarding(true)` | MISSING |
+| Orders: Open/Close Long/Short, GTC/PostOnly/FOK/IOC, TP/SL triggers | Open/Close **USED**; TP/SL MISSING |
+| Funding: rate in micros (10⁻⁶) per interval; ✱ interval **2,580 s (~43 min)** live, not 8 h / hourly | **USED correctly** (40 → 0.0056%/h) |
+| ✱ Builder codes: id 1–255 by contacting Perpl, bound to a key at enrolment, ≤ 0.1% per order | MISSING |
 
-Gate: programmatic key enrolment needs an Origin **whitelisted by Perpl**; Perpl geo-blocks US and GB.
-Meaningful use (bounties): "a production-ready trading bot or automation system on Perpl"; the risk tool is judged on
-real-time data, a protocol view and a wallet view, signal over clutter.
+✱ Geo-block: BY, CU, GB, IR, KP, RU, SY, UA, US (our notice named BY, CU, IR, KP, RU, SY, UA besides US/GB — correct).
+Sources: docs.perpl.xyz (authentication, recipes, builder-codes) · github.com/PerplFoundation/api-docs (types, websocket).
 
 ### Kuru — on-chain CLOB (v1 on mainnet) with AMM vaults
 | Capability | Ours |
 |---|---|
-| OrderBook reads: `bestBidAsk`, `getL2Book`, `getMarketParams` | `bestBidAsk` **UNWIRED**; the rest MISSING |
-| Limit orders `addBuyOrder/addSellOrder(price, size, postOnly)`, `batchUpdate`, cancels, flip orders | MISSING |
-| Market orders `placeAndExecuteMarketBuy/Sell(size, minOut, isMargin, isFillOrKill)` | MISSING |
-| Router `anyToAnySwap` (multi-hop) | MISSING |
-| MarginAccount (maker proceeds credited, deposit/withdraw) | MISSING |
-| KuruAMMVault per market (deposit/withdraw along an x·y=k curve, 10–500 bps spread) | MISSING — and invisible to our book read |
-| KuruFlow aggregator `POST /api/quote` (JWT from `/api/generate-token`) → ready calldata | MISSING |
-| Market-data REST/WS (`exchange.kuru.io`: depth, trades, 24h ticker, klines; `wss://…/ws` depth/trade streams) | MISSING |
-| Market creation (`Router.deployProxy`) | Not possible for us: **permissioned** (`Unauthorized()` from any other address) |
+| OrderBook reads `bestBidAsk`, `getL2Book`, `getMarketParams` | `bestBidAsk` **USED**; the rest MISSING |
+| Limit orders, flip orders, cancels; ✱ `batchUpdate` (live in bytecode and `@kuru-labs/kuru-sdk` 0.0.95, ethers v5; absent from the docs) | MISSING |
+| Market orders `placeAndExecuteMarketBuy/Sell` — ✱ **`uint256 _minOut`** (the docs' `uint96` gives a selector the live MON/USDC implementation lacks; use the SDK ABI) | MISSING |
+| Router `anyToAnySwap`; MarginAccount; AMM vaults | MISSING |
+| ✱ KuruFlow quote API at `https://ws.kuru.io` — JWT per user address (1 req/s) or `X-API-Key`; `referrerAddress` / `referrerFeeBps` | MISSING |
+| ✱ Market data: Binance-style REST `exchange.kuru.io/api/v3` + `wss://exchange.kuru.io/ws`, 12 symbols (`MON_USDC` …) incl. Uniswap pools | MISSING |
+| Testnet V2 router and MON/USDC book (code on 10143) | MISSING |
+| Market creation `Router.deployProxy` — permissioned; ✱ MonadDeployer unverified | Not available to us |
 
-Meaningful use: "a focused spot trading product routing trades through Kuru's on-chain order book" with target users,
-evidence of demand, acquisition/retention and a continuation plan.
+Bounty (confirmed from a participant's copy): a focused spot product routing through Kuru's book, with target users,
+demand evidence, acquisition/retention and a continuation plan. Sources: docs.kuru.io/contracts/Contract-addresses ·
+docs.kuru.io/kuru-flow/openapi.json · github.com/EndPx/kairos/blob/main/docs/HACKATHON_REQUIREMENTS.md.
 
 ### Agora — AUSD
 | Capability | Ours |
 |---|---|
-| AUSD balance (6 dp) | Read into the total; **never displayed** |
-| ERC-2612 `permit`, EIP-3009 `transferWithAuthorization` | MISSING |
-| Chainlink AUSD/USD on Monad | In `chainlink.ts`, UNWIRED |
-| Supply metrics API `api.agora.finance/v0/metrics` (Monad total 155.4M) | MISSING |
-| Testnet faucet `requestFunds(address)` at `0xd236…e6C` (live on 10143) | MISSING |
-| Mint/redeem | Not possible for us: org-gated with compliance |
-| Liquidity: Perpl sole collateral (~$3.9M), Kuru MON/AUSD, AUSD/USDC, WBTC/AUSD, Curve | Unused |
+| AUSD balance (6 dp) | **USED** (testnet Portfolio; Perpl margin) |
+| ERC-2612 `permit` (both variants), EIP-3009 `transfer/receiveWithAuthorization` (incl. bytes-signature variants for smart wallets); domain "Agora Dollar" v1 | MISSING |
+| Chainlink AUSD/USD on Monad (8 dp; ✱ an 18-dp "shared-svr" duplicate exists — don't mix) | **USED** (peg line) |
+| Metrics API `api.agora.finance/v0/metrics`, no key (✱ Monad: 154.08M total, 142.2M circulating) | MISSING |
+| Testnet faucet `requestFunds(address)` — ✱ **empty now** (`InsufficientFunds()`; one 10,000 drip, 60 s cooldown, 100,000 per address) | **USED**, falls back to our reserve |
+| Mint/redeem | Org-gated with compliance; not available |
 
-Bounty (Best Mobile Trading App): a **mobile app** that **authenticates via Mera**, **holds and displays an AUSD balance**
-and **executes trades through Perpl** — we meet none of the three yet.
+Bounty: "creative use of the three integrations together" (Mera + AUSD + Perpl). Sources:
+docs.agora.finance/developer/contract-deployments · docs.agora.finance/openapi.json ·
+github.com/frankolien/desk/blob/main/docs/00-prd.md.
 
 ### Mera — passkey accounts (`@category-labs/mera` 0.2.0, preview)
 | Capability | Ours |
 |---|---|
-| `createPasskeyWithPrfOutput` / `getPasskeyPrfOutput` (32-byte PRF, salts as namespaces) | MISSING |
-| App-side derivation: PRF → BIP-39 → `m/44'/60'/0'/0/i` (MetaMask-importable) | MISSING |
-| `createSecp256k1SigningSession` → `toViemAccount` (prompt-free signing incl. EIP-7702 `signAuthorization`); `end()` zeroes the key; **no built-in expiry or scope** | MISSING |
-| Secret vaults (AES-256-GCM, HKDF) storable in untrusted storage | MISSING |
-| React Native (`react-native-passkey`, iOS 18+/Android 9+, AASA + assetlinks, dev build) | MISSING |
+| `createPasskeyWithPrfOutput` / `getPasskeyPrfOutput` (32-byte PRF; salts as namespaces) | MISSING |
+| PRF → BIP-39 → `m/44'/60'/0'/0/i`; ✱ Ed25519 sessions and Solana addresses too | MISSING |
+| `createSecp256k1SigningSession` → `toViemAccount` (incl. EIP-7702 `signAuthorization`); `end()` zeroes the key; **no expiry, no scope** | MISSING |
+| Secret vaults (AES-256-GCM, HKDF) | MISSING |
+| React Native (iOS 18+, Android 9+; AASA + assetlinks; one passkey domain; on desktop Chrome, saved to Google Password Manager); ✱ an **Expo 57 mobile demo** in Mera's repo (`demos/mobile`) | MISSING |
 
-Bounties: *Mera-Powered UX* — one passkey prompt, prompt-free signing in a clearly scoped session, identity rebuilt after
-clearing storage or on a fresh device. *One Passkey, Many Keys* — at least one PRF namespace doing non-wallet work; their
-own ideas include separate identities per agent and encrypted AI-agent memory.
+Bounties: UX — ✱ judged on **time to first transaction** and **"clean session-expiry UX"** (which Mera does not provide,
+so it has to be built); Many Keys — a PRF namespace doing non-wallet work, live cross-device. Sources:
+docs.monad.xyz/guides/mera · npm · github.com/category-labs/mera · github.com/vaibhav0xq/turnstile (research/sources).
 
 ### Chainlink on Monad
 | Capability | Ours |
 |---|---|
-| Data Feeds: MON, ETH, BTC, SOL, LINK, USDC, USDT, AUSD, WBTC, XAU, EUR, LSTs, **wNVDAx/wTSLAx/wSPYx/wQQQx** | 4 in `chainlink.ts`, UNWIRED |
-| **CRE** (TS SDK 1.18+ on `monad-mainnet`): cron / HTTP / EVM-log triggers, HTTP fetch with consensus, EVM read, `writeReport` → KeystoneForwarder (`0x76c9…5E62` prod, `0x9eF6…784d` simulation) → a `ReceiverTemplate` consumer; `cre workflow simulate --broadcast` gives a real tx | MISSING |
-| CCIP on Monad (router `0x3356…CaDB`) | MISSING |
-| Data Streams (VerifierProxy on Monad; access gated by Chainlink) | Not available to us without access |
+| Data Feeds: MON, ETH, BTC, SOL, LINK, USDC, USDT, AUSD, WBTC, XAU, EUR, LSTs, ✱ six wrapped xStocks (wNVDAx, wTSLAx, wSPYx, wQQQx, wEWYx, wSPCXx — "24-5", likely market-hours only) | MON, ETH, BTC, USDC, AUSD **USED** |
+| **CRE** on `monad-mainnet` (✱ CLI ≥ 1.29) and ✱ **`monad-testnet`** (CLI ≥ 1.30; forwarders `0xB9F7…d192` simulation, `0xF834…4482` production): cron / HTTP / EVM-log triggers, HTTP with consensus, EVM read, `writeReport` → forwarder → `ReceiverTemplate`; `cre workflow simulate --broadcast` gives a real tx; ✱ deployment needs `cre account access` approval | MISSING |
+| CCIP (router `0x3356…CaDB`) | MISSING |
+| Data Streams (✱ verifier `0xEd81…48c8`, testnet `0x7279…Db64`; access gated) | Not available without access |
 | VRF, Automation | Not on Monad |
+
+Bounty (participant paraphrase): "an ordinary script labelled CRE is not sufficient"; the receiver must be implemented
+correctly. Sources: docs.chain.link/cre/supported-networks-ts · docs.chain.link/cre/reference/cli/workflow ·
+reference-data-directory.vercel.app/feeds-monad-mainnet.json.
 
 ### Envio
 | Capability | Ours |
 |---|---|
-| HyperIndex (`config.yaml` + `schema.graphql` + handlers, effects, factories, multichain, reorg-safe, GraphQL), Envio Cloud | MISSING |
-| HyperSync `monad.hypersync.xyz` (token needed), HyperRPC | MISSING |
+| HyperIndex (`config.yaml` + `schema.graphql` + handlers; effects, multichain, reorg-safe, GraphQL) | MISSING |
+| HyperSync / HyperRPC on 143 and 10143 (token required) | MISSING |
+| ✱ Envio Cloud free plan deletes a deployment after **30 days** — deploy after ~Sep 28 or self-host, or it is gone before judging ends (Oct 27); hosted indexers need no HyperSync token | — |
 
-Judged on depth (multichain, aggregated entities), a live working product, originality, craft; deliverables are the
-three files in a public repo, something consuming the data, and a demo.
+Sources: docs.envio.dev (hypersync-supported-networks, hosted-service-billing).
 
 ### Nansen
-Monad (`chain: "monad"`) is covered for Smart Money netflow/holdings/DEX trades, Token God Mode flows/holders/PnL and
-Profiler. REST with an API key (free tier: 100 trial credits then 10/day), MCP (24 tools), CLI — and **x402
-pay-per-call with USDC on Monad itself** ($0.05 for smart-money netflow; the 402 response lists `eip155:143` USDC).
-Ours: MISSING. Bounty: "a product experience powered by Nansen data that goes beyond exposing raw data".
+Monad (`chain: "monad"`) covered for all smart-money data incl. history. Free tier 100 trial credits then 10/day
+(smart-money calls cost 5 → about two a day); MCP with 24 tools; x402 pay-per-call with USDC on 143, ✱ settled through
+Molandak, basic calls $0.01, smart-money netflow $0.05, first 100 calls half price with `X-Payer-Address`. ✱ Licence:
+redistributing smart-money netflows needs Nansen's approval and significant modification; redistributing holdings is
+prohibited — **show a signal we derive, never raw numbers**. Ours: MISSING. Source: docs.nansen.ai (incl.
+mcp/redistribution-guidelines).
 
 ### MetaMask Agent Wallet
-The `mm` CLI (`@metamask/agent-wallet` 7.0.0) with server wallets (TEE) and Guard-Mode policies; Monad 143 and 10143
-preconfigured; plugins are npm oclif packages with a manifest declaring `wallet-read` / `wallet-submit` and
-`targetChains`, executing through `walletExecutor` so Blockaid scanning and policy still apply; beta, behind
-`experimentalPlugins`. Smart Accounts Kit (ERC-7710 delegations) supports Monad. Ours: MISSING.
+`@metamask/agent-wallet` 7.0.0; server wallets in a TEE, Blockaid scanning, Guard-Mode policies; Monad 143 and 10143
+preconfigured; plugins (beta, `experimentalPlugins`) are npm oclif packages executing through `walletExecutor` (policy
+still applies). ✱ Capabilities are `wallet-read`, `wallet-submit`, `network-manage` (`mnemonic-read`/`config-write` are
+rejected); `targetChains` is per command; the manifest needs `schemaVersion: 1`, `minCliVersion: ^6.2.0` and
+`dataAccess` per command; plugins run in-process, unsandboxed; local/git installs refused by default. ✱ ERC-7715 Advanced
+Permissions on Monad mainnet only. Ours: MISSING. Sources: docs.metamask.io/agent-wallet (plugins, architecture,
+supported-chains) · docs.metamask.io/smart-accounts-kit (supported-networks).
 
 ## 3. Where deeper integration genuinely fits — and where it would be forced
 
-Walked in the app, surface by surface:
+Walked surface by surface in the running app:
 
-- **Sign-in (`/wallet`)** — Mera belongs here outright; the Agora bounty requires it. Organic.
-- **Home balance card** — AUSD belongs here as a named line, with its peg (Chainlink AUSD/USD). Organic: it is money the
-  user already holds.
-- **Permission / grant screen** — the Perpl trade-only API key is the perps half of "a permission you can revoke"; an AUSD
-  margin cap sits beside the USDC daily cap. Organic — this is the product's own thesis applied to a sponsor that was
-  built for it (keys that cannot withdraw).
-- **Council** — seats must read Monad: Kuru's book, Chainlink MON/USD, Perpl funding and OI. Organic; right now it reads
-  Robinhood Chain and GMX.
-- **Order ticket / Markets** — Kuru is the venue for MON; its live depth stream is the most "Monad-fast" thing we could put
-  on screen. Organic.
-- **Hedge** (hidden on Monad) — becomes Perpl. Organic.
-- **History, Verify, Leaderboard** — fed by an Envio index of our own contract's events. Organic (they need an index today
-  and read the executor's database).
-- **Audit anchor** — a CRE workflow attesting each council round on Monad. Organic for the "every vote next to its
-  transaction" pitch.
-- **Agents** — Mera PRF identities per agent and encrypted memory. Organic: agents already have their own derived keys.
+- **Sign-in (`/wallet`)** — Mera, outright; Agora requires it. The one missing piece of the $10K bounty. Organic.
+- **Perps desk** — already Perpl's own delegated account. What is organic next: TP/SL on every agent position, funding
+  history on the position, the council path actually run, a live gas budget the screen can see. Organic.
+- **Order ticket / Markets (MON)** — Kuru is the venue whose book we already read; routing the fill through it (market
+  order with `minOut` from the book) turns a price source into the venue. Organic — and on testnet, Kuru's V2 router is
+  the only spot venue there is.
+- **Council** — seats already read Chainlink, Kuru and Perpl. Organic next: book depth as a seat, CRE attesting the round.
+- **Portfolio / Home** — AUSD is shown on Portfolio with its Chainlink peg; Home and Deposit do not name it. Organic.
+- **History / Verify** — an Envio index of our own contract's events. Organic; today it reads the RPC.
+- **Agents** — Mera PRF identities and encrypted memory: agents already have their own keys. Organic.
 
-Forced — say no, or keep it off the demo path:
-- **Kuru "New Assets and Markets"** — market creation is permissioned; we cannot deploy a market without Kuru.
-- **AUSD mint/redeem** — org-gated with compliance review; a trading app cannot call it.
-- **MetaMask Agent Wallet plugin** — a separate CLI artifact, off to the side of a mobile app; worth it only as
-  "xorr's permission for any agent", built last.
-- **Nansen** — coverage of Monad smart money is real but thin data is likely; a seat that votes on noise would weaken the
-  council. Use it where it changes a decision, or not at all.
-- **Chainlink VRF / Automation** — not on Monad. **Data Streams** — gated.
-- **Privy together with Mera** — both define the account layer; keeping Privy undercuts the Mera and Agora bounties.
+Forced — keep off the demo path, or say no:
+- **Kuru market creation** — permissioned. **AUSD mint/redeem** — compliance-gated.
+- **Nansen** — thin Monad smart-money data and a licence that forbids showing the raw numbers; only where a derived
+  signal changes a vote, else not at all.
+- **MetaMask Agent Wallet plugin** — a CLI artifact beside a mobile app; worth it only as "xorr's permission for any
+  agent", last.
+- **Chainlink VRF/Automation** (not on Monad), **Data Streams** (gated).
+- **Privy beside Mera** — two account layers; keeping Privy undercuts Agora and both Mera bounties.
 
-## 4. Fifty features that use the sponsors for real — ranked by how load-bearing the sponsor tech is
+## 4. Close these first — they exist, but a judge cannot see them work tonight
 
-Top = impossible without that sponsor's specific capability. Bottom = the sponsor is swappable. Depth: **Core** (the
-feature is the integration) · **Deep** (a central part) · **Surface** (a call or display).
+1. **Gas on testnet** (owner action): the Perpl operator and delegate keys and the faucet key are below one order's gas.
+   Until they are funded, the only Perpl flow a judge can try refuses.
+2. **Run the council → Perpl path once** on testnet (code present, never run) and show the round next to its order.
+3. **Name AUSD on Home and Deposit** (balance and peg), not only Portfolio.
+4. **Price-gate the manual order** with the same Chainlink check the council uses (PLAN P2.2).
+5. **Run Perps on a device** (Expo) — the Agora bounty is for a mobile app.
 
-| # | Feature | Sponsor capability used | Depth | Why a judge on that track notices |
+## 5. Fifty features that use the sponsors for real — ranked by how load-bearing the sponsor tech is
+
+Nothing here exists yet. Top = impossible without that sponsor's specific capability; bottom = the sponsor is swappable.
+Depth: **Core** (the feature is the integration) · **Deep** (a central part) · **Surface** (a call or a display).
+
+| # | Feature | Sponsor capability | Depth | Why a judge on that track notices |
 |---|---|---|---|---|
-| 1 | **Trade-only Perpl key as the agents' perps permission** — the user signs Perpl's EIP-712 enrolment for an Ed25519 key with `scope_mask=2` and `expires_at` = the grant's end; revoke in xorr revokes it | Perpl API-key model (scope, expiry, withdrawals impossible) | Core | Uses the one Perpl property that makes a bot safe to hand money to; nobody else will turn it into a user-facing permission |
-| 2 | **Council-voted Perpl orders** — every approved round sends an order on `/ws/v1/trading` (`mt:22`, IOC or PostOnly) and stores the order id and the forwarding tx beside the votes | Perpl trading WebSocket, order flags, on-chain forwarding | Core | "A production-ready trading bot on Perpl", with an audit trail per order |
-| 3 | **AUSD margin moved on-chain inside the cap** — `XorrDelegation.spendVia` → Perpl `createAccount` / `depositCollateral` from the owner's AUSD, capped per day; agents can move margin in, never out | Perpl Exchange contract + AUSD | Core | Agora + Perpl together, with the limit enforced by a contract |
-| 4 | **Mera passkey sign-in replacing Privy** — `createPasskeyWithPrfOutput` → BIP-39 → `m/44'/60'/0'/0/0` → `toViemAccount`; one prompt, web and Expo | Mera PRF + viem adapter + RN client | Core | The Agora bounty's first requirement and Mera UX's first deliverable |
-| 5 | **Per-agent identities from PRF namespaces** — each hired agent's key derived with salt `xorr.agent.<id>`; never stored, identical on any device | Mera salts-as-namespaces | Core | The Many Keys bounty's own listed idea, done on a product that already has agents |
-| 6 | **Encrypted agent memory** — each agent's notes and state sealed with `createSecretVaultWithExistingPasskey`, ciphertext in Postgres, decrypted only on the device | Mera secret vaults | Core | Non-wallet use of the key material, "nothing sensitive persisted" |
-| 7 | **Stateless recovery on stage** — "Forget this device" → one passkey prompt → wallet, agents, grants and memory come back from the chain plus the vault | Mera stateless accounts | Core | The Mera UX judges run this test themselves |
-| 8 | **Scoped Mera session = the on-chain grant** — a session key signs prompt-free only inside XorrDelegation's scope; an idle timer calls `end()`; anything outside re-prompts | Mera signing sessions (no built-in scope) + our contract | Core | Solves Mera's missing scope with an on-chain one — exactly the "session design" criterion |
-| 9 | **Kuru maker agent** — posts post-only `addBuyOrder/addSellOrder` on MON/USDC through `spendVia`, re-quotes with `batchUpdate`, tracks fills from `Trade` events | Kuru OrderBook limit orders | Core | Uses the CLOB as a CLOB, not as a swap endpoint |
-| 10 | **Kuru market orders as the default MON route** — `placeAndExecuteMarketBuy` with `minOut` from the live book, tx hash in the council round | Kuru market orders | Core | "Routing trades through Kuru's on-chain order book", literally |
-| 11 | **Live Kuru depth in the order ticket** — the MON book streamed from `wss://exchange.kuru.io/ws` and redrawn per block | Kuru market-data WebSocket | Core | The most visible proof of Monad's speed on screen |
-| 12 | **Depth-aware risk gate** — `getL2Book` before any spend; refuse an order larger than N% of depth within X bps, and say so | Kuru `getL2Book` | Deep | Risk made from order-book reality, not a price |
-| 13 | **KuruFlow best execution** — `/api/quote` vs Uniswap QuoterV2 vs the direct book; execute the best; show the saving | KuruFlow API | Deep | Kuru's own router in the path, measured |
-| 14 | **Delta-neutral carry agent** — MON spot on Kuru + MON short on Perpl when funding pays shorts; funding in micros converted right | Kuru + Perpl funding | Core | Two Monad-native venues combined into a strategy neither offers alone |
-| 15 | **CRE-attested council rounds** — a workflow (cron or EVM-log trigger) fetches Kuru and Perpl with consensus, reads Chainlink MON/USD, and `writeReport`s the round's hash to a `ReceiverTemplate` anchor on Monad | CRE triggers, HTTP consensus, EVM read/write | Core | "An orchestration layer", with a real tx from `simulate --broadcast` |
-| 16 | **CRE circuit breaker** — the workflow watches Chainlink vs Kuru mid; past a threshold it writes a pause the delegation contract checks, so every spend reverts | CRE + Data Feeds + our contract | Core | A DON that can stop a bot on-chain |
-| 17 | **Oracle-bounded fills in the contract** — `XorrDelegation` reads Chainlink MON/USD inside `spend()` and rejects a `minOut` below oracle × (1 − tolerance) | Chainlink Data Feeds on Monad | Core | The contract refuses a bad fill even from a compromised executor |
-| 18 | **Envio index of the permission** — HyperIndex over `Granted`, `Spent`, `Revoked` (+ Kuru `Trade`, Perpl events) feeding History, Verify and the leaderboard via GraphQL | Envio HyperIndex | Core | Replaces the executor's DB for public screens; the three files in the repo |
-| 19 | **Aggregated entities** — per-agent PnL, daily cap use, council approval rate, venue share, computed in handlers | HyperIndex derived entities | Core | The "depth" criterion by name |
-| 20 | **Multichain permission index** — the same schema over Monad testnet and mainnet (and the Arbitrum deployment) | HyperIndex multichain | Deep | Multichain is explicitly scored |
-| 21 | **Perpl risk dashboard, wallet view** — positions, liquidation price vs 5% maintenance, margin ratio, funding paid, fills | Perpl authenticated REST + positions stream | Core | The risk-tool bounty's wallet view |
-| 22 | **Perpl protocol view** — OI, long/short skew, funding and candles per market, one tap from the wallet view | Perpl market-data WS + candles | Core | The risk-tool bounty's protocol view and "seamless switch" |
-| 23 | **TP/SL on every agent perp** — the council sets trigger orders when it opens a position | Perpl trigger orders | Deep | Production-grade automation, not one-shot orders |
-| 24 | **Perpl funding and OI as a council seat** (replacing GMX's Macro Desk) | Perpl public data | Deep | The council finally reads Monad |
-| 25 | **Nansen smart-money seat paid by the agent in Monad USDC** — each netflow read on `chain: "monad"` is an x402 payment of $0.05 USDC on 143 from the agent's own key | Nansen API + x402 on Monad | Core | Agents paying for their own intelligence on Monad; Nansen's CEO judges |
-| 26 | **Follow a smart wallet** — Profiler PnL summary picks Monad wallets worth copying; an agent mirrors them inside the cap | Nansen Profiler | Deep | Beyond raw data: a signal that becomes a capped action |
-| 27 | **AUSD one-signature grant** — `permit` (ERC-2612) instead of an approve transaction, so the grant is one signature | AUSD permit | Deep | Uses a token feature most apps ignore |
-| 28 | **AUSD shown and checked** — a named AUSD line on Home with its Chainlink AUSD/USD peg; a depeg past 50 bps pauses AUSD margin adds | AUSD + Chainlink AUSD/USD | Deep | "Holds and displays an AUSD balance", done properly |
-| 29 | **AUSD testnet faucet button** — `requestFunds(address)` on Monad testnet, a real tx | Agora faucet | Surface | Judges can fund themselves on testnet |
-| 30 | **MetaMask Agent Wallet plugin `mm xorr`** — `grant`, `council`, `stop` commands, `targetChains:[143]`, trades via `walletExecutor` so Blockaid and Guard Mode still apply | Agent Wallet plugin architecture | Core | The bounty is the plugin |
-| 31 | **ERC-7710 delegation as a second permission** — Smart Accounts Kit caveats (allowed targets Kuru/Perpl, period transfer limit) on Monad mainnet | MetaMask Smart Accounts Kit | Deep | A standard permission beside our own contract |
-| 32 | **Mera EIP-7702 one-transaction setup** — the Mera EOA signs an authorization so approve + grant + first Perpl deposit batch into one tx (10-MON reserve respected) | Mera `signAuthorization` + Monad 7702 | Deep | Time-to-first-transaction, a Mera UX criterion |
-| 33 | **Per-conversation E2E keys for agent chat** — messages to each agent encrypted with a PRF-derived key | Mera PRF namespaces | Deep | Another non-wallet namespace |
-| 34 | **Chainlink-priced tokenized stocks on Monad** — wNVDAx/wTSLAx/wSPYx/wQQQx priced and guarded by their Monad feeds, if their tokens trade on Monad | Chainlink "Calculated" feeds | Deep | Restores the stocks pitch on Monad — only if the tokens are real there |
-| 35 | **Idle cash to a Kuru AMM vault** — uninvested USDC earns in the MON/USDC vault, withdrawn before a trade | KuruAMMVault | Deep | Uses Kuru's liquidity layer, not just its book |
-| 36 | **Range agent on Kuru flip orders** — buy-low/sell-high pairs that flip on fill | Kuru flip orders | Deep | A Kuru-only primitive |
-| 37 | **Maker proceeds via MarginAccount** — fills credited to the margin account, swept to the owner | Kuru MarginAccount | Deep | Handles Kuru's real settlement model |
-| 38 | **CRE "ask the council" over HTTP** — an HTTP trigger (Telegram, a webhook) convenes a round and writes its result on Monad | CRE HTTP trigger + write | Deep | External system → chain, the bounty's shape |
-| 39 | **Fund from any chain via CCIP** — USDC from Base or Arbitrum lands on Monad through CCIP | Chainlink CCIP on Monad | Deep | A real cross-chain deposit path |
-| 40 | **HyperSync catch-up** — "Since you looked" backfills fills and council rounds from HyperSync in one query | Envio HyperSync | Deep | Speed you can feel on reopen |
-| 41 | **Kuru candles for MON charts** — `/klines` instead of CoinGecko | Kuru market-data REST | Surface | Charts from the venue that fills |
-| 42 | **Perpl candles on the hedge screen** | Perpl candles | Surface | Consistent data for the perp leg |
-| 43 | **Agora supply on the AUSD screen** — total and circulating on Monad from `api.agora.finance/v0/metrics` | Agora metrics API | Surface | Transparency next to the balance |
-| 44 | **AUSD peg alert** — a notification when Chainlink AUSD/USD moves past a threshold | Chainlink AUSD/USD | Surface | Useful, but any feed would do |
-| 45 | **Portfolio valued by Chainlink on Monad** instead of CoinGecko (ETH, BTC, MON) | Chainlink Data Feeds | Surface | Swappable with any oracle |
+| 1 | **Mera passkey sign-in, Privy removed** — `createPasskeyWithPrfOutput` → BIP-39 → `m/44'/60'/0'/0/0` → `toViemAccount`, on web and Expo (Mera's Expo 57 demo as the reference) | Mera PRF, viem adapter, RN client | Core | Agora's first requirement; Mera UX's first deliverable |
+| 2 | **Passkey-owned Perpl desk** — the Mera account signs the DelegatedAccount's `createWithSignature` and the AUSD deposit: sign-in to a desk only the passkey can withdraw from, in one flow | Mera signing + Perpl DelegatedAccount + AUSD | Core | Agora's "creative use of the three together", in one demo path |
+| 3 | **Session-expiry UX built on the on-chain limits** — a Mera signing session signs prompt-free only inside the grant and desk caps, shows its remaining time, `end()`s on idle and re-prompts outside | Mera sessions (no expiry or scope of their own) + our contract | Core | Mera's judges score "clean session-expiry UX"; Mera leaves it to the app |
+| 4 | **Stateless recovery on stage** — clear storage or a fresh device → one passkey prompt → the same wallet, desk, agents and grants from the chain | Mera deterministic derivation | Core | The Mera UX judges' own test |
+| 5 | **Per-agent identity keys from PRF namespaces** (`xorr.agent.<id>`) — each agent's fingerprint and public key, identical on any device, never stored | Mera salts as namespaces | Core | Many Keys' own listed idea, on a product that already has agents |
+| 6 | **Encrypted agent memory** — each agent's notes and settings in a Mera secret vault; ciphertext in Postgres; the executor never reads plaintext | Mera secret vaults | Core | Non-wallet use of the key material |
+| 7 | **End-to-end encrypted agent chat** — Messages to an agent sealed with a per-conversation PRF key | Mera PRF namespaces | Deep | A second non-wallet namespace, visible in the product |
+| 8 | **EIP-7702 one-transaction setup** — the Mera EOA's `signAuthorization` batches AUSD approve + desk deposit + grant (10-MON reserve respected) | Mera `signAuthorization` on Monad | Deep | Time to first transaction |
+| 9 | **TP/SL on every agent position** — an open places Perpl trigger orders from the council's stop and target | Perpl trigger orders | Core | "Production-ready bot" means exits, not only entries |
+| 10 | **Liquidation guard** — when liquidation distance falls below a threshold, the agent reduces (Close, reduce-only) inside its caps, logged with the tx | Perpl positions + orders via the operator | Core | Automation a judge can watch protect money |
+| 11 | **Live Perps from Perpl's WebSocket** — book, trades, funding ticks and the desk's positions streamed, redrawn per block | Perpl market-data WS | Core | Real time on Monad, visibly |
+| 12 | **Risk view, wallet side** — funding paid or received per position (funding-history endpoint), margin ratio against maintenance, liquidation distance, alerts | Perpl funding history + positions | Core | The risk-tool bounty's wallet view |
+| 13 | **Risk view, protocol side** — long/short skew, OI change and funding history per market, one tap from the wallet view | Perpl context + candles + funding history | Core | The risk-tool bounty's protocol view |
+| 14 | **Kuru market orders as the MON route** — `placeAndExecuteMarketBuy/Sell` (SDK ABI, `uint256 minOut` from the live book) through `XorrDelegation.spendVia` | Kuru OrderBook market orders | Core | "Routing trades through Kuru's order book", literally |
+| 15 | **Kuru on testnet as the testnet spot venue** — the V2 router makes Monad testnet a complete demo: spot on Kuru, perps on Perpl, both real | Kuru testnet V2 router | Core | Removes "spot only on a fork"; every tx on Monad's public testnet |
+| 16 | **Kuru maker agent** — post-only limit orders on MON/USDC re-quoted with `batchUpdate`; fills read from `Trade` events | Kuru limit orders + `batchUpdate` | Core | Uses the CLOB as a CLOB |
+| 17 | **Delta-neutral carry agent** — MON long on Kuru, MON short on Perpl while Perpl funding pays shorts; closes when it flips | Kuru + Perpl funding | Core | Two Monad-native venues in one strategy neither offers alone |
+| 18 | **Live Kuru depth in the order ticket** — `wss://exchange.kuru.io/ws` ladder beside the Buy button | Kuru market-data WS | Core | The most visible "Monad is fast" moment |
+| 19 | **CRE-attested council rounds** — an EVM-log trigger on each round re-reads Chainlink, Kuru and Perpl with DON consensus and `writeReport`s the round's hash to a `ReceiverTemplate` anchor (testnet supported) | CRE triggers, HTTP consensus, EVM read/write | Core | "An orchestration layer", with a real tx from `simulate --broadcast` |
+| 20 | **CRE circuit breaker** — the DON watches Chainlink against Kuru's mid; past a threshold it writes a pause that `XorrDelegation` checks, so every spend reverts | CRE + Data Feeds + our contract | Core | A DON that can stop a bot on chain |
+| 21 | **Oracle-bounded fills in the contract** — `spend()` reads Chainlink MON/USD and rejects a `minOut` below oracle × (1 − tolerance) | Chainlink Data Feeds on Monad | Core | Even a compromised executor cannot take a bad fill |
+| 22 | **Envio index of the permission and the desk** — HyperIndex over `Granted/Spent/Closed/Revoked` and Perpl DelegatedAccount events, GraphQL behind History and Verify (self-hosted or deployed after Sep 28) | Envio HyperIndex | Core | The three files public, a live product consuming them |
+| 23 | **Aggregated entities** — per-agent PnL, cap usage, council approval rate, venue share, computed in handlers | HyperIndex derived entities | Core | The "depth" criterion by name |
+| 24 | **MetaMask plugin `mm xorr`** — `grant`, `council`, `stop` per-command on `targetChains:[143]`, trades via `walletExecutor` so Blockaid and Guard Mode still apply | Agent Wallet plugins | Core | The bounty is the plugin |
+| 25 | **Nansen smart-money seat paid per call** — an x402 payment in USDC on Monad per netflow read, from the agent's own key; the seat votes on a derived signal (never the raw numbers the licence forbids) | Nansen API + x402 on 143 | Core | Agents paying for their own intelligence, on Monad — **real money on mainnet: needs your approval** |
+| 26 | **Depth seat on the council** — `getL2Book` refuses an order larger than N% of depth within X bps and says so | Kuru `getL2Book` | Deep | Risk made from the book, not a price |
+| 27 | **KuruFlow best execution** — Kuru's aggregator quote against Uniswap's QuoterV2 and the direct book; execute the best, show the saving | KuruFlow quote API | Deep | Kuru's own router in the path, measured |
+| 28 | **AUSD one-signature desk funding** — `permit` or `receiveWithAuthorization` instead of approve + deposit | AUSD ERC-2612 / EIP-3009 | Deep | A token feature most apps ignore, making a step disappear |
+| 29 | **AUSD depeg guard** — Chainlink AUSD/USD past 50 bps pauses margin adds and agent orders on Perpl, and says why | AUSD + Chainlink AUSD/USD | Deep | Agora's dollar treated as a risk, not assumed |
+| 30 | **Oracle-vs-exchange mark check** — each Perpl position's mark against Chainlink; a gap past a threshold flags the position | Chainlink feeds + Perpl mark | Deep | Two sponsors checking each other |
+| 31 | **Council over Telegram through CRE** — an HTTP trigger convenes a round and writes its result on Monad | CRE HTTP trigger + write | Deep | External system → chain, the bounty's shape |
+| 32 | **Multichain index** — the same schema over Monad testnet and the mainnet deployment | HyperIndex multichain | Deep | Multichain is scored |
+| 33 | **HyperSync catch-up** — "since you looked" backfills fills, rounds and orders in one query on reopen | Envio HyperSync | Deep | Speed you feel on return |
+| 34 | **Follow a Monad wallet** — Nansen Profiler PnL picks wallets worth mirroring; an agent follows inside its caps | Nansen Profiler | Deep | Beyond raw data: a signal that becomes a capped action |
+| 35 | **ERC-7715 permission as an alternative grant** on Monad mainnet, for MetaMask users | Smart Accounts Kit | Deep | A standard permission next to our own |
+| 36 | **Idle USDC in a Kuru AMM vault** — earns between trades, withdrawn before a spend | KuruAMMVault | Deep | Kuru's liquidity layer, not only its book |
+| 37 | **Range agent on Kuru flip orders** — buy-low/sell-high pairs that flip on fill | Kuru flip orders | Deep | A Kuru-only primitive |
+| 38 | **Fund from Base or Arbitrum via CCIP** — USDC lands on Monad | Chainlink CCIP on Monad | Deep | A real cross-chain deposit |
+| 39 | **Perpl API key for reads** — a read-scope key (`scope_mask` 1) on the desk's profile reconciles our order log against Perpl's own fills and history (needs a Perpl-whitelisted origin) | Perpl API keys + account history | Deep | Our books checked against the exchange's |
+| 40 | **Perpl announcements in the Inbox** — listings, halts and parameter changes from Perpl's public feed | Perpl announcements | Surface | Useful; any venue feed would do |
+| 41 | **Kuru candles for MON charts** instead of CoinGecko | Kuru market-data REST | Surface | Charts from the venue that fills |
+| 42 | **Perpl candles on each Perps market** | Perpl candles | Surface | Consistent data for the perp leg |
+| 43 | **AUSD supply beside the balance** — Monad total and circulating from Agora's metrics API | Agora metrics API | Surface | Transparency, swappable |
+| 44 | **Portfolio valued by Chainlink on Monad** (ETH, BTC, MON) instead of CoinGecko | Chainlink Data Feeds | Surface | Swappable with any oracle |
+| 45 | **Feed health on Sources** — each Chainlink feed's age against its heartbeat and deviation threshold, live | Chainlink feed metadata | Surface | Honest, but display only |
 | 46 | **Public agent leaderboard** from the Envio index | HyperIndex GraphQL | Surface | Any indexer could serve it |
-| 47 | **Perpl builder fee on agent orders** — needs a builder code from Perpl | Perpl builder codes | Surface | Monetisation, not product |
-| 48 | **Kuru referrer fee on KuruFlow quotes** (`referrerAddress`) | KuruFlow referrer | Surface | Swappable monetisation |
-| 49 | **Nansen token screener suggestions** — "what to hire an agent on" | Nansen screener | Surface | Discovery any data vendor could provide |
-| 50 | **Nansen smart-alerts to Telegram** for held tokens | Nansen Smart Alerts | Surface | Notification plumbing, swappable |
+| 47 | **Perpl builder fee on agent orders** (id from Perpl, ≤ 0.1%) | Perpl builder codes | Surface | Monetisation, not product |
+| 48 | **Kuru referrer fee on KuruFlow quotes** | KuruFlow `referrerFeeBps` | Surface | Swappable monetisation |
+| 49 | **Nansen screener → "hire an agent on this"** — a derived shortlist of Monad tokens | Nansen screener | Surface | Discovery any data vendor could offer |
+| 50 | **Nansen smart alerts as notifications** for held tokens | Nansen alerts | Surface | Notification plumbing, swappable |
 
-**What to build first, for the bounties that pay most:** 4 → 5/6/7/8 (Mera: Agora + both Mera bounties), 1/2/3 (Perpl:
-Agora + Perpl API), 10/11/12 (Kuru), 24 and 28 (make the council and the balance read Monad), then 18/19 (Envio) and 15
-(CRE). Before any of it: remove the three contradictions a judge will see first — the stock welcome line, the Council's
-NVDA pills on Robinhood Chain data, and a Markets list without MON.
+**Build order for the money:** close §4 first (gas, the council → Perpl run, AUSD on Home). Then 1–4 (Mera: it unlocks
+Agora's $10K and both Mera bounties), 9–13 (Perpl bot and risk tool), 14–15 (Kuru's bounty needs a fill through its
+book), 19 (CRE), 22–23 (Envio). Blocked on things we do not have: 25 (real USDC on mainnet — your call), 39 (a
+Perpl-whitelisted origin), and CRE deployment beyond simulation (`cre account access` approval). 24 needs nothing
+external, but it is a separate CLI artifact, so it goes last.
 
-## Corrections this audit makes to earlier docs
-- "Monad has no tokenized stocks" (`docs/METROPOLIS.md`, `PLAN.md` D3): true of Monad's official token list, not of
-  Chainlink's Monad feeds, which price wrapped xStocks live. Unverified whether the tokens trade on Monad.
-- "Kuru's MON/AUSD book was empty": its **resting orders** were (on-chain `bestBidAsk` and `getL2Book`); Kuru's API quotes
-  the market two-sided at ~$0.0206 from vault liquidity, 14% below MON/USDC.
-- Perpl `rate` is documented: micros per funding interval (−40 = −0.004%).
-- Uniswap v3's published Monad **testnet** addresses have no code on 10143; Kuru's testnet router and MON/USDC book,
-  Perpl's testnet Exchange, AUSD and AUSD's faucet do.
+## Corrections to earlier docs
+- Perpl funding is paid about every 43 minutes (2,580 s), not hourly or every 8 hours; the code converts with the live
+  interval.
+- Agora's testnet AUSD faucet is empty (`InsufficientFunds()`); `/perps/fund-test` works from our reserve instead.
+- Kuru's market orders take `uint256 _minOut`; the documented `uint96` signature would fail against the live book.
+- Chainlink prices six wrapped xStocks on Monad, not four; the tokens' contracts on Monad are still not located.
+- Envio Cloud's free plan keeps a deployment 30 days at most.
+- Nansen's licence forbids showing smart-money holdings and restricts netflows: derive, never republish.
+- The morning's "Monad build shows another chain's data" findings are fixed (council on Monad feeds, pitch, Markets) —
+  the 91-route crawl (`docs/TESTPLAN-MONAD.md`, run 6) finds no wrong-chain text.
