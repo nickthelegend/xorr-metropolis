@@ -38,6 +38,8 @@ vi.mock('../evm/chains.js', () => ({
     usdcBase: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
   },
   explorerTx: (hash: string) => `fork:${hash}`,
+  // No Kuru venue on this chain (a Monad one names its adapter).
+  KURU: null,
   UNISWAP: { router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45' },
 }));
 vi.mock('../evm/delegation.js', () => ({

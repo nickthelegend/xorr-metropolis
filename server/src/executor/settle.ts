@@ -26,12 +26,13 @@ import { deliveredOnChain, PRICES_DRIFT } from '../evm/measure-route.js';
 import { slippageFor, SLIPPAGE, TOKENS as VENUE_TOKENS, canonicalSymbol, ensureRegistry, isRoutable } from '../venues/tokens.js';
 import { buildSwap, lessPct, quote } from '../venues/uniswap.js';
 import type { TradeIntent } from './kinds/index.js';
+import { kuruSide, kuruSwap } from '../venues/kuru-fill.js';
 
 /**
  * The venue that settled, as the activity log and `/metrics` name it. `aave` is a direct leg — idle cash supplied to the
  * lending pool, no swap anywhere.
  */
-export type SettlementVenue = 'uniswap-v3' | '1inch' | 'aave';
+export type SettlementVenue = 'uniswap-v3' | '1inch' | 'aave' | 'kuru';
 
 /**
  * The contract call that will carry the leg, and what it pulls: `closePosition()` pulls the sold token in its own units,
@@ -169,6 +170,39 @@ export async function chooseSettlement(params: {
         floor: { tokenOut: outToken.address, minOut: floor },
         route: '1inch',
       };
+    }
+  }
+
+  /*
+   * Kuru's order book, where it has one for this leg (MON/USDC on Monad): measured the way 1inch is — the whole leg run
+   * through the delegation in a simulation, reading what the owner would receive — and chosen only when its floor is
+   * higher than Uniswap's. A grant that does not allow the Kuru venue fails that simulation, so it simply is not a
+   * candidate, and the trade goes where it always went.
+   */
+  const side = kuruSide(inSymbol, outSymbol);
+  if (side) {
+    // Exactly what the delegation approves the venue for and the adapter pulls: `send.amount`.
+    const probe = kuruSwap(side, send.amount, owner, 0n);
+    const delivered = await deliveredOnChain({
+      owner,
+      via: send.via,
+      token: payToken.address,
+      venue: probe.to,
+      amount: send.amount,
+      tokenOut: outToken.address,
+      data: probe.data,
+    }).catch(() => undefined);
+    if (delivered !== undefined && delivered > 0n) {
+      const floor = lessPct(delivered, tolerancePct);
+      if (floor > 0n && (!uniswap || floor > uniswap.minOut)) {
+        return {
+          payToken,
+          swap: kuruSwap(side, send.amount, owner, floor),
+          venue: 'kuru',
+          floor: { tokenOut: outToken.address, minOut: floor },
+          route: `Kuru MON/USDC order book, market ${side}`,
+        };
+      }
     }
   }
 

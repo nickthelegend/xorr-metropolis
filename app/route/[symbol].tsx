@@ -50,7 +50,7 @@ const SIZES = [100, 500, 2_500, 10_000] as const;
 
 const fillPath = (venue: string) => FILL_PATH[venue] ?? venue;
 /** Who gave each quote, by the provider's own name, for the footnote. */
-const QUOTED_BY: Readonly<Record<string, string>> = { '1inch': '1inch', 'uniswap-v3': 'Uniswap v3', aqua: '1inch Aqua', swapvm: '1inch SwapVM' };
+const QUOTED_BY: Readonly<Record<string, string>> = { '1inch': '1inch', 'uniswap-v3': 'Uniswap v3', kuru: 'Kuru', aqua: '1inch Aqua', swapvm: '1inch SwapVM' };
 
 export default function RouteInspector() {
   const goBack = useGoBack();

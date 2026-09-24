@@ -12,7 +12,7 @@
  * the chain is a local copy.
  */
 import { arbitrum, arbitrumSepolia, base, baseSepolia, foundry, monad, monadTestnet, robinhood, robinhoodTestnet } from 'viem/chains';
-import type { Chain } from 'viem';
+import { getAddress, isAddress, type Address, type Chain } from 'viem';
 import 'dotenv/config';
 import { KNOWN_CHAINS, isKnownChain, moneyOn, networkName, type KnownChain } from './money.js';
 import { isSolanaCluster } from '../solana/clusters.js';
@@ -396,8 +396,23 @@ export const ONEINCH_ENABLED = !IS_ROBINHOOD && !IS_MONAD && Boolean(process.env
  * The Base-era Aqua and SwapVM books are gone from this list (2026-09-23): they existed only on Base, and nothing on
  * Arbitrum or Robinhood Chain settles through them.
  */
+/**
+ * Kuru on Monad mainnet and its fork: the MON/USDC book (native-base) and xorr's `KuruVenue` adapter in front of it.
+ *
+ * The adapter exists because `XorrDelegation` measures the output on the OWNER's balance and Kuru pays whoever called it
+ * (in native MON): it takes the market order and forwards WMON or USDC to the owner (`contracts/src/KuruVenue.sol`). Its
+ * address is per deployment — `fork-bootstrap-evm.ts` deploys it and writes `KURU_VENUE_ADDRESS` — so Kuru is a venue
+ * here only where one has been deployed.
+ */
+const KURU_VENUE_ENV = process.env.KURU_VENUE_ADDRESS;
+export const KURU: { venue: Address; books: { 'MON/USDC': Address } } | null =
+  (CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-fork') && KURU_VENUE_ENV && isAddress(KURU_VENUE_ENV)
+    ? { venue: getAddress(KURU_VENUE_ENV), books: { 'MON/USDC': '0x065C9d28E428A0db40191a54d33d5b7c71a9C394' } }
+    : null;
+
 export const SETTLEMENT_VENUES: readonly `0x${string}`[] = [
   ...(UNISWAP ? [UNISWAP.router] : []),
+  ...(KURU ? [KURU.venue] : []),
   ...(ONEINCH_ENABLED || IS_BASE_MAINNET_STATE || CHAIN_KEY === 'localnet' || CHAIN_KEY === 'base-sepolia'
     ? [ADDRESSES.oneInchRouter]
     : []),

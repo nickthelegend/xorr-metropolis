@@ -1298,7 +1298,7 @@ function describeLeg(intent: TradeIntent, units: number, venue?: SettlementVenue
   }
   // Naming the venue in the activity log is the difference between "the bot bought something" and
   // a user being able to check where it went.
-  const where = venue === 'uniswap-v3' ? ' on Uniswap v3' : venue === '1inch' ? ' through 1inch' : '';
+  const where = venue === 'uniswap-v3' ? ' on Uniswap v3' : venue === 'kuru' ? " on Kuru's order book" : venue === '1inch' ? ' through 1inch' : '';
   return intent.outSymbol === SETTLEMENT_SYMBOL
     ? `Sold ${units.toFixed(4)} ${intent.inSymbol}${where}`
     : `Bought ${units.toFixed(4)} ${intent.outSymbol}${where}`;

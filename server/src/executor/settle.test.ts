@@ -56,6 +56,17 @@ vi.mock('../evm/measure-route.js', () => ({
   deliveredOnChain: vi.fn(),
 }));
 
+// Kuru has no book for these pairs unless a case gives it one.
+const kuru = vi.hoisted(() => ({ side: null as 'buy' | 'sell' | null }));
+const KURU_VENUE = '0x3C2BafebbB0c8c58f39A976e725cD20D611d01e9' as const;
+vi.mock('../venues/kuru-fill.js', () => ({
+  kuruSide: () => kuru.side,
+  kuruSwap: (side: string, amount: bigint, receiver: string, minOut: bigint) => ({
+    to: KURU_VENUE,
+    data: `0xkuru:${side}:${amount}:${receiver}:${minOut}`,
+  }),
+}));
+
 const uniswap = await import('../venues/uniswap.js');
 const oneinch = await import('../venues/oneinch.js');
 const { slippageFor } = await import('../venues/tokens.js');
@@ -117,6 +128,40 @@ beforeEach(() => {
   vi.mocked(uniswap.quote).mockResolvedValue(QUOTE);
   vi.mocked(uniswap.buildSwap).mockResolvedValue(UNI);
   vi.mocked(slippageFor).mockReturnValue(0.63);
+  kuru.side = null;
+});
+
+describe("Kuru's order book as a venue", () => {
+  it('fills on Kuru when what it delivers, less the tolerance, beats Uniswap’s floor', async () => {
+    kuru.side = 'buy';
+    vi.mocked(deliveredOnChain).mockResolvedValue(40_500_000_000_000_000n);
+    const s = await settle(buy());
+    expect(s.venue).toBe('kuru');
+    expect(s.swap.to).toBe(KURU_VENUE);
+    // 0.0405 WETH less 0.63%: the floor the contract holds the owner's balance to, and Kuru's own.
+    const floor = 40_244_850_000_000_000n;
+    expect(s.floor).toEqual({ tokenOut: WETH, minOut: floor });
+    expect(s.swap.data).toBe(`0xkuru:buy:100000000:${OWNER}:${floor}`);
+    // Measured as the delegation would run it: the amount the delegation pulls, Kuru's own floor off.
+    expect(vi.mocked(deliveredOnChain)).toHaveBeenCalledWith(
+      expect.objectContaining({ owner: OWNER, via: 'spend', venue: KURU_VENUE, amount: 100_000_000n, tokenOut: WETH }),
+    );
+  });
+
+  it('stays on Uniswap when Kuru would deliver less', async () => {
+    kuru.side = 'buy';
+    vi.mocked(deliveredOnChain).mockResolvedValue(39_000_000_000_000_000n);
+    const s = await settle(buy());
+    expect(s.venue).toBe('uniswap-v3');
+    expect(s.swap.to).toBe(SWAP_ROUTER);
+  });
+
+  it('is not a candidate when its run through the delegation fails — a grant without the Kuru venue', async () => {
+    kuru.side = 'buy';
+    vi.mocked(deliveredOnChain).mockRejectedValue(new Error('VenueNotAllowed(0x3C2B…)'));
+    const s = await settle(buy());
+    expect(s.venue).toBe('uniswap-v3');
+  });
 });
 
 describe('chooseSettlement', () => {

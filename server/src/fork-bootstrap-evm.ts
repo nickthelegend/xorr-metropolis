@@ -41,6 +41,7 @@ import {
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { CHAIN_KEY, chain as registryChain, ADDRESSES, SETTLEMENT_SYMBOL } from './evm/chains.js';
 import { FORK_USDC_RESERVE, anvil, dealErc20 } from './fork/anvil.js';
+import { deployKuruVenue } from './fork/kuru-venue.js';
 
 const RPC = process.env.FORK_RPC ?? 'http://127.0.0.1:8545';
 /**
@@ -110,6 +111,10 @@ async function main() {
   const anchor = (await pub.waitForTransactionReceipt({ hash: anchorHash, ...RECEIPT })).contractAddress as Address;
   console.log(`XorrAuditAnchor  ${anchor}`);
 
+  // Kuru on a Monad fork: the adapter that lets the delegation fill on Kuru's book (`contracts/src/KuruVenue.sol`).
+  const kuruVenue = CHAIN_KEY === 'monad-fork' ? await deployKuruVenue(wallet as never, pub as never) : undefined;
+  if (kuruVenue) console.log(`KuruVenue        ${kuruVenue}`);
+
   /*
    * The bot's key must hold gas on this chain or every scheduled run dies at signing — with an error that reads as the
    * USER being short. The executor's own client says which key that is, so the two cannot disagree.
@@ -154,6 +159,7 @@ async function main() {
       `DELEGATION_ADDRESS=${delegation}`,
       `EXPO_PUBLIC_DELEGATION_ADDRESS=${delegation}`,
       `ANCHOR_ADDRESS=${anchor}`,
+      ...(kuruVenue ? [`KURU_VENUE_ADDRESS=${kuruVenue}`] : []),
       '',
     ].join('\n'),
     { mode: 0o600 },

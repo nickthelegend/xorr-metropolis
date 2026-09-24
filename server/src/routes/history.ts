@@ -16,7 +16,7 @@ import { Hono } from 'hono';
 import { formatUnits, type Address } from 'viem';
 import { query } from '../db/index.js';
 import { THIS_CHAIN } from '../db/chain-scope.js';
-import { AAVE_V3_POOL, ADDRESSES, CHAIN_KEY, HAS_MAINNET_STATE, UNISWAP, explorerTx } from '../evm/chains.js';
+import { AAVE_V3_POOL, ADDRESSES, CHAIN_KEY, HAS_MAINNET_STATE, KURU, UNISWAP, explorerTx } from '../evm/chains.js';
 import { publicClient } from '../evm/client.js';
 import { DELEGATION_ADDRESS } from '../evm/delegation.js';
 import { getLogsPaged } from '../evm/logs.js';
@@ -199,6 +199,7 @@ function dollarsOf(token: HistoryToken | null, amount: bigint): number | null {
 function venueName(address: string): string {
   const named: [string | undefined, SettlementVenue][] = [
     [UNISWAP?.router, 'uniswap-v3'],
+    [KURU?.venue, 'kuru'],
     [ADDRESSES.oneInchRouter, '1inch'],
     [HAS_MAINNET_STATE ? AAVE_V3_POOL : undefined, 'aave'],
   ];

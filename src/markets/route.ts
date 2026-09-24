@@ -24,4 +24,5 @@ export const FILL_PATH: Readonly<Record<string, string>> = {
   swapvm: 'Swap program',
   '1inch': 'Aggregator',
   'uniswap-v3': 'Uniswap pool',
+  kuru: 'Kuru order book',
 };

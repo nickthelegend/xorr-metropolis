@@ -43,6 +43,7 @@ export type VenueNaming = {
  */
 const KNOWN: Readonly<Record<string, VenueNaming>> = {
   'uniswap-v3': { label: 'Uniswap v3', detail: 'Filled in a Uniswap v3 pool.', routed: true },
+  kuru: { label: 'Kuru', detail: 'A market order on Kuru’s on-chain order book, delivered to your wallet.', routed: true },
   gmx: { label: 'GMX', detail: 'An order on GMX V2, executed by its keepers.', routed: true },
   'jupiter-route': {
     label: 'Jupiter route',
