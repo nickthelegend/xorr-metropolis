@@ -191,3 +191,35 @@ describe('what each pill and range asks the executor for', () => {
     for (const s of ['BTC', 'CBBTC', 'WETH', 'SPYx']) expect(isStockSymbol(s)).toBe(false);
   });
 });
+
+describe('a history the executor is still fetching', () => {
+  beforeEach(() => {
+    clearMarketDataCache();
+    resetPricedSymbols();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('waits out a 202 "warming" and draws what the executor answers next — no error, no empty chart', async () => {
+    let ohlcCalls = 0;
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/market/symbols')) return Promise.resolve(new Response(JSON.stringify(['BTC']), { status: 200 }));
+      ohlcCalls += 1;
+      if (ohlcCalls === 1) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: 'warming', detail: 'History is being fetched; retry shortly.' }), {
+            status: 202,
+            headers: { 'retry-after': '0.01' },
+          }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({ rows: rows(48, 30 * MIN) }), { status: 200 }));
+    });
+    const out = await fetchChartCandles('BTC', '1H');
+    expect(ohlcCalls).toBe(2);
+    expect(out).toHaveLength(12);
+  });
+});

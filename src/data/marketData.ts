@@ -99,7 +99,9 @@ async function getJson<T>(path: string, ttlMs = TTL_MS): Promise<T> {
           // through to the generic error on the final try meant the caller saw a plain Error, the
           // `instanceof StillWarming` check failed, and the screen said "no feed" for data that
           // was seconds away — the exact confusion this state exists to prevent.
-          if (res.status === 503) {
+          // 202 is the executor's "still fetching" since 2026-09-24 (a 5xx is logged by the browser as an error); 503 is
+          // the same answer from an executor older than that.
+          if (res.status === 202 || res.status === 503) {
             if (attempt === WARMING_RETRIES - 1) throw new StillWarming(path);
             const after = Number(res.headers.get('retry-after'));
             await new Promise((r) =>

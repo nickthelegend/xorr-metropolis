@@ -147,6 +147,14 @@ export async function crossCheck(symbol: string): Promise<CrossCheck> {
 
   const spreadPct = (Math.abs(coingecko - oneinch) / ((coingecko + oneinch) / 2)) * 100;
   const agree = spreadPct <= DISAGREEMENT_PCT;
+  /*
+   * Both sources by name, and each price to its own precision.
+   *
+   * This said "the two price sources … the market feed … a fill would happen nearer $0.02": neither source named (the
+   * second is Uniswap on Monad, carried in a field still called `oneinch`), and MON's $0.02372 rounded to cents — a
+   * sub-cent price shown to two decimals says almost nothing (2026-09-24). PLAN's own rule: every price names its source.
+   */
+  const venue = MONAD_SPOT ? (CHAIN_KEY === 'monad-fork' ? 'Uniswap v3 on the Monad fork' : 'Uniswap v3 on Monad') : '1inch';
   return {
     symbol,
     coingecko,
@@ -155,8 +163,15 @@ export async function crossCheck(symbol: string): Promise<CrossCheck> {
     compared: true,
     agree,
     note: agree
-      ? `Two independent sources within ${spreadPct.toFixed(2)}%.`
-      : `The two price sources disagree by ${spreadPct.toFixed(2)}%. The number shown is the market feed; a fill would happen nearer ${oneinch.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}.`,
+      ? `CoinGecko and ${venue} agree within ${spreadPct.toFixed(2)}%.`
+      : `CoinGecko says ${usd(coingecko)}; ${venue} would fill at ${usd(oneinch)} — ${spreadPct.toFixed(2)}% apart. The number shown is CoinGecko's.`,
     source,
   };
+}
+
+/** Dollars to cents from $1 up; four significant digits below, where cents would hide the price ($0.02372, not $0.02). */
+function usd(n: number): string {
+  return n >= 1
+    ? n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+    : n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
 }

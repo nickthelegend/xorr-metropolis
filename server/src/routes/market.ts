@@ -234,13 +234,18 @@ market.get('/market/quotes', async (c) => {
     // data that is thirty seconds away.
     if (e instanceof ColdFetchPending) {
       c.header('retry-after', '3');
-      return c.json({ error: 'warming', detail: 'Prices are being fetched; retry shortly.' }, 503);
+      return c.json({ error: 'warming', detail: 'Prices are being fetched; retry shortly.' }, 202);
     }
     throw e;
   }
 });
 
 /** GET /market/ohlc?symbol=BTC&days=30 — raw OHLC rows; the client folds them to 12 candles. */
+/*
+ * A cold read answers 202, not 503 (2026-09-24): "accepted, still being fetched, ask again after `retry-after`" is exactly
+ * what it is, and the browser logs every 5xx as a console error — a chart's first load after a restart put a red error
+ * in front of a judge for data three seconds away. `marketData` waits a 202 out as it waited the 503.
+ */
 market.get('/market/ohlc', async (c) => {
   /*
    * Kept in the caller's spelling as well as uppercased.
@@ -292,7 +297,7 @@ market.get('/market/ohlc', async (c) => {
   } catch (e) {
     if (e instanceof ColdFetchPending) {
       c.header('retry-after', '3');
-      return c.json({ error: 'warming', detail: 'History is being fetched; retry shortly.' }, 503);
+      return c.json({ error: 'warming', detail: 'History is being fetched; retry shortly.' }, 202);
     }
     throw e;
   }

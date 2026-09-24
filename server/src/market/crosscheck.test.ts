@@ -43,7 +43,7 @@ describe('a second opinion, and whether there was one', () => {
     expect(r.compared).toBe(true);
     expect(r.agree).toBe(true);
     expect(r.spreadPct).toBeLessThan(DISAGREEMENT_PCT);
-    expect(r.note).toContain('Two independent sources');
+    expect(r.note).toMatch(/^CoinGecko and 1inch agree within/);
   });
 
   it('a real disagreement is compared AND not agreed', async () => {
@@ -55,7 +55,8 @@ describe('a second opinion, and whether there was one', () => {
     const r = await crossCheck('WETH');
     expect(r.compared).toBe(true);
     expect(r.agree).toBe(false);
-    expect(r.note).toContain('disagree');
+    // Both sources named, and CoinGecko's figure is the one on screen.
+    expect(r.note).toMatch(/^CoinGecko says \$[\d,.]+; 1inch would fill at \$[\d,.]+ — [\d.]+% apart\. The number shown is CoinGecko's\.$/);
   });
 
   it('a token with no on-chain route was never compared', async () => {
