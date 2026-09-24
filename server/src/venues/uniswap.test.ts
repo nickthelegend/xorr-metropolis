@@ -106,6 +106,41 @@ describe('the route chosen', () => {
     await expect(u.bestRoute('USDC', 'WETH', 1_000_000n)).rejects.toThrow(/No liquidity for USDC -> WETH at this size on arbitrum-fork/);
   });
 
+  it('says the chain did not answer — never "no liquidity" — when every quote timed out, after asking once more', async () => {
+    const u = await load();
+    const q = quoter({});
+    q.client.simulateContract = vi.fn(async () => {
+      throw new Error('The request took too long to respond.');
+    }) as unknown as PublicClient['simulateContract'];
+    u.setQuoteClientForTests(q.client);
+    const err = await u.bestRoute('USDC', 'WETH', 1_000_000n).catch((e: Error) => e);
+    expect(String(err)).toMatch(/Could not price USDC -> WETH on arbitrum-fork: the chain did not answer in time, twice/);
+    expect(String(err)).not.toMatch(/No liquidity/);
+    // Every candidate asked twice: the first pass and the one retry.
+    const perPass = vi.mocked(q.client.simulateContract).mock.calls.length / 2;
+    expect(Number.isInteger(perPass) && perPass > 0).toBe(true);
+  });
+
+  it('prices from the retry when the one route with a pool timed out the first time', async () => {
+    const u = await load();
+    const pool = k([USDC, WETH], [500]);
+    const q = quoter({ [pool]: 7_000_000_000_000_000n });
+    const real = q.client.simulateContract as unknown as (a: { args: [Hex, bigint] }) => Promise<unknown>;
+    let slowOnce = true;
+    q.client.simulateContract = vi.fn(async (args: { args: [Hex, bigint] }) => {
+      const { tokens, fees } = decodePath(args.args[0]);
+      if (slowOnce && `${tokens.join('>')}|${fees.join(',')}` === pool) {
+        slowOnce = false;
+        throw new Error('The request took too long to respond.');
+      }
+      return real(args);
+    }) as unknown as PublicClient['simulateContract'];
+    u.setQuoteClientForTests(q.client);
+    const best = await u.bestRoute('USDC', 'WETH', 1_000_000n);
+    expect(best.amountOut).toBe(7_000_000_000_000_000n);
+    expect(best.route).toEqual({ tokens: ['USDC', 'WETH'], fees: [500] });
+  });
+
   it('quotes in whole units, the path it took, and no invented impact when asked for none', async () => {
     const u = await load();
     u.setQuoteClientForTests(quoter({ [k([USDC, WETH], [500])]: 7_265_805_651_930_385n }).client);

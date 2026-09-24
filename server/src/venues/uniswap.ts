@@ -217,28 +217,58 @@ export type BestRoute = { route: Route; path: Hex; amountOut: bigint; gasEstimat
  */
 export async function bestRoute(from: string, to: string, amountIn: bigint): Promise<BestRoute> {
   const routes = candidateRoutes(from, to);
-  const results = await Promise.all(
-    routes.map(async (route) => {
-      const path = encodePath(route);
-      try {
-        const q = await quoteRaw(path, amountIn);
-        return { route, path, ...q };
-      } catch (e) {
-        return { route, path, error: e };
-      }
-    }),
-  );
-  let best: BestRoute | undefined;
-  for (const r of results) {
-    if ('error' in r || r.amountOut <= 0n) continue;
-    if (!best || r.amountOut > best.amountOut) best = { route: r.route, path: r.path, amountOut: r.amountOut, gasEstimate: r.gasEstimate };
+  const quoteAll = () =>
+    Promise.all(
+      routes.map(async (route) => {
+        const path = encodePath(route);
+        try {
+          const q = await quoteRaw(path, amountIn);
+          return { route, path, ...q };
+        } catch (e) {
+          return { route, path, error: e };
+        }
+      }),
+    );
+  const pick = (results: Awaited<ReturnType<typeof quoteAll>>) => {
+    let best: BestRoute | undefined;
+    for (const r of results) {
+      if ('error' in r || r.amountOut <= 0n) continue;
+      if (!best || r.amountOut > best.amountOut) best = { route: r.route, path: r.path, amountOut: r.amountOut, gasEstimate: r.gasEstimate };
+    }
+    return best;
+  };
+
+  let results = await quoteAll();
+  let best = pick(results);
+  /*
+   * A quote that ran out of time says nothing about the pool.
+   *
+   * This reported every failure as "No liquidity for WMON -> USDC at this size" — including a quoter call that timed out
+   * while a fresh fork fetched the pool's state from Monad's RPC ("The request took too long to respond"). It failed the
+   * proof's sale on 2026-09-24 and would have told a person their token could not be sold. A timeout is asked again once;
+   * if the chain still does not answer, that is what is said.
+   */
+  if (!best && results.some((r) => 'error' in r && timedOut(r.error))) {
+    results = await quoteAll();
+    best = pick(results);
   }
   if (!best) {
-    const first = results.find((r) => 'error' in r) as { error?: unknown } | undefined;
+    const failed = results.filter((r) => 'error' in r) as { error: unknown }[];
+    const slow = failed.find((r) => timedOut(r.error));
+    const first = slow ?? failed[0];
     const why = first?.error instanceof Error ? first.error.message.split('\n')[0] : 'no pool delivered anything';
+    if (slow) {
+      throw new Error(`Could not price ${from} -> ${to} on ${CHAIN_KEY}: the chain did not answer in time, twice (${why})`);
+    }
     throw new Error(`No liquidity for ${from} -> ${to} at this size on ${CHAIN_KEY} (${why})`);
   }
   return best;
+}
+
+/** A read that ran out of time — the RPC's silence, not the pool's answer. */
+function timedOut(e: unknown): boolean {
+  const text = e instanceof Error ? `${e.name} ${e.message}` : String(e);
+  return /took too long|timed? ?out|TimeoutError|ETIMEDOUT/i.test(text);
 }
 
 /** "Uniswap v3 USDG→NVDA 0.05%", or the hops joined for a multi-hop path. */
