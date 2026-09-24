@@ -88,7 +88,8 @@ describe('permission line — only what the executor read', () => {
   });
 
   it('gas only when the executor read it', () => {
-    expect(gasLine('0.05')).toBe('0.0500 ETH');
+    // The chain's own gas token: this suite builds for the Monad fork, whose gas is MON.
+    expect(gasLine('0.05')).toBe('0.0500 MON');
     expect(gasLine(null)).toBeNull();
     expect(gasLine(undefined)).toBeNull();
   });

@@ -9,6 +9,7 @@
  * Everything shown about a permission comes from the executor's `permission` row, which it read off the chain. Nothing
  * here computes a cap, a remainder or a date the server did not give.
  */
+import { activeChain } from '@/chain';
 import { encodeFunctionData, parseUnits, type Address, type Hex } from 'viem';
 import { day, money, quantity, shortAddress } from '@/format';
 
@@ -203,7 +204,8 @@ export function gasLine(gasEth: string | null | undefined): string | null {
   if (gasEth === null || gasEth === undefined || gasEth.trim() === '') return null;
   const n = Number(gasEth);
   if (!Number.isFinite(n)) return null;
-  return `${quantity(n, n > 0 && n < 0.0001 ? 8 : 4)} ETH`;
+  // In the chain's own gas token: an agent's wallet on Monad holds MON, and "0.0000 ETH" named a coin it never holds.
+  return `${quantity(n, n > 0 && n < 0.0001 ? 8 : 4)} ${activeChain.nativeCurrency.symbol}`;
 }
 
 /** "0x5cF6…cC34". */
