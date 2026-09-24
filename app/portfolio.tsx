@@ -11,6 +11,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { shownHere } from '@/nav/buildRoutes';
 import { settlementSymbol } from '@/chain';
+import { api } from '@/data/api';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
@@ -158,6 +159,11 @@ export default function Portfolio() {
   const realised = useAsync(() => repos.portfolio.realised(), []);
   const strategies = useAsync(() => repos.strategies.list(), []);
   const runs = useAsync(() => system.runs(200), []);
+  // AUSD's peg, from Chainlink AUSD/USD on Monad, where AUSD is the cash (Monad testnet). A stablecoin is a claim until read.
+  const peg = useAsync(
+    () => (settlementSymbol === 'AUSD' ? api.get<{ price: number; ageSec: number; stale: boolean }>('/monad/feed/AUSD') : Promise.resolve(null)),
+    [],
+  );
   const activity = useAsync(() => repos.activity.list(), []);
 
   // Dust a sale left behind is not a position: it would read as an open trade worth $0.00.
@@ -484,6 +490,11 @@ export default function Portfolio() {
             ) : (
               <Price variant="rowPrimary">—</Price>
             )}
+            {peg.data ? (
+              <Text variant="footnoteSm" color={peg.data.stale ? colors.warn : colors.ink40}>
+                {`1 AUSD = ${fmtPrice(peg.data.price)} · Chainlink${peg.data.stale ? ', stale' : ''}`}
+              </Text>
+            ) : null}
           </View>
           {/* Savings are Aave on Base; this build has no yield screen (`src/nav/buildRoutes.ts`). */}
           {shownHere('/yield') ? (

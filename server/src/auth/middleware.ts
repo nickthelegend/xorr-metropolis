@@ -83,7 +83,8 @@ const PUBLIC_PATHS = new Set([
  * making a reader sign in to look at a catalogue of results would be theatre. Note it is a prefix
  * under `/strategies`, which is NOT public: that one is the caller's own live strategies.
  */
-const PUBLIC_PREFIXES = ['/perp/', '/strategies/library'];
+// `/monad/feed/` — a public Chainlink price by symbol, like the rest of `/monad/*`.
+const PUBLIC_PREFIXES = ['/perp/', '/strategies/library', '/monad/feed/'];
 
 /**
  * The public surface, published.
