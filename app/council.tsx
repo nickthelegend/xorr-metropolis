@@ -39,6 +39,7 @@ import { useAsync } from '@/data/useAsync';
 import { apiProse } from '@/data/apiError';
 import { council, type CouncilBallot, type CouncilRound } from '@/data/council';
 import { CHAIN_KEY, onMonad } from '@/chain';
+import { useNow } from '@/state/useNow';
 
 const SEAT_NAMES: Record<CouncilBallot['persona'], string> = onMonad
   ? { 'session-desk': 'Price Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Perps Desk' }
@@ -91,7 +92,9 @@ const REVEAL_WITHIN_MS = 60_000;
 function RoundCard({ round, roster }: { round: CouncilRound; roster: Roster }) {
   const p = round.proposal;
   // Each seat arrives in turn and the outcome after them, so a person watches the vote happen. Older rounds are still.
-  const fresh = Date.now() - Date.parse(round.createdAt) < REVEAL_WITHIN_MS;
+  // The clock is a hook, not `Date.now()` in the render: a render must not read an impure value (it failed lint and CI).
+  const now = useNow(15_000);
+  const fresh = now - Date.parse(round.createdAt) < REVEAL_WITHIN_MS;
   const beat = (at: number, key: string, node: React.ReactNode) =>
     fresh ? (
       <Rise key={key} index={at}>

@@ -17,6 +17,7 @@ import { CHAIN_KEY } from '@/chain';
 import { percent } from '@/format';
 import { useAsync } from '@/data/useAsync';
 import { perps, type PerplLiveMarket } from '@/data/perps';
+import { useNow } from '@/state/useNow';
 
 /** Countries by the codes Perpl's geo-block list uses (its public context, 2026-09-24). Unknown codes are shown as sent. */
 const COUNTRY: Readonly<Record<string, string>> = {
@@ -67,7 +68,8 @@ export default function PerplLive() {
   const longsPay = markets.filter((m) => (m.fundingPctPerHour ?? 0) > 0).length;
   const shortsPay = markets.filter((m) => (m.fundingPctPerHour ?? 0) < 0).length;
   const blocked = (live.data?.geoBlock ?? []).map((c) => COUNTRY[c] ?? c);
-  const now = Date.now();
+  // Ticks every 5 s so "Updated 3s ago" keeps counting, and a render never reads the clock itself (lint, CI).
+  const now = useNow(5_000);
 
   return (
     <Screen gutter="none">

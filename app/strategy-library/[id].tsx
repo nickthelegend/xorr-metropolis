@@ -19,14 +19,13 @@
  */
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BackButton, Button, colors, LoadingRows, PnlBars, radius, Ring, Row, Screen, size, space, StatTile, Text } from '@/ui';
 import { useGoBack } from '@/nav/useGoBack';
 import { count, plainPct, ratio, returnPct, tone, usd } from '@/strategies/format';
 import { pnlStructure, pnlStructureFromDetail } from '@/strategies/pnl';
 import { seedFromStrategy } from '@/strategies/seedAgent';
 import { repos } from '@/data';
-import { useRouter } from 'expo-router';
 import { useAsync } from '@/data/useAsync';
 import { strategyLibrary, type Split, type StrategyDetail } from '@/data/strategyLibrary';
 

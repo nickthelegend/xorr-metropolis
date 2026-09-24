@@ -336,7 +336,7 @@ export default function Perps() {
           <SheetCard bordered borderRadius={radius.panel} padding={space.s14}>
             <Text variant="rowPrimary">One more signature</Text>
             <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s6 }}>
-              Perpl changed its order function after your desk's code was written. Let xorr's key call the current one ({d.allowlistMissing.map((m) => m.name).join(', ')}). It still cannot withdraw.
+              Perpl changed its order function after your desk’s code was written. Let xorr’s key call the current one ({d.allowlistMissing.map((m) => m.name).join(', ')}). It still cannot withdraw.
             </Text>
             <Button
               label="Allow trading"
@@ -399,7 +399,7 @@ export default function Perps() {
                       ))}
                     </View>
                     <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s6 }}>
-                      xorr's agent key sends it through your desk, immediate-or-cancel within 1% of the book.
+                      xorr’s agent key sends it through your desk, immediate-or-cancel within 1% of the book.
                     </Text>
                   </>
                 ) : null}
@@ -434,7 +434,7 @@ export default function Perps() {
               ))
             )}
 
-            <Text variant="control" color={colors.ink55}>The agent's leash</Text>
+            <Text variant="control" color={colors.ink55}>The agent’s leash</Text>
             {d.operatorActive ? (
               <HoldButton
                 label="Hold to stop the agent"
