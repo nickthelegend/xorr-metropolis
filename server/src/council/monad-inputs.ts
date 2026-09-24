@@ -146,6 +146,52 @@ async function priceOf(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], proposal:
   };
 }
 
+/** The council symbol a spot token prices as: WMON/MON → MON, WETH → ETH, WBTC → BTC; anything else has no gate. */
+const GATED: Record<string, (typeof MONAD_COUNCIL_SYMBOLS)[number]> = { MON: 'MON', WMON: 'MON', WETH: 'ETH', WBTC: 'BTC' };
+
+/**
+ * The council's price check, for an order placed by hand (PLAN P2.2).
+ *
+ * Only the council's price desk compared the fill with Chainlink; a buy from the order ticket went straight to the venue,
+ * so the same trade was vetoed when an agent proposed it and filled when a person pressed Buy. Same inputs, same limit
+ * (`MAX_FILL_GAP_BPS`), same staleness rule. A price that cannot be checked is not a price that passed: the order is
+ * refused with the reason, as a missing permission is. `null` for a token with no Chainlink feed to check against.
+ */
+export async function manualPriceGate(
+  spotSymbol: string,
+  usd: number,
+  client: PublicClient = monadMainnet(),
+): Promise<{ ok: true; gapBps: number } | { ok: false; detail: string } | null> {
+  const symbol = GATED[spotSymbol.toUpperCase()];
+  if (!symbol) return null;
+  let p: Awaited<ReturnType<typeof priceOf>>;
+  try {
+    p = await priceOf(symbol, { side: 'buy', symbol, usd }, client);
+  } catch (e) {
+    const why = e instanceof Error ? e.message.split('\n')[0] : String(e);
+    return { ok: false, detail: `The price could not be checked against Chainlink (${why}), so nothing was placed.` };
+  }
+  // Cents from $1 up; four significant digits below ($0.02401, not $2.401e-2; $87,450.81, not $8.745e+4).
+  const fmt = (n: number) =>
+    n >= 1
+      ? n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+      : n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
+  if (p.chainlink.ageSec > p.chainlink.maxAgeSec) {
+    return {
+      ok: false,
+      detail: `Chainlink's ${symbol}/USD round is ${Math.round(p.chainlink.ageSec / 60)} min old, past its ${p.chainlink.maxAgeSec / 60}-minute heartbeat, so the fill cannot be checked. Nothing was placed.`,
+    };
+  }
+  if (p.gapBps > p.maxGapBps) {
+    const kuru = p.kuru ? `; Kuru's mid is ${fmt(p.kuru.mid)}` : '';
+    return {
+      ok: false,
+      detail: `The fill (${fmt(p.fill.price)}, ${p.fill.venue}) is ${p.gapBps.toFixed(0)} bps from Chainlink (${fmt(p.chainlink.price)}), past the ${p.maxGapBps} bps limit${kuru}. Nothing was placed.`,
+    };
+  }
+  return { ok: true, gapBps: p.gapBps };
+}
+
 /** Round ids behind the latest the trend samples: a proxy's id packs the phase in its top bits, so `id - k` stays in it. */
 // MON/USD answers a round every few minutes (32 rounds were under an hour on 2026-09-24), so the samples reach 512 back.
 const TREND_STEPS = [512n, 256n, 128n, 64n, 32n, 8n, 1n];

@@ -22,7 +22,8 @@ import { THIS_CHAIN } from '../db/chain-scope.js';
 import { runStrategy, type RunOutcome, type StrategyRow } from './run.js';
 import { nextRuns } from './schedule.js';
 import { TOKENS as VENUE_TOKENS, canonicalSymbol, ensureRegistry } from '../venues/tokens.js';
-import { CHAIN_KEY } from '../evm/chains.js';
+import { CHAIN_KEY, IS_MONAD } from '../evm/chains.js';
+import { manualPriceGate } from '../council/monad-inputs.js';
 import { readPolicy } from '../evm/delegation.js';
 import type { WalletRow } from '../routes/wallet-context.js';
 
@@ -67,6 +68,12 @@ export async function placeOrder(
   }
   if (policy.expiresAt <= Date.now()) {
     return refuse('delegation_expired', 'The trading permission has expired. Renew it before placing an order.');
+  }
+
+  // The council's price check for a buy placed by hand: the fill against Chainlink on Monad, the same limit (PLAN P2.2).
+  if (IS_MONAD && CHAIN_KEY !== 'monad-testnet') {
+    const gate = await manualPriceGate(symbol, usd);
+    if (gate && !gate.ok) return refuse('price_gap', gate.detail);
   }
 
   // A one-shot `buy`: no cadence, so `advance()` never reschedules it.
