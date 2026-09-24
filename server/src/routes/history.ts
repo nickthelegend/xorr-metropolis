@@ -72,6 +72,54 @@ export const CLOSED_EVENT = {
  */
 const LOOKBACK_BLOCKS = BigInt(process.env.HISTORY_LOOKBACK_BLOCKS ?? 9_000);
 
+/**
+ * The first block worth reading: the delegation contract cannot have logged anything before it existed.
+ *
+ * On a fresh fork the window reached back past the fork point, and anvil forwards a log query for those blocks to the
+ * forked chain's public RPC — which served Monad in small windows, one after another, for a contract that exists only
+ * on the fork. `/history` took 65.6 s on a fork made 20 minutes earlier (2026-09-24), and History showed placeholders
+ * for all of it. A new deployment on a live chain wastes the same reads, in fewer, on the blocks before it.
+ *
+ * So the window starts where the contract's code does, found by bisecting `getCode` over the window (about fourteen
+ * reads, once per process). When the contract already has code at the window's start, one read says so and nothing
+ * changes. Per address, because a test or a restart may point at another contract.
+ *
+ * A block whose state cannot be read counts as one the contract may be in. A fork resumed from its saved file keeps no
+ * state for its own blocks before the resume (anvil answers `BlockOutOfRangeError`), and a pruned node forgets old
+ * blocks; either way the start can only move earlier, so the window is slower, never shorter than the truth. When the
+ * window's first block cannot be read at all, nothing is known and the window stays as it was.
+ */
+const scanFloor = new Map<string, bigint>();
+
+async function contractFloor(fromBlock: bigint, head: bigint): Promise<bigint> {
+  const key = DELEGATION_ADDRESS.toLowerCase();
+  const known = scanFloor.get(key);
+  if (known !== undefined) return known > fromBlock ? known : fromBlock;
+  const hasCode = async (blockNumber: bigint) =>
+    ((await publicClient.getCode({ address: DELEGATION_ADDRESS, blockNumber })) ?? '0x') !== '0x';
+  const mayHaveCode = (blockNumber: bigint) => hasCode(blockNumber).catch(() => true);
+  try {
+    if (await hasCode(fromBlock)) {
+      // Known to exist by the window's start; later windows only start later.
+      scanFloor.set(key, fromBlock);
+      return fromBlock;
+    }
+  } catch (e) {
+    log.warn(`[history] could not find where ${DELEGATION_ADDRESS} begins; reading the whole window: ${reasonOf(e)}`);
+    return fromBlock;
+  }
+  if (!(await mayHaveCode(head))) return fromBlock;
+  let lo = fromBlock; // read, and no code
+  let hi = head; // code, or unreadable
+  while (hi - lo > 1n) {
+    const mid = (lo + hi) / 2n;
+    if (await mayHaveCode(mid)) hi = mid;
+    else lo = mid;
+  }
+  scanFloor.set(key, hi);
+  return hi;
+}
+
 /** Rows when the request does not say, and the most it may ask for — the same ceiling as `/runs`. */
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -298,7 +346,7 @@ historyRoutes.get('/history', async (c) => {
   let placed: Placed[];
   try {
     head = await publicClient.getBlockNumber();
-    fromBlock = head > LOOKBACK_BLOCKS ? head - LOOKBACK_BLOCKS : 0n;
+    fromBlock = await contractFloor(head > LOOKBACK_BLOCKS ? head - LOOKBACK_BLOCKS : 0n, head);
     placed = await chainSettlements(owner, fromBlock, head);
   } catch (e) {
     // An unread log is not an empty history. The cause goes to the log in full; the screen gets the provider's words.

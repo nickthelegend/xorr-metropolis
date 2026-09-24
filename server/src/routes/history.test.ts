@@ -16,11 +16,13 @@ const h = vi.hoisted(() => ({
   getBlockNumber: vi.fn(),
   getLogs: vi.fn(),
   getBlock: vi.fn(),
+  getCode: vi.fn(),
 }));
 
-// Exactly what the route reads from the chain: the head, the contract's logs (through the real `getLogsPaged`), blocks.
+// Exactly what the route reads from the chain: the head, where the contract begins, its logs (through the real
+// `getLogsPaged`), blocks.
 vi.mock('../evm/client.js', () => ({
-  publicClient: { getBlockNumber: h.getBlockNumber, getLogs: h.getLogs, getBlock: h.getBlock },
+  publicClient: { getBlockNumber: h.getBlockNumber, getLogs: h.getLogs, getBlock: h.getBlock, getCode: h.getCode },
 }));
 vi.mock('../evm/chains.js', () => ({
   get CHAIN_KEY() {
@@ -167,6 +169,8 @@ beforeEach(() => {
   h.delegation = '0x6c5528Fd8E74a047A85bAb413856A9239E73540e';
   h.getBlockNumber.mockReset().mockResolvedValue(HEAD);
   h.getLogs.mockReset();
+  // The contract has code at every block unless a test says otherwise: an older deployment, the window unchanged.
+  h.getCode.mockReset().mockResolvedValue('0x6080');
   h.getBlock
     .mockReset()
     .mockImplementation(async ({ blockNumber }: { blockNumber: bigint }) => ({ number: blockNumber, timestamp: timeOf(blockNumber) }));
@@ -211,6 +215,59 @@ describe('what it reads', () => {
       items: [],
     });
     expect(query).not.toHaveBeenCalled();
+  });
+});
+
+describe('where the window starts', () => {
+  it("is where the contract's code begins, when that is inside the window — a fork made minutes ago — and is found once", async () => {
+    h.delegation = '0x00000000000000000000000000000000000000F1';
+    const born = HEAD - 700n;
+    h.getCode.mockImplementation(async ({ blockNumber }: { blockNumber: bigint }) => (blockNumber >= born ? '0x6080' : undefined));
+
+    const { status, body } = await get();
+
+    expect(status).toBe(200);
+    const asked = h.getLogs.mock.calls.map(([q]) => q as LogQuery);
+    for (const event of [SPENT_EVENT, CLOSED_EVENT]) {
+      const windows = asked.filter((q) => q.event === event);
+      expect(windows[0]!.fromBlock, event.name).toBe(born);
+      expect(windows.at(-1)!.toBlock, event.name).toBe(HEAD);
+    }
+    expect(body.window).toEqual({ fromBlock: Number(born), toBlock: Number(HEAD), since: iso(born) });
+    // A bisection over 9,000 blocks: a handful of reads, not one per block.
+    expect(h.getCode.mock.calls.length).toBeLessThanOrEqual(16);
+
+    h.getCode.mockClear();
+    await get();
+    expect(h.getCode).not.toHaveBeenCalled();
+  });
+
+  it("starts at the first block it cannot read, when the contract's own blocks have no state (a fork resumed from its file)", async () => {
+    h.delegation = '0x00000000000000000000000000000000000000F3';
+    const forkedAt = HEAD - 1_000n;
+    const resumedAt = HEAD - 300n;
+    h.getCode.mockImplementation(async ({ blockNumber }: { blockNumber: bigint }) => {
+      if (blockNumber < forkedAt) return undefined; // the forked chain: readable, and no such contract
+      if (blockNumber < resumedAt) throw new Error(`BlockOutOfRangeError: block height is ${HEAD} but requested was ${blockNumber}`);
+      return '0x6080';
+    });
+
+    const { body } = await get();
+
+    // Earlier than the contract's real first block, never later: the unreadable blocks are read for logs, not skipped.
+    expect(body.window.fromBlock).toBe(Number(forkedAt));
+  });
+
+  it('is the whole window when where the contract begins cannot be read — slower, never shorter', async () => {
+    h.delegation = '0x00000000000000000000000000000000000000F2';
+    h.getCode.mockRejectedValue(new Error('missing trie node'));
+
+    const { status, body } = await get();
+
+    expect(status).toBe(200);
+    expect(body.window.fromBlock).toBe(Number(HEAD - 9_000n));
+    const { log } = await import('../http/request-id.js');
+    expect(vi.mocked(log.warn)).toHaveBeenCalledWith(expect.stringContaining('missing trie node'));
   });
 });
 
