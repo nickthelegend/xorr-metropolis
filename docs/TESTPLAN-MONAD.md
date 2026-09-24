@@ -87,6 +87,12 @@ fixes of the day, not repeated after them.
 | 2 | 71/90 — after the first copy fixes. |
 | 3 | 82/90 — after the Monad-true copy, the council, the agents and the DOM fixes. |
 | 5 | **84/92** (with `/perps`, `/perpl` added). Every route that failed before and was reached passes — Home, `/asset/WMON`, `/chart/WETH`, `/coverage`, `/metrics`, `/portfolio` (no nested button), `/route/WETH`, `/schedule`, `/council`, `/welcome`-era copy. The 8 FAILs are the last 8 routes in order (`/verify` … `/perpl`): the Mac's disk filled (ENOSPC) and the bundler died mid-crawl, so they did not load at all. Of those, run 3 passed `/voice`, `/wallet`, `/welcome`, `/withdraw-everything`; `/verify`'s G5 and `/watchlist`'s hydration error were fixed after run 3 (`f92f331`, `7f39251`) and are **unverified in the browser**. `/perps` on the fork now redirects to `/not-here`; `/perpl` rendered from the API but not in a crawl. |
+| 6 | **91/91** (the Monad build's routes as they stand: `/oracle` has since joined the hidden list). After the PC restarted, on a fork taken again at block 107,482,899 and rebuilt (`rebuild:fork`'s grant fixed, `61f23e8`). 43 passed before the fork's anvil was stopped by a signal mid-crawl; it resumed from its saved chain, and the 48 routes left or failed passed on the second pass, 48/48, after the `/history` fix below. The 8 that never loaded in run 5 pass — `/verify` (G5) and `/watchlist` (hydration) now verified in the browser; `/perps` goes to `/not-here` on the fork; `/more` and `/bot` go Home by design. Limit: a 5xx that lands after the 9 s window is not seen by the crawl (the backtest's cold 503 at 12 s was found in the executor log, and answers 200 in 22 ms warm). |
+
+Found by run 6 and fixed: `GET /history` took 65–71 s on a fresh fork — its 9,000-block window reached past the fork
+point, so anvil fetched those logs from Monad's public RPC window by window, for a contract that exists only on the
+fork, and every other read on the fork queued behind it (the crawl's `/health` 503s). It now starts where the contract's
+code does: 1.7 s, then 10 ms (`6f7d9bb`).
 
 Found by the crawl and fixed on the way: native MON shown as "ETH … $133.20" (MON priced at ETH, `654f99b`); WETH
 labelled "Computer Peripheral Equipment, NEC" (`7414e70`); Uniswap sales recorded as 1inch (`4b0662c`); another build's
@@ -96,7 +102,7 @@ agent looks (NVDAx…) on Schedule (`57f582d`); Base's 1inch equities warmed on 
 | Item | Result |
 |---|---|
 | C2 `/health` 20 consecutive reads | **PASS** — 20/20 × 200, read while a full crawl was running. The intermittent 503s were the fork freezing on slow remote reads (anvil 45 s × 5 retries); bounded at 10 s × 3 (`4b0662c`). |
-| C3 `/monad/crosscheck`, `/monad/perpl` | **PASS** — Uniswap $0.023954, Kuru $0.023988, Chainlink $0.023986, 14.2 bps apart; 9 Perpl markets with funding per hour. |
+| C3 `/monad/crosscheck`, `/monad/perpl` | **PASS** — Uniswap $0.023954, Kuru $0.023988, Chainlink $0.023986, 14.2 bps apart; 9 Perpl markets with funding per hour. `/monad/feed/AUSD` (public): $0.99983 from Chainlink on Monad, not stale; `/monad/feed/DOGE` a named 404 listing the five feeds. |
 | D1 `forge test` | **PASS** — 53/53. |
 | D2 `prove-monad.ts` | **PASS** (earlier run) — `docs/evidence/prove-monad-fork-2026-09-24.txt`. |
 | D3 testnet deployment on Sourcify | **PASS** — `86f7900`, `contracts/deployments/monad-testnet.json` (`sourcifyVerified: true`). |
@@ -119,7 +125,7 @@ agent looks (NVDAx…) on Schedule (`57f582d`); Base's 1inch equities warmed on 
 | F13 | **PASS** (the list) — `/market/tradable` on Monad is USDC, WMON, WETH, WBTC, USDT0 (no AUSD, no ETH sentinel), `7414e70`. Creation not repeated. |
 | F18 | **PASS** (two inputs) — allowlist "0x1234": "Not a valid address: it starts with 0x and has 42 characters.", Add not usable; an order above the balance: F7. Zero and negative amounts not tried. |
 | F14, F15, F17, F19, F20 | UNTESTED today. (F20's persistence was exercised in passing: the executor restarted four times today with rounds, runs, the grant and the hired agent intact.) |
-| F16 | Code and unit only: "Cash · AUSD" on Portfolio and the Chainlink peg line on testnet; the testnet build was not re-rendered after it (the disk filled, see below). |
+| F16 | **PASS** — testnet build, test-4668: Portfolio reads "CASH · AUSD $499.80 · 1 AUSD = $0.9998 · Chainlink"; the chain holds 499.800293 AUSD (`0xa901…22dC`) for `0x0EAc…3c16`. Home and Deposit do not name AUSD yet (PLAN P4.2). |
 
 ### Testnet (Perpl), this session
 | Check | Result |
@@ -127,6 +133,10 @@ agent looks (NVDAx…) on Schedule (`57f582d`); Base's 1inch equities warmed on 
 | Desk create / fund / open / long / hold-to-stop / resume / close / withdraw | **PASS** (earlier run) — desk `0x3323…11b8`, account #693, withdrew 149.80 AUSD. |
 | Change the agent's limits from Perps | **FAIL → fixed → PASS** — the browser's CORS preflight refused PUT (also breaking `PUT /watchlist/order`); PUT allowed (`9c0a894`); saved and read back as $500/$1,000/3x, then restored. |
 | Block pulse on the desk | **PASS** — "Monad testnet · block 65,148,991", advancing. |
+
+Restart note: the PC restarted mid-run. macOS empties `/tmp`, which held the fork's saved chain and the crawl's
+scripts, so the fork was taken again at Monad's head (XorrDelegation `0xaaa0…196e`, anchor `0x5366…2299`, the owner's
+$1,600/day grant restored by `fork-grant.ts`) and now saves its chain on the external disk (README).
 
 Environment note: the Mac's data volume reached 100% (1.3 GB free, 3.5 GB of swap in use) while two bundlers, two
 executors, the fork and Chromium ran together; one bundler and the testnet executor died with ENOSPC. Nothing of the

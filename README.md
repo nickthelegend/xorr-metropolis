@@ -77,10 +77,13 @@ npm ci && (cd server && npm ci)
 cd contracts && forge build && forge test && cd ..
 
 # A fork of Monad mainnet, and our contracts on it
-anvil --fork-url https://rpc.monad.xyz --chain-id 143            # or: sh infra/monad-fork/entrypoint.sh
+# The entrypoint saves the chain to FORK_DATA_DIR and resumes it; keep that off /tmp, which macOS empties on restart
+FORK_DATA_DIR=~/.xorr-monad-fork PORT=8547 sh infra/monad-fork/entrypoint.sh     # or: anvil --fork-url https://rpc.monad.xyz --chain-id 143
 cd server
 export DELEGATE_PRIVATE_KEY=0x…                                   # the executor's key (never commit it)
-XORR_CHAIN=monad-fork npx tsx src/fork-bootstrap-evm.ts <your wallet>   # writes .env.fork
+XORR_CHAIN=monad-fork FORK_RPC=http://127.0.0.1:8547 npx tsx src/fork-bootstrap-evm.ts <your wallet>   # writes .env.fork
+# Optional: your wallet's grant without signing it ($/day), by impersonation, which only a fork allows
+set -a && . ./.env.fork && set +a && FORK_RPC=http://127.0.0.1:8547 npx tsx src/fork-grant.ts <your wallet> 1600
 
 # The proof above
 set -a && . ./.env.fork && set +a
