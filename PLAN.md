@@ -114,7 +114,8 @@ Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED*
 - P4.2 **DONE** AUSD named on Home, Deposit and Portfolio with its Chainlink peg (`cbd0dc3`, `665570d`); Agora's faucet
   (empty on 2026-09-24, so the deployment's AUSD reserve) behind the test-funds buttons on Fund and Perps (`5ebb4e2`).
 - P4.3 **IN PROGRESS** A second key from the passkey (PRF under its own salt) encrypts private notes on each run; the
-  executor stores only ciphertext (`d5239c1`). Per-agent identity keys: not started.
+  executor stores only ciphertext (`d5239c1`). Per-agent identity keys: not built — no action here for one to authorize
+  (agents trade with executor-derived keys; no screen edits an agent's limits), so it would be forced.
 - P4.4 **DONE** The signing session is bounded (15 minutes, a countdown and a lock in Settings, then one passkey prompt);
   agents trade without a prompt inside the on-chain grant; identity rebuilt with every byte of storage cleared (same
   account, same grant, same notes). Evidence: `7b64c9e`, `d5239c1`.

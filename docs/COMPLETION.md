@@ -116,7 +116,7 @@ typecheck 0 errors on both sides; lint 0 errors), CI on `main`, and each changed
 | 17 | A Perpl position from an agent, now | Same keys: the operator holds 0.021 MON for a ~0.048 MON order |
 | 19 | The council opens a Perpl position on testnet | Needs the same gas to run once |
 | 34 | The executor stays up unattended | Both exited at ~09:22 with nothing logged; now supervised with exit tracing and no unexplained exit since 13:50 — the cause is not found, so it is not claimed |
-| 37 | Per-agent identity keys + encrypted memory (P4.3) | Half: the notes key is built (`d5239c1`); per-agent identity keys are not |
+| 37 | Per-agent identity keys + encrypted memory (P4.3) | Half: the notes key is built (`d5239c1`). Per-agent identity keys are deliberately not built: nothing in this product would use one — agents trade server-side with executor-derived keys, and no screen changes an agent's limits after creation (`updateAgent` has no caller) — so a key would authorize nothing and would be a forced integration |
 | 39 | Envio index (P5.1) | Not built: a judge could only see it hosted (an Envio account), and its local stack would need ports another project holds and disk this machine lacks |
 | 40 | Chainlink CRE workflow (P5.2) | Not built: CRE needs a Chainlink account (`cre login`; deployment needs access approval) — an account is the owner's to create |
 | 41 | Nansen seat (P5.3) | No key; x402 pay-per-call spends real USDC on Monad mainnet — the owner's call |
