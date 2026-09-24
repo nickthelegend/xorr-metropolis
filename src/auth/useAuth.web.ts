@@ -7,6 +7,7 @@ import { usePrivy, useLogin, useLoginWithEmail, useLoginWithOAuth, useWallets, u
 import type { SocialProvider } from './socialLogins';
 import { pickEmbedded } from './embeddedWallet';
 import { alreadyHasWallet } from './alreadyHasWallet';
+import { signOutPasskey, useMera } from './mera/session';
 
 export type AuthState = {
   ready: boolean;
@@ -46,17 +47,39 @@ export function useAuth(): AuthState & {
     }
   }, [address, create]);
 
+  /*
+   * A Mera passkey account wins where there is one (`mera/session.ts`): its address IS the wallet, derived on this device,
+   * and signing out ends its signing window as well as its session. Privy's hooks still run — hooks cannot be skipped —
+   * and still answer for anyone who signed in with an email code.
+   */
+  const mera = useMera();
+  const logoutAll = useCallback(async () => {
+    signOutPasskey();
+    if (authenticated) await logout();
+  }, [authenticated, logout]);
+
   return useMemo(
-    () => ({
-      ready,
-      authenticated,
-      userId: user?.id,
-      address,
-      email: user?.email?.address,
-      logout,
-      createWallet,
-    }),
-    [ready, authenticated, user, address, logout, createWallet],
+    () =>
+      mera.signedIn
+        ? {
+            ready: true,
+            authenticated: true,
+            userId: `mera:${mera.address!.toLowerCase()}`,
+            address: mera.address,
+            email: undefined,
+            logout: logoutAll,
+            createWallet: async () => mera.address,
+          }
+        : {
+            ready,
+            authenticated,
+            userId: user?.id,
+            address,
+            email: user?.email?.address,
+            logout: logoutAll,
+            createWallet,
+          },
+    [mera.signedIn, mera.address, ready, authenticated, user, address, logoutAll, createWallet],
   );
 }
 

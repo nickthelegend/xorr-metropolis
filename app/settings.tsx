@@ -37,6 +37,7 @@ import { TONES, useTone } from '@/bot/tone';
 import { useVoice } from '@/chat/voice';
 import { NotSignedIn, errorText } from '@/data/apiError';
 import { VersionRow } from '@/about/VersionRow';
+import { lockSigning, useMera } from '@/auth/mera/session';
 
 const SETTING_ROW = 54;
 const TONE_OPTIONS = TONES.map((t) => ({ value: t.id, label: t.label }));
@@ -125,6 +126,7 @@ export default function Settings() {
    */
   const { logout, ready, authenticated } = useAuth();
   const signedOut = ready && !authenticated;
+  const mera = useMera();
   const forgetAccount = useStore((s) => s.forgetAccount);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string>();
@@ -319,6 +321,7 @@ export default function Settings() {
           <Eyebrow small style={{ marginTop: space.s26 }}>
             Session
           </Eyebrow>
+          {!signedOut && mera.signedIn ? <PasskeySigningRow /> : null}
           {signedOut ? (
             <Row title="Sign in" height={SETTING_ROW} divider={false} onPress={signIn} />
           ) : (
@@ -357,5 +360,29 @@ export default function Settings() {
         </ScrollView>
       </Fill>
     </Screen>
+  );
+}
+
+/**
+ * The passkey's signing window, said plainly (Mera's session-expiry UX): unlocked with the minutes left and a way to lock
+ * it now, or locked — and what happens at the next signature. Mera sessions never expire on their own; this one does.
+ */
+function PasskeySigningRow() {
+  const mera = useMera();
+  const now = useNow(15_000);
+  const left = mera.unlocked && mera.unlockedUntil ? Math.max(1, Math.ceil((mera.unlockedUntil - now) / 60_000)) : 0;
+  return mera.unlocked ? (
+    <Row
+      title="Passkey signing · unlocked"
+      secondary={`No prompt for ${left} more min, then your passkey is asked again. Tap to lock now.`}
+      height={SETTING_ROW}
+      onPress={lockSigning}
+    />
+  ) : (
+    <Row
+      title="Passkey signing · locked"
+      secondary="The key is not held. Your next signature asks your passkey once, for 15 minutes."
+      height={SETTING_ROW}
+    />
   );
 }

@@ -20,6 +20,7 @@
     "deploy:executor": "node scripts/deploy-executor.mjs"
   },
   "dependencies": {
+    "@category-labs/mera": "^0.2.0",
     "@ethersproject/shims": "^5.8.0",
     "@expo/metro-runtime": "~57.0.15",
     "@moonpay/moonpay-js": "^0.7.6",
@@ -27,6 +28,8 @@
     "@privy-io/expo-native-extensions": "^0.0.12",
     "@privy-io/react-auth": "^3.40.0",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@scure/bip32": "^2.4.0",
+    "@scure/bip39": "^2.4.0",
     "@shopify/flash-list": "2.0.2",
     "@solana-program/memo": "^0.14.1",
     "@solana-program/system": "^0.14.1",

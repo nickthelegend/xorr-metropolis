@@ -11,6 +11,7 @@
 import { PrivyClient, type User } from '@privy-io/server-auth';
 import 'dotenv/config';
 import { ON_SOLANA } from '../solana/clusters.js';
+import { isPasskeyToken, verifyPasskeyToken } from './passkey-session.js';
 
 const APP_ID = process.env.PRIVY_APP_ID;
 const APP_SECRET = process.env.PRIVY_APP_SECRET;
@@ -119,6 +120,15 @@ export function clearUserCache(): void {
 export async function verifyToken(authorization: string | undefined): Promise<AuthedUser> {
   const token = authorization?.replace(/^Bearer\s+/i, '').trim();
   if (!token) throw new UnauthorizedError('Missing bearer token.');
+
+  // A Mera passkey session (`auth/passkey-session.ts`): the executor's own token, never sent to Privy.
+  if (isPasskeyToken(token)) {
+    try {
+      return verifyPasskeyToken(token);
+    } catch (e) {
+      throw new UnauthorizedError(e instanceof Error ? e.message : 'Invalid passkey session.');
+    }
+  }
 
   let claims;
   try {

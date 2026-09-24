@@ -43,9 +43,11 @@ import { useAuth, useEmailLogin, useSocialLogin, useWalletLogin } from '@/auth/u
 import { SOCIAL_LOGINS, type SocialProvider } from '@/auth/socialLogins';
 import { codeFailure, connectFailure, oauthFailure, verifyFailure } from '@/auth/onboardingErrors';
 import { NotSignedIn } from '@/data/api';
+import { createPasskeyAccount, passkeySupported, signInWithPasskey } from '@/auth/mera/session';
+import { passkeyFailure } from '@/auth/mera/failure';
 
 const STEPS = [
-  { label: 'Signed in', detail: 'A code, Google, X or your own wallet' },
+  { label: 'Signed in', detail: 'A passkey, a code, Google, X or your own wallet' },
   { label: 'Wallet created', detail: 'Only you can sign' },
   { label: 'Connected', detail: 'The app can read this wallet' },
   { label: 'Ready to fund', detail: 'Nothing is deposited yet' },
@@ -139,6 +141,23 @@ export default function WalletSetup() {
       await createWallet();
     } catch (e) {
       setError(oauthFailure(e, label) || undefined);
+    } finally {
+      setPending(undefined);
+    }
+  }
+
+  /**
+   * A Mera passkey: the account is derived from the passkey on this device (`auth/mera/`), so there is no email, no code
+   * and no wallet provider — one prompt, and the same account on any device the passkey syncs to.
+   */
+  async function withPasskey(mode: 'create' | 'existing') {
+    setPending(`passkey-${mode}`);
+    setError(undefined);
+    try {
+      if (mode === 'create') await createPasskeyAccount('xorr account');
+      else await signInWithPasskey();
+    } catch (e) {
+      setError(passkeyFailure(e) || undefined);
     } finally {
       setPending(undefined);
     }
@@ -254,6 +273,32 @@ export default function WalletSetup() {
             {/* The ways in that need nothing typed, first — and gone once a code is on its way to an address. */}
             {!codeSent ? (
               <>
+                {passkeySupported() ? (
+                  <>
+                    <Button
+                      label="Create a passkey account"
+                      loading={pending === 'passkey-create'}
+                      disabled={busy || (!!pending && pending !== 'passkey-create')}
+                      onPress={() => void withPasskey('create')}
+                      testID="passkey-create"
+                    />
+                    <Button
+                      label="Sign in with a passkey"
+                      variant="ghost"
+                      loading={pending === 'passkey-existing'}
+                      disabled={busy || (!!pending && pending !== 'passkey-existing')}
+                      onPress={() => void withPasskey('existing')}
+                      testID="passkey-sign-in"
+                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s10, marginVertical: space.s2 }}>
+                      <View style={{ flex: 1, height: 1, backgroundColor: colors.hairline }} />
+                      <Text variant="secondarySm" color={colors.ink40}>
+                        or
+                      </Text>
+                      <View style={{ flex: 1, height: 1, backgroundColor: colors.hairline }} />
+                    </View>
+                  </>
+                ) : null}
                 {SOCIAL_LOGINS.map((s) => (
                   <Button
                     key={s.id}

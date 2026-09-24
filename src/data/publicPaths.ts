@@ -54,6 +54,8 @@ export const PUBLIC_PATHS: readonly string[] = [
   // Monad market facts: MON priced three ways, and Perpl's public markets (server/src/monad/routes.ts).
   '/monad/crosscheck',
   '/monad/perpl',
+  '/auth/passkey/challenge',
+  '/auth/passkey/session',
   '/perps/markets',
   '/deposit/moonpay/config',
   '/deposit/moonpay/webhook',

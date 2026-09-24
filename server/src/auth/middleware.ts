@@ -35,6 +35,9 @@ const PUBLIC_PATHS = new Set([
   /** Monad: MON priced three ways (Uniswap v3, Kuru, Chainlink), and Perpl's public markets. Market facts. */
   '/monad/crosscheck',
   '/monad/perpl',
+  // How a signed-out person becomes signed in with a passkey (`auth/passkey-session.ts`).
+  '/auth/passkey/challenge',
+  '/auth/passkey/session',
   /** Perpl's open markets for the Perps screen: market facts. */
   '/perps/markets',
   // Same reasoning as the rest of `/market/*`: an observed price series is not user data, and

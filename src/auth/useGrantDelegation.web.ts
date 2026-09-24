@@ -26,6 +26,8 @@ import { SETTLEMENT_APPROVAL_DAYS, type GrantOptions } from '@/wallet/grantPlan'
 import { chainAccess } from '@/wallet/chainAccess';
 import { assertGrantDestination, confirmStopped, contractToStop } from '@/wallet/delegationChain';
 import { assertGasFor, estimateUserFee, sendAsUser, type UserSigner, signTypedDataAsUser } from '@/wallet/userSigning';
+import { meraSnapshot, signingAccount } from './mera/session';
+import { meraProvider } from './mera/provider';
 
 const DELEGATION_ABI = [
   {
@@ -82,6 +84,20 @@ export function useGrantDelegation() {
    * permission signed by the wrong key grants nothing the executor can use.
    */
   const signer = useCallback(async (): Promise<UserSigner | undefined> => {
+    /*
+     * A passkey account signs for itself: a Mera session (at most one passkey prompt, then none until its window
+     * closes), answering as a wallet that signs and lets the app broadcast (`mera/provider.ts`).
+     */
+    if (meraSnapshot().signedIn) {
+      const account = await signingAccount();
+      return {
+        provider: meraProvider(account, activeChain.id),
+        from: account.address,
+        chain: activeChain,
+        chainAccess,
+        signOnly: true,
+      };
+    }
     const wallet = pickEmbedded(wallets);
     if (!wallet) return undefined;
     return {

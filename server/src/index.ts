@@ -22,6 +22,7 @@ import { privyRoutes } from './routes/privy.js';
 import { crosschainRoutes } from './routes/crosschain.js';
 import { gmxRoutes } from './venues/gmx/routes.js';
 import { monadRoutes } from './monad/routes.js';
+import { passkeyRoutes } from './auth/passkey-session.js';
 import { perplRoutes } from './monad/perpl-routes.js';
 import { councilRoutes } from './council/routes.js';
 import { tokenRoutes } from './routes/tokens.js';
@@ -166,6 +167,7 @@ app.use('*', async (c, next) => {
  */
 guardRequests(app, authMiddleware);
 
+app.route('/', passkeyRoutes);
 app.route('/', routes);
 app.route('/', strategyRoutes);
 app.route('/', agentSurface);
