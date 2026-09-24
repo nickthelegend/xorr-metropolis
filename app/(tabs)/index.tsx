@@ -70,7 +70,8 @@ import {
   type SetupStepState,
 } from '@/state/derived';
 import { isAddress, type Address } from 'viem';
-import { pinnedDelegation, CHAIN_KEY } from '@/chain';
+import { pinnedDelegation, CHAIN_KEY, settlementSymbol } from '@/chain';
+import { api } from '@/data/api';
 import { xStockGainers } from '@/markets/xstockClass';
 import { isPriced, stockName } from '@/markets/catalog';
 import { chainAccess } from '@/wallet/chainAccess';
@@ -603,6 +604,8 @@ export default function Home() {
               {balanceAge.label}
             </Text>
           ) : null}
+          {/* The dollar the balance is in, named on the first screen, not only on Portfolio (PLAN P4.2; Agora's bounty). */}
+          {settlementSymbol === 'AUSD' && total !== null ? <AusdLine /> : null}
         </Rise>
 
         {/*
@@ -952,5 +955,16 @@ export default function Home() {
         </Rise>
       </ScrollView>
     </Screen>
+  );
+}
+
+/** "In AUSD, Agora's dollar · 1 AUSD = $0.9998 · Chainlink" under the total where AUSD is the cash (Monad testnet). */
+function AusdLine() {
+  const peg = useAsync(() => api.get<{ price: number; stale: boolean }>('/monad/feed/AUSD'), []);
+  const pegText = peg.data ? ` · 1 AUSD = ${fmtPrice(peg.data.price)} · Chainlink${peg.data.stale ? ', stale' : ''}` : '';
+  return (
+    <Text variant="footnote" color={peg.data?.stale ? colors.warn : colors.ink55} style={{ marginTop: space.s6 }}>
+      {`In AUSD, Agora’s dollar${pegText}`}
+    </Text>
   );
 }

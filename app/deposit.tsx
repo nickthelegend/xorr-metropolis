@@ -36,7 +36,7 @@ import { RollingNumber } from '@/ui/RollingNumber';
 import { successTap } from '@/ui/haptics';
 import { useAuth } from '@/auth/useAuth';
 import { shortAddress } from '@/format';
-import { depositQrNote, depositQrWorks, depositUri, settlementSymbol } from '@/chain';
+import { activeChain, depositQrNote, depositQrWorks, depositUri, settlementSymbol } from '@/chain';
 import { NetworkChip } from '@/networks/NetworkChip';
 import { useStore } from '@/state/store';
 import { useNow } from '@/state/useNow';
@@ -296,7 +296,8 @@ function Funds({
             height={size.rowSm}
           />
           <Row
-            title="ETH"
+            // The chain's own gas token: this row is the wallet's native balance, MON on Monad, never "ETH" there.
+            title={activeChain.nativeCurrency.symbol}
             value={
               <Holding
                 figure={quantity(data.sol ? data.sol.amount : data.eth.amount, data.sol ? 4 : ETH_DIGITS)}
