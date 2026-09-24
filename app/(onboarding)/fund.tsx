@@ -11,10 +11,10 @@
  * chip (money moves here), a code where a code is true, and test funds where this network has them.
  */
 import React, { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Linking, ScrollView, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
-import { depositQrNote, depositQrWorks, depositUri, settlementSymbol } from '@/chain';
+import { CHAIN_KEY, depositQrNote, depositQrWorks, depositUri, settlementSymbol } from '@/chain';
 import { NetworkChip } from '@/networks/NetworkChip';
 import { AddressQR } from '@/ui/AddressQR';
 import { useGoBack } from '@/nav/useGoBack';
@@ -43,6 +43,7 @@ import { useAsync } from '@/data/useAsync';
 import { useIntentKeys } from '@/data/useIntentKeys';
 import { errorText } from '@/data/apiError';
 import { faucetStatus, requestFaucet, type FaucetOutcome } from '@/data/deposit';
+import { perps } from '@/data/perps';
 
 import { fetchMoonPayConfig, openMoonPayBuy } from '@/deposit/moonpay';
 
@@ -216,6 +217,13 @@ export default function Fund() {
             </SheetCard>
           )}
 
+          {/*
+            Monad testnet: MON for gas and AUSD, here where a new wallet is told to fund. The grant's first signature needs
+            gas, and this step used to offer none — a fresh wallet failed "Signer had insufficient balance" with no way on
+            (2026-09-24). The same claim Perps makes; its refusals are the executor's own sentences.
+          */}
+          {!signedOut && CHAIN_KEY === 'monad-testnet' ? <TestnetFunds /> : null}
+
           {/* Test funds only where this network has them; elsewhere the section is simply not there. */}
           {signedOut ? null : faucet.error && !status ? (
             <ErrorState error={faucet.error} onRetry={faucet.reload} />
@@ -274,5 +282,51 @@ function Outcome({ outcome }: { outcome: FaucetOutcome | undefined }) {
     >
       {`Added ${quantity(outcome.usdc.amount, 2)} ${settlementSymbol}.${gasFailed ? ' Gas top-up failed.' : ''}`}
     </Text>
+  );
+}
+
+/** Monad testnet's test funds on the Fund step: MON for gas and AUSD to trade, with each transfer's explorer link. */
+function TestnetFunds() {
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<{ text: string; url?: string }>();
+  const [failed, setFailed] = useState<string>();
+
+  async function ask() {
+    if (busy) return;
+    setBusy(true);
+    setFailed(undefined);
+    try {
+      const r = await perps.fundTest();
+      setDone({ text: `Sent: ${r.sent.map((s) => s.what).join(' · ')}.`, url: r.sent.at(-1)?.explorer });
+    } catch (e) {
+      setFailed(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <View style={{ marginTop: space.s16 }}>
+      <Button label="Get test MON and AUSD" variant="secondary" loading={busy} disabled={Boolean(done)} onPress={() => void ask()} testID="fund-testnet" />
+      {done ? (
+        <Text
+          variant="footnote"
+          color={colors.up}
+          align="center"
+          style={{ marginTop: space.s8 }}
+          onPress={done.url ? () => void Linking.openURL(done.url!) : undefined}
+        >
+          {done.url ? `${done.text} View on the explorer ›` : done.text}
+        </Text>
+      ) : failed ? (
+        <Text variant="footnote" color={colors.down} align="center" style={{ marginTop: space.s8 }}>
+          {failed}
+        </Text>
+      ) : (
+        <Text variant="footnote" color={colors.ink55} align="center" style={{ marginTop: space.s8 }}>
+          Signing the permission needs a little MON for gas. Once a day per wallet.
+        </Text>
+      )}
+    </View>
   );
 }

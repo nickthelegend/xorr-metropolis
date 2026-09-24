@@ -35,6 +35,8 @@
 import type { Href } from 'expo-router';
 import { ApiError, NotSignedIn, TimedOut, apiProse, apiReason, errorRef } from './apiError';
 import { SessionExpired } from '@/auth/expiry';
+import { humanWalletError } from '@/wallet/walletError';
+import { CHAIN_KEY } from '@/chain';
 
 /**
  * What KIND of failure this is — what the screen has to do about it, not where it came from.
@@ -348,6 +350,20 @@ export function classify(e: unknown): Failure {
       kind: 'congested',
       message: 'The network was busy and this did not land. Nothing was placed.',
       retryable: true,
+      outcomeUnknown: false,
+    };
+  }
+  /*
+   * The wallet could not pay gas. Perps' deposit, stop and withdraw reached the screen with the chain's own words ("Signer
+   * had insufficient balance", 2026-09-24); the grant already translated them. One sentence for both, with where gas comes
+   * from on testnet.
+   */
+  if (/insufficient (funds|balance)/i.test(message)) {
+    return {
+      kind: 'insufficient-balance',
+      message: humanWalletError(e),
+      retryable: false,
+      fix: CHAIN_KEY === 'monad-testnet' ? { label: 'Get test MON', href: '/fund' } : undefined,
       outcomeUnknown: false,
     };
   }

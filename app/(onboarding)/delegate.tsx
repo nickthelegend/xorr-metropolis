@@ -39,7 +39,8 @@ import { useGrantDelegation } from '@/auth/useGrantDelegation';
 import { CAP_MAX, CAP_MIN, RUN_FOR, capLabel, runForMs } from '@/state/derived';
 import { useStore } from '@/state/store';
 import { readDelegationIntoStore } from '@/wallet/readDelegation';
-import { errorText } from '@/data/apiError';
+import { ApiError, errorText } from '@/data/apiError';
+import { humanWalletError } from '@/wallet/walletError';
 import { onMonad, settlementSymbol } from '@/chain';
 import { PERPL_NOTICE, STOCK_TOKEN_NOTICE } from '@/legal/jurisdiction';
 
@@ -107,7 +108,9 @@ export default function GrantDelegation() {
       // trade here. The agents' baskets are set from the agent screens, so the grant lands on Home.
       router.replace('/(tabs)');
     } catch (e) {
-      setLocalError(errorText(e));
+      // The executor's refusals keep its own sentence; a wallet's failure is translated, never shown as the chain's raw
+      // words ("insufficient balance for gas: have 0 want 21756294000000000" reached this screen, 2026-09-24).
+      setLocalError(e instanceof ApiError ? errorText(e) : humanWalletError(e));
     }
   }
 

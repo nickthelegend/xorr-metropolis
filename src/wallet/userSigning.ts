@@ -38,7 +38,7 @@ export type WalletProvider = {
 /** Reads and broadcasts on the chain this build settles on — never through the wallet's own RPC. */
 export type ChainAccess = Pick<
   PublicClient,
-  'getTransactionCount' | 'estimateGas' | 'estimateFeesPerGas' | 'getGasPrice' | 'sendRawTransaction'
+  'getTransactionCount' | 'estimateGas' | 'estimateFeesPerGas' | 'getGasPrice' | 'sendRawTransaction' | 'getBalance'
 >;
 
 export type UserSigner = {
@@ -220,5 +220,26 @@ export async function estimateUserFee(
     return { gas: BigInt(gas as string), gasPrice: BigInt(gasPrice as string) };
   } catch {
     return undefined;
+  }
+}
+
+/**
+ * Refuse, before any wallet sheet opens, a run of `count` transactions the wallet cannot pay gas for.
+ *
+ * A fresh Monad testnet wallet holds no MON. The grant opened Privy's sheet anyway, and Privy's own screen said "Signer had
+ * insufficient balance · Please try again · Retry transaction" — retrying could never work, and nothing of ours was on
+ * screen to say why (2026-09-24). The first transaction's fee, times the count, against the wallet's balance: short of that
+ * the error is the chain's own "insufficient balance", which `humanWalletError` turns into a sentence with where gas comes
+ * from. An estimate that cannot be made is not a refusal — only an empty wallet is then.
+ */
+export async function assertGasFor(signer: UserSigner, to: Address, data: Hex, count: number): Promise<void> {
+  const [have, fee] = await Promise.all([
+    signer.chainAccess.getBalance({ address: signer.from }).catch(() => undefined),
+    estimateUserFee(signer, to, data),
+  ]);
+  if (have === undefined) return;
+  const need = fee ? fee.gas * fee.gasPrice * BigInt(Math.max(1, count)) : 1n;
+  if (have < need) {
+    throw new Error(`insufficient balance for gas: have ${have} want ${need}`);
   }
 }

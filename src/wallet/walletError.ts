@@ -18,6 +18,7 @@
  * sentence than viem's, and never render the request. Anything unrecognised keeps its first line,
  * which is short and at least true, rather than being replaced by a generic apology.
  */
+import { activeChain, CHAIN_KEY } from '@/chain';
 
 /** viem prints `Details: <reason>` for the node's own message. That line is the useful one. */
 function detailLine(message: string): string | undefined {
@@ -59,8 +60,16 @@ export function humanWalletError(e: unknown): string {
    * fork (`walletSignsOnly` in src/chain.ts), so this is the fork wallet's own balance, which the
    * faucet tops up.
    */
-  if (/insufficient funds/i.test(raw)) {
-    return 'Your wallet has no ETH to pay the network fee, so the transaction was not sent.';
+  /*
+   * Also "Signer had insufficient balance" — Privy's words on Monad — which matched nothing here, so a fresh testnet wallet
+   * read that sentence under the grant and "Please try again", which cannot help (2026-09-24). Named in the chain's own gas
+   * token (MON on Monad, not ETH), and on testnet with where test MON comes from.
+   */
+  if (/insufficient (funds|balance)/i.test(raw)) {
+    const gas = activeChain.nativeCurrency.symbol;
+    return CHAIN_KEY === 'monad-testnet'
+      ? `Your wallet has no ${gas} to pay the network fee, so the transaction was not sent. Get test ${gas} on the Fund step, then sign again.`
+      : `Your wallet has no ${gas} to pay the network fee, so the transaction was not sent.`;
   }
   if (/nonce too low|already known|replacement transaction underpriced/i.test(raw)) {
     return 'A transaction from this wallet is already in flight. Wait for it to settle, then try again.';

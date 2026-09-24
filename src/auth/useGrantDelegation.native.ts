@@ -24,7 +24,7 @@ import { humanWalletError } from '@/wallet/walletError';
 import { SETTLEMENT_APPROVAL_DAYS, type GrantOptions } from '@/wallet/grantPlan';
 import { chainAccess } from '@/wallet/chainAccess';
 import { assertGrantDestination, confirmStopped, contractToStop } from '@/wallet/delegationChain';
-import { estimateUserFee, sendAsUser, type UserSigner, signTypedDataAsUser } from '@/wallet/userSigning';
+import { assertGasFor, estimateUserFee, sendAsUser, type UserSigner, signTypedDataAsUser } from '@/wallet/userSigning';
 
 const DELEGATION_ABI = [
   {
@@ -89,6 +89,8 @@ export function useGrantDelegation() {
     async (to: Address, data: Hex) => {
       const s = await signer();
       if (!s) throw new Error('No wallet yet. Finish sign-in first.');
+      // Every signature, not only the grant: a wallet with no gas is told so before the wallet's own sheet opens.
+      await assertGasFor(s, to, data, 1);
       return sendAsUser(s, to, data);
     },
     [signer],
@@ -151,6 +153,16 @@ export function useGrantDelegation() {
          * `options.approvals` every token is approved, as a first grant needs.
          */
         const wanted = options?.approvals?.map((a) => a.toLowerCase());
+        // Gas for every prompt below, checked before the first one opens (see `assertGasFor`).
+        const toApprove = approvable.filter((t) => !wanted || wanted.includes(t.address.toLowerCase()));
+        const firstSigner = await signer();
+        if (!firstSigner) throw new Error('No wallet yet. Finish sign-in first.');
+        await assertGasFor(
+          firstSigner,
+          (toApprove[0]?.address ?? params.contract) as Address,
+          encodeFunctionData({ abi: DELEGATION_ABI, functionName: 'approve', args: [params.contract, cap] }),
+          toApprove.length + 1,
+        );
         for (const t of approvable) {
           if (wanted && !wanted.includes(t.address.toLowerCase())) continue;
           const amount =
@@ -188,7 +200,7 @@ export function useGrantDelegation() {
         setBusy(false);
       }
     },
-    [send],
+    [send, signer],
   );
 
   const revoke = useCallback(async () => {

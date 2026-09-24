@@ -20,8 +20,15 @@ Version: viem@2.56.3`;
 describe('a wallet failure reads as a sentence, not a request log', () => {
   it('says what went wrong and nothing about the transport', () => {
     const message = humanWalletError(new Error(VIEM_DUMP));
+    // The chain's own gas token: this suite builds for the Monad fork, whose gas is MON.
     expect(message).toBe(
-      'Your wallet has no ETH to pay the network fee, so the transaction was not sent.',
+      'Your wallet has no MON to pay the network fee, so the transaction was not sent.',
+    );
+  });
+
+  it("reads Privy's 'Signer had insufficient balance' as the same missing gas", () => {
+    expect(humanWalletError(new Error('Signer had insufficient balance'))).toBe(
+      'Your wallet has no MON to pay the network fee, so the transaction was not sent.',
     );
   });
 

@@ -7,6 +7,7 @@ import { encodeFunctionData, erc20Abi, keccak256, toHex, type Hex, type Transact
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import {
   WrongChainError,
+  assertGasFor,
   estimateUserFee,
   sendAsUser,
   type ChainAccess,
@@ -200,5 +201,28 @@ describe('the fee a person pays (3.13)', () => {
   it('is undefined, never a zero, when it cannot be read', async () => {
     const f = fork({ estimateGas: vi.fn(async () => Promise.reject(new Error('node down'))) });
     expect(await estimateUserFee(signerOf(wallet(), f.access, true), USDC, DATA)).toBeUndefined();
+  });
+});
+
+describe('gas is checked before any wallet sheet opens', () => {
+  it('refuses, as the chain would, a run the wallet cannot pay for — and the sheet is never asked to sign', async () => {
+    const w = wallet();
+    // 55,819 gas at ~1 gwei is ~0.0000558 per transaction; five need ~0.00028; the wallet holds a tenth of that.
+    const f = fork({ getBalance: vi.fn(async () => 27_900_000_000_000n) });
+    await expect(assertGasFor(signerOf(w, f.access, true), USDC, DATA, 5)).rejects.toThrow(/insufficient balance for gas/);
+    expect(w.methods()).not.toContain('eth_signTransaction');
+    expect(w.methods()).not.toContain('eth_sendTransaction');
+  });
+
+  it('lets a funded wallet through', async () => {
+    const w = wallet();
+    const f = fork({ getBalance: vi.fn(async () => 10n ** 18n) });
+    await expect(assertGasFor(signerOf(w, f.access, true), USDC, DATA, 5)).resolves.toBeUndefined();
+  });
+
+  it('does not refuse when the balance cannot be read — the chain will say, and that is not ours to guess', async () => {
+    const w = wallet();
+    const f = fork({ getBalance: vi.fn(async () => { throw new Error('down'); }) });
+    await expect(assertGasFor(signerOf(w, f.access, true), USDC, DATA, 5)).resolves.toBeUndefined();
   });
 });

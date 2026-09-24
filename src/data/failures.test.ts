@@ -243,3 +243,12 @@ describe('a session that expired mid-use', () => {
     expect(f.fix).toEqual({ label: 'Sign in', href: '/' });
   });
 });
+
+describe('a wallet that cannot pay gas', () => {
+  it("reads Privy's 'Signer had insufficient balance' as a sentence about gas, not the chain's words", () => {
+    const f = classify(new Error('Signer had insufficient balance'));
+    expect(f.kind).toBe('insufficient-balance');
+    expect(f.message).toBe('Your wallet has no MON to pay the network fee, so the transaction was not sent.');
+    expect(f.retryable).toBe(false);
+  });
+});

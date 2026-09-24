@@ -15,7 +15,7 @@
 import { randomUUID } from 'node:crypto';
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
-import { createWalletClient, erc20Abi, getAddress, http, parseAbi, parseEther, type Address } from 'viem';
+import { createWalletClient, erc20Abi, formatEther, getAddress, http, parseAbi, parseEther, type Address } from 'viem';
 import { requireUser } from '../auth/middleware.js';
 import { chain, CHAIN_KEY, explorerTx, rpcUrl } from '../evm/chains.js';
 import { publicClient } from '../evm/client.js';
@@ -178,6 +178,27 @@ perplRoutes.post('/perps/fund-test', async (c) => {
     const sent: { what: string; tx: string; explorer: string }[] = [];
     const gasHave = await publicClient.getBalance({ address: owner });
     const gasAdded = gasHave < TEST_GAS ? TEST_GAS - gasHave : 0n;
+    /*
+     * The faucet must be able to pay before it is asked to.
+     *
+     * With its key down to 0.0074 MON this sent anyway: every attempt was refused ("insufficient balance"),
+     * `sendWhenSpendable` kept retrying, and the button answered 502 after 44.8 s (2026-09-24) — a person waited most of a
+     * minute to be told nothing. Monad bills the gas limit, so the two sends' limits are what it must hold beside the MON
+     * it gives away; short of that, it says so at once, with what it holds and where test MON comes from.
+     */
+    const feeBudget = (21_000n + 150_000n) * ((fees as { maxFeePerGas?: bigint }).maxFeePerGas ?? 0n);
+    const faucetHas = await publicClient.getBalance({ address: faucet.address });
+    if (faucetHas < gasAdded + feeBudget) {
+      return c.json(
+        {
+          error: 'faucet_empty',
+          detail: `The test faucet is out of MON: it holds ${formatEther(faucetHas).slice(0, 8)} MON and needs ${formatEther(gasAdded + feeBudget).slice(0, 6)} to send yours. Get test MON at faucet.monad.xyz for ${owner}, or ask this deployment's operator to top up ${faucet.address}.`,
+          faucet: faucet.address,
+          faucetMon: Number(formatEther(faucetHas)),
+        },
+        409,
+      );
+    }
     if (gasAdded > 0n) {
       const h = await sendWhenSpendable(() => wallet.sendTransaction({ account: faucet, chain, to: owner, value: TEST_GAS - gasHave, gas: 21000n, ...fees }));
       await publicClient.waitForTransactionReceipt({ hash: h });
