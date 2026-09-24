@@ -74,3 +74,60 @@ exist here).
 | F18 | Invalid inputs | Zero/negative/huge amounts, bad address — refused in words, no crash. |
 | F19 | Sign out and back in | State (grant, holdings, strategies) restored from chain and DB. |
 | F20 | Executor restart | App recovers; persisted strategies, runs and audit intact. |
+
+## Results — 2026-09-24 (fork build on :8082 against the fork executor; testnet build on :8081 against :8788)
+
+Evidence lives in the commits named and in `docs/evidence/`. "Earlier run" means executed in this session before the
+fixes of the day, not repeated after them.
+
+### A, B. Every screen (the crawl: signed in, G1–G5 on each route)
+| Run | Result |
+|---|---|
+| 1 | 65/90 — 25 FAIL: wrong-chain text (G5) on 15 routes, 3 blank, 404s from the crawl's own bogus ids, hydration errors, `/health` 503s. |
+| 2 | 71/90 — after the first copy fixes. |
+| 3 | 82/90 — after the Monad-true copy, the council, the agents and the DOM fixes. |
+| 5 | **84/92** (with `/perps`, `/perpl` added). Every route that failed before and was reached passes — Home, `/asset/WMON`, `/chart/WETH`, `/coverage`, `/metrics`, `/portfolio` (no nested button), `/route/WETH`, `/schedule`, `/council`, `/welcome`-era copy. The 8 FAILs are the last 8 routes in order (`/verify` … `/perpl`): the Mac's disk filled (ENOSPC) and the bundler died mid-crawl, so they did not load at all. Of those, run 3 passed `/voice`, `/wallet`, `/welcome`, `/withdraw-everything`; `/verify`'s G5 and `/watchlist`'s hydration error were fixed after run 3 (`f92f331`, `7f39251`) and are **unverified in the browser**. `/perps` on the fork now redirects to `/not-here`; `/perpl` rendered from the API but not in a crawl. |
+
+Found by the crawl and fixed on the way: native MON shown as "ETH … $133.20" (MON priced at ETH, `654f99b`); WETH
+labelled "Computer Peripheral Equipment, NEC" (`7414e70`); Uniswap sales recorded as 1inch (`4b0662c`); another build's
+agent looks (NVDAx…) on Schedule (`57f582d`); Base's 1inch equities warmed on Monad ("Warm Monad's own charts first").
+
+### C, D
+| Item | Result |
+|---|---|
+| C2 `/health` 20 consecutive reads | **PASS** — 20/20 × 200, read while a full crawl was running. The intermittent 503s were the fork freezing on slow remote reads (anvil 45 s × 5 retries); bounded at 10 s × 3 (`4b0662c`). |
+| C3 `/monad/crosscheck`, `/monad/perpl` | **PASS** — Uniswap $0.023954, Kuru $0.023988, Chainlink $0.023986, 14.2 bps apart; 9 Perpl markets with funding per hour. |
+| D1 `forge test` | **PASS** — 53/53. |
+| D2 `prove-monad.ts` | **PASS** (earlier run) — `docs/evidence/prove-monad-fork-2026-09-24.txt`. |
+| D3 testnet deployment on Sourcify | **PASS** — `86f7900`, `contracts/deployments/monad-testnet.json` (`sourcifyVerified: true`). |
+
+### E. Flows
+| # | Result |
+|---|---|
+| F1 | **PASS** — test-0356 signed in through the real email-code form; `/wallet/connect` 200. |
+| F2 | **PASS** (earlier run) — fork faucet paid USDC; the testnet test-funds button paid MON + 500 AUSD. |
+| F3 | **PASS** — `/delegate`: five Privy signatures (approvals incl. WMON, then the grant); `/delegation/record` 200; Home reads ARMED. |
+| F4 | **PASS** (earlier run) — $250 of WETH bought; the position (0.0930 WETH) is on Portfolio. |
+| F5 | **PASS** — through the council: 1,037.94 WMON to the owner, `0x6289f268…c9c121`, receipt status 1 (25 USDC → XorrDelegation → Uniswap pool). |
+| F6 | **PASS** after a fix — sold 1,037.71 WMON for 24.84 USDC (`0x41732ac6…`, status 1). Found: the grant never approved WMON (`7aa7606`), and the sale was recorded as "1inch" though 1inch is off on Monad (`4b0662c`). |
+| F7 | **PASS** — $5,000 of WETH on a $739.84 wallet: "Buy $5000 of WETH" disabled (`aria-disabled=true`), "You have $739.84."; no console error. |
+| F8 | **PASS** (D2) — `DailyCapExceeded(60000000, 50000000)` mined as a revert. |
+| F9 | **PASS** (earlier run) — hold → revoke confirmed on chain; the next order refused. The gesture now says so ("Hold to stop all trading", `3d2e6f9`). |
+| F10 | **PASS** — re-granted from `/delegate` after the stop (F3's run). |
+| F11 | **PASS** — round #2: Price Desk yes (Chainlink $0.02393, fill $0.02409, Kuru $0.02394, 66 bps), Risk Keeper yes, Trend Reader abstain, Perps Desk no (MON/ETH longs pay 0.0056%/h); approved 2–1; executed (F5). |
+| F12 | **PASS** — hired Yield Keeper ("Buys MON a little every day", $100/day, 7 days; grant `0xaefd860d…` signed in Privy). On the next tick it proposed "buy MON $10", the council approved it, and its own wallet `0xbd15…3c08` signed the trade: 10 USDC from the owner → 415.18 WMON to the owner (`0x63eeb9e3…`, status 1). Found: its gas read "ETH" (`23224ec`). |
+| F13 | **PASS** (the list) — `/market/tradable` on Monad is USDC, WMON, WETH, WBTC, USDT0 (no AUSD, no ETH sentinel), `7414e70`. Creation not repeated. |
+| F18 | **PASS** (two inputs) — allowlist "0x1234": "Not a valid address: it starts with 0x and has 42 characters.", Add not usable; an order above the balance: F7. Zero and negative amounts not tried. |
+| F14, F15, F17, F19, F20 | UNTESTED today. (F20's persistence was exercised in passing: the executor restarted four times today with rounds, runs, the grant and the hired agent intact.) |
+| F16 | Code and unit only: "Cash · AUSD" on Portfolio and the Chainlink peg line on testnet; the testnet build was not re-rendered after it (the disk filled, see below). |
+
+### Testnet (Perpl), this session
+| Check | Result |
+|---|---|
+| Desk create / fund / open / long / hold-to-stop / resume / close / withdraw | **PASS** (earlier run) — desk `0x3323…11b8`, account #693, withdrew 149.80 AUSD. |
+| Change the agent's limits from Perps | **FAIL → fixed → PASS** — the browser's CORS preflight refused PUT (also breaking `PUT /watchlist/order`); PUT allowed (`9c0a894`); saved and read back as $500/$1,000/3x, then restored. |
+| Block pulse on the desk | **PASS** — "Monad testnet · block 65,148,991", advancing. |
+
+Environment note: the Mac's data volume reached 100% (1.3 GB free, 3.5 GB of swap in use) while two bundlers, two
+executors, the fork and Chromium ran together; one bundler and the testnet executor died with ENOSPC. Nothing of the
+project's was lost; the stacks were then run one at a time.
