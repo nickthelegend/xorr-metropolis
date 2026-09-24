@@ -68,8 +68,14 @@ export default function Fund() {
   const auth = useAuth();
   const signedOut = useSignedOut();
   // Registered on the step before this one; a session that skipped it still has Privy's own address.
-  const address = useStore((s) => s.wallet)?.address ?? auth.address;
-  const faucet = useAsync(() => faucetStatus(), []);
+  const registered = useStore((s) => s.wallet)?.address ?? null;
+  const address = registered ?? auth.address;
+  /*
+   * Read again once the wallet is registered. Fund opened straight after a first sign-in reads the faucet while the
+   * wallet is still being registered, and the executor answers "no wallet on file": the button stayed disabled over
+   * "Set up your wallet first." for a wallet that was set up a moment later, until a reload (2026-09-24).
+   */
+  const faucet = useAsync(() => faucetStatus(), [registered]);
   // Card deposits only where the executor has MoonPay keys (2026-09-19): with none it answers `configured: false`, and a
   // button here would open a checkout that cannot work. The faucet and the address below still fund the wallet.
   const moonPay = useAsync(() => fetchMoonPayConfig(), []);
