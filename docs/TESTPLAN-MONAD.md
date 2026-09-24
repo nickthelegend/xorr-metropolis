@@ -88,6 +88,7 @@ fixes of the day, not repeated after them.
 | 3 | 82/90 — after the Monad-true copy, the council, the agents and the DOM fixes. |
 | 5 | **84/92** (with `/perps`, `/perpl` added). Every route that failed before and was reached passes — Home, `/asset/WMON`, `/chart/WETH`, `/coverage`, `/metrics`, `/portfolio` (no nested button), `/route/WETH`, `/schedule`, `/council`, `/welcome`-era copy. The 8 FAILs are the last 8 routes in order (`/verify` … `/perpl`): the Mac's disk filled (ENOSPC) and the bundler died mid-crawl, so they did not load at all. Of those, run 3 passed `/voice`, `/wallet`, `/welcome`, `/withdraw-everything`; `/verify`'s G5 and `/watchlist`'s hydration error were fixed after run 3 (`f92f331`, `7f39251`) and are **unverified in the browser**. `/perps` on the fork now redirects to `/not-here`; `/perpl` rendered from the API but not in a crawl. |
 | 6 | **91/91** (the Monad build's routes as they stand: `/oracle` has since joined the hidden list). After the PC restarted, on a fork taken again at block 107,482,899 and rebuilt (`rebuild:fork`'s grant fixed, `61f23e8`). 43 passed before the fork's anvil was stopped by a signal mid-crawl; it resumed from its saved chain, and the 48 routes left or failed passed on the second pass, 48/48, after the `/history` fix below. The 8 that never loaded in run 5 pass — `/verify` (G5) and `/watchlist` (hydration) now verified in the browser; `/perps` goes to `/not-here` on the fork; `/more` and `/bot` go Home by design. Limit: a 5xx that lands after the 9 s window is not seen by the crawl (the backtest's cold 503 at 12 s was found in the executor log, and answers 200 in 22 ms warm). |
+| 7 | **91/91** after the evening's changes (passkeys, notes, Kuru, venue labels, AUSD on Home, named sources, 202 warming): no console error, no 5xx, no wrong-chain text on any route. |
 
 Found by run 6 and fixed: `GET /history` took 65–71 s on a fresh fork — its 9,000-block window reached past the fork
 point, so anvil fetched those logs from Monad's public RPC window by window, for a contract that exists only on the
@@ -149,3 +150,24 @@ $1,600/day grant restored by `fork-grant.ts`) and now saves its chain on the ext
 Environment note: the Mac's data volume reached 100% (1.3 GB free, 3.5 GB of swap in use) while two bundlers, two
 executors, the fork and Chromium ran together; one bundler and the testnet executor died with ENOSPC. Nothing of the
 project's was lost; the stacks were then run one at a time.
+
+## Results — the evening build (2026-09-24, `4d3a490` … `d5239c1`)
+
+Each item run in Chromium (Playwright; a virtual WebAuthn authenticator with PRF for passkeys) against the fork build on
+:8082 or the testnet build on :8081, with every executor request and console error logged, and every transaction's
+receipt read.
+
+| Item | Result |
+|---|---|
+| Mera passkey account | **PASS** — create (one PRF ceremony) → `/auth/passkey/challenge` + `/session` 200 → wallet connected → fork faucet → grant signed by the Mera session (five signatures, no wallet sheet, `/delegation/record` 200, `remainingToday` $1,600) → Home ARMED → a WETH buy. 0 console errors. |
+| Passkey signing window | **PASS** — after a reload Settings reads "Passkey signing · locked"; a re-grant unlocked it with the passkey and signed (nonce 5 → 10). |
+| Recovery with storage cleared | **PASS** — `localStorage.clear()` → "Sign in with a passkey" → the same address, ARMED, the same balance. |
+| Private notes (a second PRF key) | **PASS** — a note on a council run saved (`PUT /notes` 200; the row is 128 characters of base64, no plaintext), read back after a reload and after clearing storage and signing in again. 0 console errors. |
+| Kuru fills | **PASS** — sale: 2,107.45 WMON → 49.91 USDC on Kuru (`0x8244ec4c…`: owner → delegation → KuruVenue → Kuru's book → USDC to the owner, dust back as WMON); buy: $50 → 2,109.62 WMON (`0xe8397cea…`, on a test executor with the gate widened for the fork's drift). Run detail: "Filled at Kuru". |
+| Manual price gate | **PASS** — WBTC refused: "The fill ($87,450.81 …) is 469 bps from Chainlink ($83,532.97), past the 150 bps limit. Nothing was placed."; WMON (~100 bps) filled. |
+| Testnet with no gas | **PASS (the product)** — Fund offers "Get test MON and AUSD"; with the faucet key short it refuses in 1.3 s, naming what it holds and needs; the grant refuses before any wallet sheet: "Your wallet has no MON to pay the network fee … Get test MON on the Fund step, then sign again." **Blocked (owner):** funding the faucet, delegate and operator keys. |
+| Named price sources | **PASS** — "CoinGecko says $2,661.06; Uniswap v3 on the Monad fork would fill at $2,691.81 — 1.15% apart. The number shown is CoinGecko's." |
+| Cold charts | **PASS** — a first chart after an executor restart answers 202 and is waited out; 0 console errors on `/asset/WMON` and `/markets` cold. |
+| Send balance after a transfer | **PASS** — "Balance 24,990.0000 USDC" once mined, equal to the chain. |
+| Fund on a first sign-in | **PASS** — the faucet status is read again once the wallet registers (a second `GET /faucet` after the connect). |
+| CI on `main` | **PASS** — green on every push since `4d3a490` (it failed at Lint on every run before). |

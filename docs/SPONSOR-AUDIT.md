@@ -21,6 +21,13 @@ ever run it · **IMPORTED-UNUSED** · **FAKED** · **MISSING**.
 
 ## 1. The honest status, first
 
+> **Update, later the same evening (after the build, at `d5239c1`):** Kuru now **fills** (the `KuruVenue` adapter; a sale
+> and a buy filled on Kuru's book on the fork, chosen over Uniswap by measured delivery). Mera is now **USED** (web):
+> passkey accounts derived from PRF, a bounded signing session, a second PRF-derived key encrypting private notes, and
+> recovery with storage cleared — verified in Chromium with a virtual PRF authenticator. Chainlink now also gates a buy
+> placed by hand. AUSD is named on Home and Deposit. Still absent: CRE, Envio, Nansen, MetaMask. Still blocked tonight:
+> Perpl orders on testnet (gas). The table below is the measurement before those changes.
+
 **Four sponsors are genuinely used in flows a judge can trigger: Perpl, Agora AUSD, Chainlink Data Feeds and Kuru.** Two
 of those are deep: Perpl (real orders on testnet through Perpl's own delegated account) and Chainlink (a price gate that
 vetoes council trades). Kuru is read-only: it prices, it never fills. **Five are absent: Mera, Chainlink CRE, Envio,
@@ -48,10 +55,10 @@ feeds in the council, a stock-token pitch) are gone — the full crawl of 91 rou
 
 | Bounty | Status |
 |---|---|
-| Agora — Best Mobile Trading App ($10K): Mera auth + AUSD held and shown + a Perpl trade | 2 of 3. **No Mera.** AUSD and Perpl real on testnet (Perpl gas-blocked tonight). Mobile: the Perps signer exists natively (`src/auth/useGrantDelegation.native.ts`), **not run on a device** in this audit. |
+| Agora — Best Mobile Trading App ($10K): Mera auth + AUSD held and shown + a Perpl trade | 2 of 3 at measurement; **3 of 3 on web after the build** (Mera passkey sign-in `7b64c9e`). Perpl gas-blocked on testnet tonight. Mobile: Mera on Expo not built (passkey domain + dev build); the Perps signer exists natively, not run on a device. |
 | Perpl — Best use of the API ($5K): a production-ready bot on Perpl | Real agent orders inside caps, on Perpl's own delegated account. Missing: the council path run, TP/SL, WebSocket, a live gas budget. |
-| Kuru — Consumer Trading App ($5K): trades routed through Kuru's book | **Not met** (reads only). |
-| Mera ×2 ($2.5K each) | **Not met.** |
+| Kuru — Consumer Trading App ($5K): trades routed through Kuru's book | Not met at measurement; **met after the build** (`e504cd2`: fills through `KuruVenue`, best of Kuru/Uniswap). The go-to-market write-up is not done. |
+| Mera ×2 ($2.5K each) | Not met at measurement; **after the build**: UX — passkey account, bounded signing session with a countdown, recovery with storage cleared (`7b64c9e`); Many Keys — a notes key under its own PRF salt (`d5239c1`). Cross-device on real hardware not tested (the virtual authenticator cannot carry PRF between browsers). |
 | Perpl — Risk tool ($3K) | Partly: positions with entry, mark, PnL, liquidation price (testnet); protocol-wide OI and funding (`/perpl`). No funding history, skew, alerts. |
 | Chainlink CRE ($3K) | **Not met.** (Feeds are used; the bounty is for CRE.) |
 | Envio ($1K) · Nansen ($5K pool) · MetaMask plugin ($2.5K) | **Not met.** |

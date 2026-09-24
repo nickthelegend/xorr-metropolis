@@ -1,5 +1,7 @@
 # xorr on Monad — honest completion
 
+**Now: 32 of 44 · 73%** (second measurement, below). First measurement the same evening: 22 of 44 · 50%.
+
 **100% is the project's own definition of done** (`PLAN.md` §1: Qualified · Product · Honest · Technical · Submitted),
 plus the phases `PLAN.md` §3 commits to (P2–P5, the sponsor work) and the rules in `docs/METROPOLIS.md`. Each item is
 verified by running it — the flow driven in a real browser with its requests logged, the transaction's receipt read, the
@@ -80,3 +82,42 @@ The Arbitrum build's measurement this file used to hold is in `docs/archive/COMP
 | 45 | The end-to-end flows | ✓ | F1–F20 pass (`docs/TESTPLAN-MONAD.md`) |
 
 (Item 43 duplicates 16 and is not counted twice: 22 of 44 unique items.)
+
+
+## Second measurement — the same evening, after the build, commit `d5239c1`+ — **32 of 44 · 73%**
+
+Re-measured across the whole checklist, not only the items touched: the 91-route crawl again (**91/91**, run 7), the
+proof again (**passed**: grant, a fill on Kuru, `DailyCapExceeded` mined, close, `PolicyRevoked` mined —
+`docs/evidence/prove-monad-fork-2026-09-24-final.txt`), every suite (app 2,812 · executor 1,516 · contracts 59 passing;
+typecheck 0 errors on both sides; lint 0 errors), CI on `main`, and each changed flow in the browser
+(`docs/TESTPLAN-MONAD.md`, "the evening build").
+
+| # | Item | First | Now | What moved it |
+|---|---|---|---|---|
+| 6 | Demo video ≤ 3 min | ✗ | ✓ | 2:59 recorded from the running app (`docs/demo/xorr-monad-demo.mp4`, `183a12a`); publishing it is item 7 |
+| 8 | Sign in with a passkey (Mera) | ✗ | ✓ | `7b64c9e` — web; verified with a virtual PRF authenticator (Expo not built) |
+| 11 | AUSD named on Home and Deposit | ✗ | ✓ | `cbd0dc3` |
+| 16 / 43 | MON filled on Kuru when it delivers more | ✗ | ✓ | `e504cd2` — `KuruVenue`; sale and buy filled on Kuru on the fork; the proof's buy chose Kuru |
+| 22 | Every price names its source | ✗ | ✓ | `0cc4173` |
+| 23 | The price gap gates a spend | ✗ | ✓ | `d9ff059` — manual buys too (WBTC refused at 469 bps) |
+| 26 | Errors say what happened | ✗ | ✓ | `6e526e7` (a timeout is not "no liquidity"), `5ebb4e2` (missing gas, in MON, before any sheet) |
+| 28 | Lint | ✗ | ✓ | `4d3a490` — 0 errors |
+| 32 | CI green on `main` | ✗ | ✓ | green on every push since `4d3a490` |
+| 38 | Scoped session; identity rebuilt on a fresh device (P4.4) | ✗ | ✓ | `7b64c9e`, `d5239c1` — 15-minute signing window with a countdown; storage cleared → the same account, grant and notes |
+
+**Still not done, and why:**
+
+| # | Item | Why |
+|---|---|---|
+| 2 | Repository public | Owner: publishing is an outward-facing action |
+| 5 | A hosted build | Owner: a Railway/Vercel deployment costs money and needs the owner's accounts |
+| 7 | Submitted | Owner: registration and submission on hackathon.monad.xyz |
+| 13 | A fresh user completes the grant on testnet | The product now says why and where gas comes from (`5ebb4e2`); the faucet key holds 0.0053 MON — owner: fund `0x5C19…2D938` and `0xEe7d…c49f` at faucet.monad.xyz (a captcha-gated site) |
+| 17 | A Perpl position from an agent, now | Same keys: the operator holds 0.021 MON for a ~0.048 MON order |
+| 19 | The council opens a Perpl position on testnet | Needs the same gas to run once |
+| 34 | The executor stays up unattended | Both exited at ~09:22 with nothing logged; now supervised with exit tracing and no unexplained exit since 13:50 — the cause is not found, so it is not claimed |
+| 37 | Per-agent identity keys + encrypted memory (P4.3) | Half: the notes key is built (`d5239c1`); per-agent identity keys are not |
+| 39 | Envio index (P5.1) | Not built: a judge could only see it hosted (an Envio account), and its local stack would need ports another project holds and disk this machine lacks |
+| 40 | Chainlink CRE workflow (P5.2) | Not built: CRE needs a Chainlink account (`cre login`; deployment needs access approval) — an account is the owner's to create |
+| 41 | Nansen seat (P5.3) | No key; x402 pay-per-call spends real USDC on Monad mainnet — the owner's call |
+| 42 | MetaMask Agent Wallet plugin (P5.4) | Not built: last by plan, a separate CLI artifact |

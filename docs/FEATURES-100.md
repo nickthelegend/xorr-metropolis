@@ -19,7 +19,7 @@ Buckets: F functional · S sponsor depth · D design/motion · P production-read
 | 7 | **Withdraw from the desk** — owner-only `withdrawCollateral`, AUSD back in the wallet | F | 4 | 5 | 5 | 100 | BUILT ✓ `9b84ce2` — withdrew 149.80 AUSD to the owner on testnet |
 | 8 | **The council votes on Monad** — perps and MON proposals; seats read Perpl funding/OI/book, Kuru's book, Chainlink MON/USD | F | 5 | 4 | 5 | 100 | BUILT ✓ `bf8b4f6` — live inputs read on the fork: Uniswap, Kuru, Chainlink MON/ETH/BTC, Perpl funding; testnet rounds trade the desk |
 | 9 | **Monad-true surfaces** — welcome line, Sources, the grant notice, Council pills, Markets with MON; no Robinhood/USDG/GMX anywhere | P | 5 | 5 | 4 | 100 | BUILT ✓ `aad59b3` `f92f331` `654f99b` `7414e70` — crawl G5 clean except recorded 1inch fills (see TESTPLAN) |
-| 10 | **Kuru spot fills** — MON market orders on Kuru's on-chain book through the delegation (mainnet fork: real resting orders) | S | 5 | 3 | 5 | 75 | TODO |
+| 10 | **Kuru spot fills** — MON market orders on Kuru's on-chain book through the delegation (mainnet fork: real resting orders) | S | 5 | 3 | 5 | 75 | BUILT ✓ `e504cd2` — `KuruVenue` adapter; best of Kuru/Uniswap measured through the contract; a sale (`0x8244ec4c…`) and a buy (`0xe8397cea…`) filled on Kuru's book on the fork |
 | 11 | **Live Kuru book in the MON ticket** — top levels from Kuru's market-data API, redrawn as blocks land | D | 4 | 4 | 5 | 80 | TODO |
 | 12 | **Test MON for gas on testnet** — the executor drips a little MON to a new wallet so a judge can sign | P | 4 | 5 | 4 | 80 | BUILT ✓ `2c5fde5` — `/perps/fund-test`: MON for gas + AUSD (Agora's faucet, else the reserve) |
 | 13 | **Hold-to-stop with a visible ring** — the kill switch shows "Hold to stop" and fills as you hold | D | 4 | 5 | 4 | 80 | BUILT ✓ `3d2e6f9` — "Hold to stop all trading", fill as you hold, "Keep holding" on an early release |
@@ -29,9 +29,9 @@ Buckets: F functional · S sponsor depth · D design/motion · P production-read
 | 17 | **Funding-carry agent** — long MON spot on Kuru + short MON perp on Perpl when funding pays shorts | S | 5 | 3 | 5 | 75 | TODO |
 | 18 | **Perpl risk dashboard** — protocol view (OI, long/short skew, funding by market) ↔ wallet view (positions, liq distance) | S | 4 | 4 | 4 | 64 | BUILT ✓ `16c4fcb` — /perpl: OI in dollars, book width, who pays funding per hour, geo-block; wallet side is /perps |
 | 19 | **Bounded approvals** — no "No limit" approvals; the grant approves only what the cap can spend | P | 4 | 4 | 4 | 64 | PARTIAL `3d2e6f9` — settlement approval is cap × days; sell-side stays unlimited by design and Safety says what bounds it (contract minOut to the owner) |
-| 20 | **Mera passkey sign-in** (Agora's requirement) — PRF → BIP-39 → EVM account; web + Expo | S | 5 | 2 | 5 | 50 | TODO |
+| 20 | **Mera passkey sign-in** (Agora's requirement) — PRF → BIP-39 → EVM account; web + Expo | S | 5 | 2 | 5 | 50 | BUILT ✓ (web) `7b64c9e` — PRF → BIP-39 → EVM account on the device; executor session from a signed challenge; bounded signing session; verified with a virtual PRF authenticator. Expo: not built |
 | 21 | Per-agent identity keys from PRF namespaces (Mera) | S | 4 | 2 | 4 | 32 | TODO |
-| 22 | Encrypted agent memory in Postgres, key from the passkey (Mera) | S | 4 | 2 | 3 | 24 | TODO |
+| 22 | Encrypted agent memory in Postgres, key from the passkey (Mera) | S | 4 | 2 | 3 | 24 | PARTIAL `d5239c1` — a second PRF key (own salt) encrypts private notes per run, server stores ciphertext only; per-agent memory not built |
 | 23 | Liquidation-distance meter on each position — a bar that fills toward the liq price | D | 4 | 4 | 4 | 64 | BUILT ✓ `9b84ce2` — LiqMeter on each Perpl position |
 | 24 | Monad block pulse — the block number ticks visibly on the desk (400 ms) | D | 3 | 5 | 4 | 60 | BUILT ✓ `2d6297c` — BlockPulse on the desk: the head each second, a dot that brightens on each block |
 | 25 | Council vote reveal — seats resolve one by one, then the tx hash slides in | D | 4 | 4 | 4 | 64 | BUILT ✓ `b405872` — a round convened in the last minute reveals seat by seat, then outcome and tx |
@@ -51,8 +51,8 @@ Buckets: F functional · S sponsor depth · D design/motion · P production-read
 | 39 | Council cites Perpl's order-book imbalance (bid/ask volume) | S | 3 | 3 | 4 | 36 | TODO |
 | 40 | Kuru market-data candles for MON charts instead of CoinGecko | S | 3 | 4 | 4 | 48 | TODO |
 | 41 | MON price crosscheck (Uniswap / Kuru / Chainlink) shown on the MON asset screen | S | 4 | 5 | 4 | 80 | BUILT ✓ `ce4e112` — MON's asset screen: Uniswap · Kuru · Chainlink and the gap |
-| 42 | Price-gap gate: refuse a MON trade when sources disagree past a limit, with the three numbers | F | 4 | 4 | 4 | 64 | PARTIAL `bf8b4f6` — the council's price desk vetoes past 150 bps between the fill and Chainlink; manual orders are not gated |
-| 43 | AUSD peg line (Chainlink AUSD/USD) beside the balance | S | 3 | 5 | 4 | 60 | TODO |
+| 42 | Price-gap gate: refuse a MON trade when sources disagree past a limit, with the three numbers | F | 4 | 4 | 4 | 64 | BUILT ✓ `d9ff059` — council and manual buys refused past 150 bps from Chainlink or on a stale round, numbers named (WBTC refused at 469 bps on the fork) |
+| 43 | AUSD peg line (Chainlink AUSD/USD) beside the balance | S | 3 | 5 | 4 | 60 | BUILT ✓ `665570d` `cbd0dc3` — Portfolio and Home: '1 AUSD = $0.9998 · Chainlink' |
 | 44 | Agora supply stat on the AUSD screen (api.agora.finance) | S | 2 | 5 | 3 | 30 | TODO |
 | 45 | Envio index of XorrDelegation + desk events driving History | S | 4 | 2 | 3 | 24 | TODO |
 | 46 | Chainlink CRE workflow attesting council rounds to the anchor | S | 4 | 2 | 3 | 24 | TODO |
@@ -70,7 +70,7 @@ Buckets: F functional · S sponsor depth · D design/motion · P production-read
 | 58 | README deployment table filled with testnet addresses + verification links | P | 4 | 5 | 5 | 100 | BUILT ✓ `5b0ed37` |
 | 59 | Hosted demo (Vercel + Railway) | P | 5 | 3 | 5 | 75 | TODO |
 | 60 | Crawl test of every screen in CI | P | 3 | 4 | 3 | 36 | TODO |
-| 61 | Demo video ≤ 3 min | P | 5 | 3 | 5 | 75 | TODO (owner records) |
+| 61 | Demo video ≤ 3 min | P | 5 | 3 | 5 | 75 | PARTIAL `183a12a` — a 2:59 recording of the real app with captions (`docs/demo/xorr-monad-demo.mp4`); voice-over and publishing are the owner's |
 | 62 | Explain-this-trade: each agent perp run explains the seat votes and funding it used | F | 3 | 4 | 4 | 48 | TODO |
 | 63 | "Why can't my agent withdraw?" sheet linking Perpl's DelegatedAccount source | D | 3 | 5 | 4 | 60 | TODO |
 | 64 | Operator key rotation (resign + add) without redeploying the desk | F | 2 | 4 | 3 | 24 | TODO |
@@ -96,7 +96,7 @@ Buckets: F functional · S sponsor depth · D design/motion · P production-read
 | 84 | Reduced-motion respect for every new animation | P | 2 | 5 | 3 | 30 | TODO |
 | 85 | Accessibility labels on the perps controls | P | 2 | 5 | 3 | 30 | TODO |
 | 86 | Number formatting for tiny MON prices ($0.02412 — 5 dp) everywhere | P | 3 | 5 | 4 | 60 | BUILT ✓ `aad59b3` — price() gives 5 dp for $0.01–0.1, 6 below |
-| 87 | Stale-price label when Perpl's mark is older than 60 s | P | 3 | 4 | 4 | 48 | TODO |
+| 87 | Stale-price label when Perpl's mark is older than 60 s | P | 3 | 4 | 4 | 48 | BUILT ✓ `028d74c` — 'Updated 3s ago' per market, warning ink past 60 s |
 | 88 | Audit trail rows for desk actions (open, operator added/removed, withdraw) | P | 4 | 4 | 4 | 64 | TODO |
 | 89 | Anchor the audit chain on Monad testnet from the executor | F | 3 | 4 | 4 | 48 | TODO |
 | 90 | Session restore after refresh mid-desk-setup | P | 3 | 3 | 3 | 27 | TODO |

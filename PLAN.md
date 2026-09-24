@@ -78,8 +78,10 @@ Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED*
   $60 refused off-chain and on-chain (`DailyCapExceeded(60000000, 50000000)`, mined) → close to USDC → revoke →
   `PolicyRevoked()`. Evidence: `131f988`, `docs/evidence/prove-monad-fork-2026-09-24.txt`; one of four runs failed at the
   close with the cause swallowed and did not recur.
-- P1.3 **NOT STARTED** Kuru fill path: route MON/USDC through Kuru's router (or KuruFlow) from `spend()`; add the router
-  to the grant's venues; best of Uniswap vs Kuru per trade. (Kuru bounty.)
+- P1.3 **DONE** Kuru fill path: `contracts/src/KuruVenue.sol` (the delegation calls it like any venue; it takes Kuru's
+  market order and forwards WMON/USDC to the owner), deployed by the fork bootstrap and on the grant's venues; the executor
+  measures Kuru and Uniswap through the contract and takes the better. Evidence: `e504cd2`; on the fork a sale
+  (`0x8244ec4c…`) and a buy (`0xe8397cea…`) filled on Kuru's book; forge round trip on the real book.
 - P1.4 **DONE** `closeHolding` records the raw error in an audit row and its response, as a failed buy does, so a failed
   close says why (the swallowed cause in P1.2). Evidence: server unit tests 1,481 pass.
 
@@ -87,8 +89,9 @@ Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED*
 - P2.1 **DONE** `server/src/monad/`: Chainlink feeds, Kuru top of book, Perpl markets, `crosscheckMon`; public
   `/monad/crosscheck`, `/monad/perpl`. Evidence: `d4c76b4`; live test: Uniswap $0.024112, Kuru $0.024117, Chainlink
   $0.024118, gap 2.2 bps.
-- P2.2 **IN PROGRESS** The gap gates a council spend: the price desk vetoes a round whose fill is past 150 bps from
-  Chainlink, or whose feed is stale, naming the numbers (`bf8b4f6`). A manual order is not gated yet.
+- P2.2 **DONE** The gap gates every buy: the council's price desk and a buy placed by hand (`manualPriceGate`) refuse a
+  fill > 150 bps from Chainlink on Monad or a stale round, naming the numbers. Evidence: `bf8b4f6`, `d9ff059` (WBTC
+  refused at 469 bps on the fork, WMON filled).
 - P2.3 **DONE** Council seats on Monad read Chainlink on Monad, the fill's venue, Kuru's book and Perpl funding (price desk,
   risk keeper, trend reader, perps desk). Evidence: `bf8b4f6`; round #2 on the fork approved 2–1 and executed
   (1,037.94 WMON, `0x6289f268…c9c121`, receipt status 1).
@@ -104,12 +107,17 @@ Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED*
   interest and funding (`16c4fcb`).
 
 ### P4 — Accounts: Mera (Agora, Mera ×2)
-- P4.1 **NOT STARTED** Mera passkey sign-in on web and Expo (iOS 18+/Android 9+, one passkey domain); Privy removed from
-  the sign-in path.
-- P4.2 **IN PROGRESS** AUSD is the testnet dollar ("Cash · AUSD" on Portfolio, `14e8745`); Agora's faucet (or the
-  reserve) behind the Perps test-funds button (`2c5fde5`). Home and Deposit do not name it yet.
-- P4.3 **NOT STARTED** Per-agent identity keys and an encrypted agent-memory key derived from the passkey's PRF output.
-- P4.4 **NOT STARTED** Scoped session: agents trade without a prompt inside the grant; identity rebuilt on a fresh device.
+- P4.1 **DONE (web)** Mera passkey sign-in: PRF → BIP-39 → `m/44'/60'/0'/0/0` on the device; the executor verifies a signed
+  challenge and issues its own session (`server/src/auth/passkey-session.ts`); signing from a Mera session behind a
+  wallet-shaped shim. Evidence: `7b64c9e`, Chromium with a virtual PRF authenticator (create → fund → grant → buy).
+  Expo: not started (needs react-native-passkey, a passkey domain, a development build). Privy stays for email sign-in.
+- P4.2 **DONE** AUSD named on Home, Deposit and Portfolio with its Chainlink peg (`cbd0dc3`, `665570d`); Agora's faucet
+  (empty on 2026-09-24, so the deployment's AUSD reserve) behind the test-funds buttons on Fund and Perps (`5ebb4e2`).
+- P4.3 **IN PROGRESS** A second key from the passkey (PRF under its own salt) encrypts private notes on each run; the
+  executor stores only ciphertext (`d5239c1`). Per-agent identity keys: not started.
+- P4.4 **DONE** The signing session is bounded (15 minutes, a countdown and a lock in Settings, then one passkey prompt);
+  agents trade without a prompt inside the on-chain grant; identity rebuilt with every byte of storage cleared (same
+  account, same grant, same notes). Evidence: `7b64c9e`, `d5239c1`.
 
 ### P5 — Data and orchestration
 - P5.1 **NOT STARTED** Envio HyperIndex for `XorrDelegation` (grants, spends, revokes) driving History and Verify.

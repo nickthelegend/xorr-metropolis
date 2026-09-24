@@ -145,7 +145,7 @@ async function main(): Promise<void> {
     [randomUUID(), `prove-${Date.now()}`, owner.address, CHAIN_KEY],
   ))!;
 
-  step('3', 'placeOrder(owner, WMON, $50) — Uniswap v3 on Monad through spend()');
+  step('3', 'placeOrder(owner, WMON, $50) — the better of Uniswap v3 and Kuru’s book on Monad, through spend()');
   const usdcBefore = await balanceOf(USDC, owner.address);
   const first = await order(w, 50);
   if (first.status !== 'filled') fail(`the $50 MON buy did not fill: ${JSON.stringify(first)}`);

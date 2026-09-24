@@ -10,7 +10,26 @@ Nobody can watch a market all night. xorr lets a council of AI agents do it for 
 vote shown beside the transaction it produced, and none of it able to touch more than you allowed, because the chain
 enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 400 ms.
 
+**Demo (2:59, recorded from the running app):** [`docs/demo/xorr-monad-demo.mp4`](docs/demo/xorr-monad-demo.mp4).
+
 ## What works today
+
+**Sign in with a passkey (Mera).** The account is derived from the passkey on the device — PRF output → BIP-39 →
+`m/44'/60'/0'/0/0` — so the same passkey gives the same wallet on any device, and nothing that can sign is stored. The
+executor verifies a signed challenge and issues its own session; signatures come from a Mera signing session that opens
+for 15 minutes (Settings shows the countdown and a lock), then asks the passkey once more. A second key from the same
+passkey, under its own PRF salt, encrypts **private notes** on each trade: the server stores ciphertext it cannot read,
+and the passkey opens them on any device. (Web; the phone app needs a passkey domain and a development build. Email
+sign-in through Privy remains for people without a PRF passkey.)
+
+**Spot fills on Kuru's order book.** `contracts/src/KuruVenue.sol` lets the delegation fill through Kuru's native-MON
+books (it takes the market order and forwards WMON or USDC to the owner, where the contract checks the floor). The
+executor measures Kuru and Uniswap through the contract in a simulation and takes whichever delivers more. On the fork:
+a WMON sale filled on Kuru for 49.91 USDC (`0x8244ec4c…`) and a $50 buy for 2,109.62 WMON (`0xe8397cea…`).
+
+**Every buy is price-checked.** A council round and a buy placed by hand both compare the fill with Chainlink on Monad
+and refuse past 150 bps or a stale round, naming the numbers ("The fill ($87,450.81, Uniswap v3 …) is 469 bps from
+Chainlink ($83,532.97) …").
 
 Proven on a fork of Monad mainnet (chain 143, block ~107.4M), through the executor's own code, with Monad's real USDC,
 real Uniswap v3 pools and the real router (`docs/evidence/prove-monad-fork-2026-09-24.txt`):
@@ -45,8 +64,8 @@ executed: 1,037.94 WMON to the owner (`0x6289f268…c9c121`). On testnet an appr
 Kuru's on-chain order book, and Chainlink's MON/USD feed — $0.024112, $0.024117 and $0.024118 when last read, 2.2 bps
 apart. Perpl's perpetual markets (`GET /monad/perpl`): mark, book, open interest and funding for BTC, MON, ETH, SOL and more.
 
-What is next, phase by phase — Kuru fills, Mera passkey accounts with an AUSD balance, Envio indexing, a Chainlink CRE
-workflow — is in [`PLAN.md`](PLAN.md); the ranked 100 and what is built is [`docs/FEATURES-100.md`](docs/FEATURES-100.md). The hackathon research and the bounties we build for are
+What is next, phase by phase — hosting, Envio indexing, a Chainlink CRE workflow, per-agent passkey identities — is in
+[`PLAN.md`](PLAN.md); the ranked 100 and what is built is [`docs/FEATURES-100.md`](docs/FEATURES-100.md). The hackathon research and the bounties we build for are
 in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 
 ## Monad, and exactly how it is used
@@ -56,9 +75,10 @@ in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 | **Monad** (143 / 10143) | the chain the permission lives on and every fill settles on; a fork of mainnet for real fills with test money | `server/src/evm/chains.ts`, `infra/monad-fork/` |
 | **Uniswap v3 on Monad** | spot venue: QuoterV2 quotes, SwapRouter02 fills through `XorrDelegation.spend()` | `server/src/venues/uniswap.ts` |
 | **Perpl** | agents trade perps through Perpl's `DelegatedAccount` (operator trades, never withdraws); funding read by the council | `server/src/monad/perpl-desk.ts`, `app/perps.tsx` |
-| **Kuru** | MON/USDC book read on-chain (`bestBidAsk`) by the council's price desk and the verifier; the fill path is next | `server/src/monad/kuru.ts` |
-| **Chainlink** | MON/USD, ETH/USD, BTC/USD, USDC/USD, AUSD/USD on Monad; the council's reference and trend; staleness refused | `server/src/monad/chainlink.ts` |
-| **Agora AUSD** | the testnet settlement token, the desk's margin, Agora's faucet in the app's test-funds button | `server/src/evm/chains.ts`, `server/src/monad/perpl-routes.ts` |
+| **Kuru** | spot fills through `KuruVenue` when Kuru's book delivers more than Uniswap; the MON/USDC book read by the council's price desk | `contracts/src/KuruVenue.sol`, `server/src/venues/kuru-fill.ts`, `server/src/monad/kuru.ts` |
+| **Mera** | passkey accounts: the wallet key and a private-notes key, both from the passkey's PRF output; a bounded signing session | `src/auth/mera/`, `server/src/auth/passkey-session.ts` |
+| **Chainlink** | MON/USD, ETH/USD, BTC/USD, USDC/USD, AUSD/USD on Monad; the price gate on every buy (council and manual), the trend, AUSD's peg | `server/src/monad/chainlink.ts`, `server/src/council/monad-inputs.ts` |
+| **Agora AUSD** | the testnet settlement token and the desk's margin; named on Home, Deposit and Portfolio with its Chainlink peg; Agora's faucet (else a reserve) in the app's test funds | `server/src/evm/chains.ts`, `server/src/monad/perpl-routes.ts` |
 | **Sourcify (MonadVision)** | contract verification on deploy | `contracts/deploy-testnet.sh` |
 
 ## Deployments
@@ -68,6 +88,7 @@ in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 | Monad testnet `XorrDelegation(AUSD)` | [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) — Sourcify-verified |
 | Monad testnet `XorrAuditAnchor` | [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
 | Perpl testnet desk (proof) | [`0xa21Fa8708008890565817c9d73538Cabc3d098b5`](https://testnet.monadvision.com/address/0xa21Fa8708008890565817c9d73538Cabc3d098b5), Perpl account #692 |
+| `KuruVenue` (fork of Monad mainnet) | deployed by `fork-bootstrap-evm.ts` on every fork (`KURU_VENUE_ADDRESS`) |
 | Hosted Monad fork, executor, web | pending (`PLAN.md` P0.6) |
 
 ## Run it

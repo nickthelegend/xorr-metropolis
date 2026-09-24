@@ -1,0 +1,37 @@
+xorr proof on monad-fork — http://127.0.0.1:8547  (chain 143, block 107511027)
+
+1. Fresh owner 0x2Ee5f151fA60E0f27c52734d4E0957674637De72: USDC from the fork faucet, MON for gas
+   faucet USDC transfer               0xee435fd6743c836de18c4432fd9783e91db5502925e40c2faa66422497f55b63
+   owner holds 1000 USDC (Circle's, at 0x754704Bc059F8C67012fEd69BC8A327a5aafb603)
+
+2. Owner approves USDC + WMON to XorrDelegation 0xaaa041dbf0e57bd41f5c6050e3c2a823e3ea196e and grants a $100/day cap
+   approve USDC                       0xcc4c6b2ece8843a2e29d73d1814ced1d39d6eac3ae1ce891ecc0143800aaf541
+   approve WMON                       0x37ceb11b72fedd6dfa12c4c681b250ade605ce11d07e340ab92515c12a1b3b08
+   grant($100/day, venues)            0xbda229c4c939addc91129f6182d293e53895d928e18056efdb633d530d05ffea
+   venues granted: 0xfe31f71c1b106eac32f1a19239c9a9a72ddfb900, 0x3C2BafebbB0c8c58f39A976e725cD20D611d01e9 (Uniswap SwapRouter02 on Monad 0xfe31f71c1b106eac32f1a19239c9a9a72ddfb900)
+   on-chain policy: cap $100, remaining today $100, revoked false
+
+3. placeOrder(owner, WMON, $50) — the better of Uniswap v3 and Kuru’s book on Monad, through spend()
+[push] dca-executed: no registered devices for wallet 57b00c6f-cfad-4000-bbe9-4fc6b7064759
+   spend() → Uniswap v3 USDC→WMON     0x3dfa6f2945cca6dac282b8578a0e94362d0ff8246b122cd3149f9e9c00c853de
+   filled 2109.6156 WMON at $0.023732 (USDC 1000 → 950)
+   OWNER holds 2109.6156280325 WMON; the contract holds 0
+   strategy_runs: filled via kuru
+
+4. A second buy of $60 (only $50 of the $100 cap is left)
+   executor: blocked — daily_cap: That would take today past your $100 cap. $50.00 is left.
+[push] strategy-blocked: no registered devices for wallet 57b00c6f-cfad-4000-bbe9-4fc6b7064759
+   raw spend($60) mined: reverted     0xf621026aaedcc5a71dc60d6746d1810d6b12ab6a3084c06891f5b293cd82db3e
+   the contract's refusal: DailyCapExceeded(60000000, 50000000)
+
+5. closeHolding(owner, WMON, 100%) — the /positions/close path, through closePosition()
+   closePosition() → Kuru MON/USDC order book, market sell 0x9db6b3afd081464f8718fadc7d7f5a0cea5f9cb4109632ff7c2dbd4ed8187d66
+   sold 2109.6156 WMON for 49.964136 USDC into the owner's wallet; WMON left 0
+
+6. The owner revokes; the next order is refused
+   revoke()                           0x21083f3cd33ce033c4e6e16259cb347cd72a69882effc065e76f9dd9564f85be
+   executor: refused — no_delegation: No active trading permission on-chain. Grant one before placing an order.
+   raw spend($10) mined: reverted     0xab3976318eba811da393bceeb526260a8e2ed7a3feef48dee9a7e8476be6a372
+   the contract's refusal: PolicyRevoked()
+
+PROOF PASSED on monad-fork: 3 audit rows for 0x2Ee5f151fA60E0f27c52734d4E0957674637De72.
