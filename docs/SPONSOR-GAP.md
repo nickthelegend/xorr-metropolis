@@ -18,7 +18,8 @@ Monad integration 20%, innovation 10% — so a requirement left unmet costs more
 ## Status after the 6 Oct local build (owner's direction: no Monad transactions, no hosting yet)
 
 Everything below was exercised on a local fork of Monad mainnet (`infra/monad-fork/local-stack.sh`), in a real browser
-(`npm run e2e:fork`, 0 console errors) and by the proofs. "Met locally" means the stated requirement works end to end on
+(`npm run e2e:fork`, `e2e:flows`, `e2e:crawl` — every step fails on a console error or an API response ≥ 400) and by the
+proofs; every component's status is in `docs/TEST-PLAN-ZERO-MOCK.md`, and the go-live steps in `docs/DEPLOY-LATER.md`. "Met locally" means the stated requirement works end to end on
 the fork; the live step each needs is in the last column. `docs/SUBMISSION.md` has the same, per bounty, for judges.
 
 | Bounty | Status | What changed on 6 Oct | Live step left |
@@ -28,11 +29,11 @@ the fork; the live step each needs is in the last column. `docs/SUBMISSION.md` h
 | Perpl — Risk Tool (T1) | ✓ met | (5 Oct) | — |
 | Kuru — Consumer App (T1) | ✓ met locally | Each fill records and shows what the other venue would have delivered | A fill on a real network (Kuru v2 tokens or a few real dollars) |
 | MetaMask — Agent Wallet Plugin (T1) | ◐ built | (5 Oct) | `mm login` + a funded agent wallet |
-| Mera — UX | ✓ met locally | Passkey account ~1.5 s, permission signed ~1.5 s later with no prompt, stop read back from the chain | The same on Monad testnet (test MON) |
+| Mera — UX | ✓ met locally | One ceremony; 3.1–5.6 s from the app on screen to a confirmed permission, signed with no prompt; the stateless test and the signing lock in the browser specs; stop read back from the chain | The same on Monad testnet (test MON) |
 | Mera — One Passkey, Many Keys | ✓ met | — | A cross-device run on real hardware |
 | Chainlink — CRE | ◐ built | (5 Oct) | `cre login`, then simulate; ~0.12 MON for the receiver |
 | Envio | ✓ met locally | HyperIndex v3 (`indexer/`) over XorrDelegation, the anchor and Perpl's desk factory (desks as dynamic contracts); derived owner/day/venue/desk entities; RPC sync, no token; `GET /indexed` and a History card read it | An Envio API token or Envio Cloud for a hosted index |
-| Kimi | ◐ built | Fifth council seat decides split rounds; numbers checked against the desks'; labelled fixture without a key | `MOONSHOT_API_KEY` |
+| Kimi | ◐ built | Fifth council seat decides split rounds; numbers checked against the desks'. The fixture is gone (no production mocks): without a key the seat does not sit and the Council says "not configured" | `MOONSHOT_API_KEY` |
 | Qwen | — | Track 4 only: not eligible for xorr (Track 1) | — |
 
 **Keys and accounts the owner holds the only copy of:** `MOONSHOT_API_KEY` (Kimi), `cre login` (Chainlink CRE),

@@ -11,6 +11,74 @@ vote shown beside the transaction it produced, and none of it able to touch more
 enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 400 ms.
 
 **Demo (2:59, recorded from the running app):** [`docs/demo/xorr-monad-demo.mp4`](docs/demo/xorr-monad-demo.mp4).
+**For judges:** per bounty, with the portal's fields and a 3-minute script — [`docs/SUBMISSION.md`](docs/SUBMISSION.md);
+every component's status from a real run — [`docs/TEST-PLAN-ZERO-MOCK.md`](docs/TEST-PLAN-ZERO-MOCK.md).
+
+**Try it in one command** (needs Node 20+, Node 22 for the indexer, Foundry, Postgres):
+
+```bash
+sh infra/monad-fork/local-stack.sh refork   # fork Monad mainnet, deploy, grant, Perpl keeper, executor, Envio, web → http://localhost:8092
+```
+
+## Why Monad
+
+- **A council can deliberate and still fill at the price it voted on.** Four desks read Chainlink, Kuru's book, Uniswap
+  and Perpl funding, vote, and the order lands in the next 400 ms block — so the gate that refuses a fill more than
+  150 bps from Chainlink holds, instead of refusing every round that took a few seconds to decide.
+- **A real on-chain order book to route against.** Kuru is a central-limit order book on chain, which only works with
+  fast, cheap blocks; every xorr order measures Kuru against Uniswap v3 through the contract and takes the better one.
+- **Perps with the permission model built in.** Perpl's `DelegatedAccount` lets an operator trade and never withdraw —
+  exactly the shape of a revocable agent permission, enforced by Perpl's own contract.
+- **Cheap enough to check everything on chain.** The daily cap is checked by the contract on every spend, each owner's
+  agent has its own operator key, and every wallet's audit log is anchored hourly — costs that would sink the design
+  elsewhere.
+- **EVM, unchanged.** `XorrDelegation` and the executor came across from the Arbitrum build without a line of contract
+  change; Foundry, viem and Sourcify (MonadVision) work as they do everywhere. One Monad-specific detail shaped the code:
+  Monad bills the gas *limit*, so estimates are padded 10%, not 30%.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph Device["Phone / browser (Expo)"]
+    P[Mera passkey<br/>PRF → wallet key + notes key]
+  end
+  subgraph Executor["Executor (Node, Postgres)"]
+    C[Council: Price Desk · Risk Keeper ·<br/>Trend Reader · Perps Desk + Kimi]
+    G[Price gate · routing · caps]
+    X[Perpl exit guard, every 30 s]
+    I["GET /indexed"]
+  end
+  subgraph Monad["Monad"]
+    D[XorrDelegation<br/>cap · venues · expiry · revoke]
+    K[KuruVenue → Kuru order book]
+    U[Uniswap v3 SwapRouter02]
+    PA[Perpl DelegatedAccount → Perpl Exchange<br/>AUSD margin]
+    CL[Chainlink feeds]
+    A[XorrAuditAnchor]
+    R[XorrPriceReceiver]
+  end
+  E[Envio HyperIndex] -->|events → envio schema| I
+  CRE[Chainlink CRE workflow] -->|writeReport| R
+  MM[MetaMask Agent Wallet<br/>mm perpl plugin] --> PA
+  P -->|grant, desk creation: signed by the passkey| D
+  P --> PA
+  C --> G -->|spend| D
+  D --> K
+  D --> U
+  G -->|operator order| PA
+  X --> PA
+  CL --> G
+  R --> G
+  G --> A
+  D -.-> E
+  PA -.-> E
+  A -.-> E
+```
+
+The owner's passkey signs the permission once; from then on the executor's agents trade inside it, and the chain refuses
+anything past it — a raw spend over the cap or after a revoke is mined as a revert. The executor's design, carried over
+from the earlier builds: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## What works today
 
@@ -87,7 +155,8 @@ anchor and Perpl's desk factory, with per-owner, per-day, per-venue and per-desk
 over RPC into the executor's Postgres; History leads with it.
 
 **Kimi in the council** (`server/src/council/strategist.ts`): a fifth seat that weighs the four desks and decides split
-rounds — no veto, and no number a desk did not report. A labelled fixture without `MOONSHOT_API_KEY`.
+rounds — no veto, and no number a desk did not report. Without `MOONSHOT_API_KEY` the seat does not sit and the Council
+screen says so ("not configured"); there is no stand-in answer.
 
 **Mera on the phone** (`src/auth/mera/platform.native.ts`): the same passkey account in the native app through Mera's
 React Native client, once a passkey domain serves [`docs/passkey-domain/`](docs/passkey-domain/README.md).
@@ -96,11 +165,11 @@ React Native client, once a passkey domain serves [`docs/passkey-domain/`](docs/
 Uniswap's best pool on mainnet, at $10 to $20,000 — Kuru ahead at small sizes, the winner flipping within a minute at
 $1k–$5k, which is why every order measures both.
 
-What is next, phase by phase — hosting, Envio indexing, per-agent passkey identities — is in
-[`PLAN.md`](PLAN.md); the ranked 100 and what is built is [`docs/FEATURES-100.md`](docs/FEATURES-100.md). The hackathon research and the bounties we build for are
-in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
+What is next, phase by phase, is in [`PLAN.md`](PLAN.md); going live on testnet and hosting, step by step, in
+[`docs/DEPLOY-LATER.md`](docs/DEPLOY-LATER.md). The hackathon research and the bounties we build for are in
+[`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 
-## Monad, and exactly how it is used
+## Sponsors, and exactly how each is used
 
 | | Used for | Where |
 |---|---|---|
@@ -112,6 +181,8 @@ in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 | **Chainlink** | MON/USD, ETH/USD, BTC/USD, USDC/USD, AUSD/USD on Monad; the price gate on every buy (council and manual), the trend, AUSD's peg; a **CRE** workflow that writes MON/USD to testnet for the gate | `server/src/monad/chainlink.ts`, `server/src/council/monad-inputs.ts`, `cre/`, `contracts/src/XorrPriceReceiver.sol` |
 | **MetaMask Agent Wallet** | an `mm` plugin: Perpl perps for the agent wallet, through `ctx.walletExecutor` | `mm-plugin-perpl/` |
 | **Agora AUSD** | the testnet settlement token and the desk's margin; named on Home, Deposit and Portfolio with its Chainlink peg; Agora's faucet (else a reserve) in the app's test funds | `server/src/evm/chains.ts`, `server/src/monad/perpl-routes.ts` |
+| **Envio** | HyperIndex v3 over the delegation, the audit anchor and Perpl's desk factory (each desk registered as it is created); per-owner, per-day, per-venue and per-desk entities; History reads it through `GET /indexed` | `indexer/`, `server/src/routes/indexed.ts`, `app/history.tsx` |
+| **Kimi (Moonshot)** | the council's Strategist seat: weighs the four desks and decides split rounds; no veto, no number a desk did not report | `server/src/council/strategist.ts` |
 | **Sourcify (MonadVision)** | contract verification on deploy | `contracts/deploy-testnet.sh` |
 
 ## Deployments
@@ -122,7 +193,7 @@ in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 | Monad testnet `XorrAuditAnchor` | [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
 | Perpl testnet desk (proof) | [`0xa21Fa8708008890565817c9d73538Cabc3d098b5`](https://testnet.monadvision.com/address/0xa21Fa8708008890565817c9d73538Cabc3d098b5), Perpl account #692 |
 | `KuruVenue` (fork of Monad mainnet) | deployed by `fork-bootstrap-evm.ts` on every fork (`KURU_VENUE_ADDRESS`) |
-| Hosted Monad fork, executor, web | pending (`PLAN.md` P0.6) |
+| Executor, web, indexer, CRE receiver on testnet | on hold until the owner's go — runbook: [`docs/DEPLOY-LATER.md`](docs/DEPLOY-LATER.md) |
 
 ## Run it
 
@@ -133,12 +204,15 @@ browser journey and a crawl of every screen:
 ```bash
 sh infra/monad-fork/local-stack.sh refork        # up | down | refork; stops only what it started
 npm run e2e:fork                                 # passkey → fund → permission → buy → History (Envio) → Perpl long/close → stop
-npm run e2e:crawl                                # all 116 screens, signed in: console errors and error states
+npm run e2e:flows                                # the rest: limits, close, private note, send, council, a hired agent, signing lock, executor down
+npm run e2e:crawl                                # all 116 screens at 375 px, signed in: console, network, error states, overflow
+sh infra/monad-fork/local-stack.sh down          # stops only what it started
 ```
 
-Evidence from the last runs: `docs/evidence/e2e-fork-journey-2026-10-06.txt` (8 steps, 0 console errors) and
-`docs/evidence/crawl-fork-2026-10-06.txt` (90 screens render, 26 hidden on Monad, 0 errors). Per bounty, for judges:
-[`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+Each step fails on any console error or API response ≥ 400. Evidence from the 6 Oct runs, in `docs/evidence/`:
+the journey (9 steps, 0 console errors, 3.1–5.6 s to the first transaction), the flows (9 of 9 pass), the crawl (91
+screens render, 25 hidden on Monad by design, 0 failures), and the quality gate (every suite, typecheck, lint, slither
+triaged, secret scan). Per bounty, for judges: [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 
 Piece by piece:
 
@@ -173,27 +247,44 @@ Deploy to Monad testnet (needs test MON in the deployer named in `server/.env.de
 
 ## Honest limits
 
-- **Spot fills are on a fork; perps are on testnet.** Spot trades fill against Monad mainnet's real state on an anvil fork
-  (Uniswap's testnet addresses hold no code); Perpl orders fill on Perpl's testnet. Nothing here spends real funds.
-  Reference prices (Chainlink, Kuru, Perpl) are read from mainnet live, because a fork's feeds stop at the fork block.
+- **Everything since 24 Sep runs on a fork; testnet waits for the owner's go.** Spot trades fill against Monad mainnet's
+  real state on an anvil fork (Uniswap's testnet addresses hold no code). Perpl orders filled on Perpl's testnet on
+  24 Sep and fill on the fork through Perpl's real Exchange, kept trading by a local keeper that posts Perpl's live marks
+  (`server/src/fork/perpl-keeper.ts`, fork only). On a fork the price gate compares against the fork's own Chainlink and
+  Kuru, aged at the fork block. Nothing here spends real funds.
 - **Monad has no tokenized stocks** (official token list, 2026-09-24), so the Stock Token screens of the Arbitrum build
   are hidden here, and the agents trade MON and the majors.
-- **Mera sign-in is web-only.** The phone app needs a passkey domain and a development build; Privy's email sign-in
-  remains beside the passkey for people without a PRF passkey.
+- **Mera on the phone is built, not yet run on a device.** It needs the passkey domain's two files served and a
+  development build; on the web it runs end to end. Privy's email sign-in remains for people without a PRF passkey.
 - **Built, not yet run against the real thing:** the CRE workflow has not been simulated (the CRE CLI refuses every command
-  until `cre login`), and the receiver is not deployed (~0.12 test MON); the `mm perpl` wallet commands need `mm login`; the
-  desk exits have never had an open position to close. Each says so in its own README or test file.
-- **Test MON is scarce.** The faucet is rate-limited, and the testnet flows above used most of what was claimed; more
-  testnet runs wait on the deployer being topped up at faucet.monad.xyz.
+  until `cre login`), and the receiver is not deployed (~0.12 test MON); the `mm perpl` trading commands need `mm login`
+  and a funded agent wallet; Kimi needs `MOONSHOT_API_KEY`. Each says so in its own README, and the app says so where it
+  shows them.
+- **Test MON is scarce.** The faucet is rate-limited; the testnet runs wait on the keys being topped up
+  ([`docs/DEPLOY-LATER.md`](docs/DEPLOY-LATER.md) §1 has the amounts).
 
 ## Disclosures (Metropolis rules)
 
 **Foundation.** This repository starts from the earlier xorr builds — Base, then Solana, X Layer and Arbitrum, all made in
 September 2026 by the same author. The root commit (`5681467`, "Initial commit") is that code exactly as the Arbitrum build
 left it: the `XorrDelegation` and `XorrAuditAnchor` contracts, the Node executor, the agent council and the Expo app.
-Everything after the root commit is the Monad work: the Monad chains, the Monad fork, the testnet deploy, Uniswap v3 on
-Monad, the Kuru, Chainlink and Perpl readers, the Monad app build, and the phases in `PLAN.md`. The previous README is
-`docs/archive/README-arbitrum.md`.
+Everything after the root commit is the Monad work. The previous README is `docs/archive/README-arbitrum.md`.
+
+**New in the build window, for Metropolis** (24 Sep – 13 Oct; 100 commits after the root, ~16,000 lines added, not
+counting lockfiles, evidence and media — `git diff --stat 5681467`):
+
+| Area | New |
+|---|---|
+| Chain | Monad mainnet, testnet and a fork of mainnet as chains both sides know; the fork's infrastructure and one-command stack (`infra/monad-fork/`) |
+| Contracts | `KuruVenue` (fills through Kuru's book), `XorrPriceReceiver` (a CRE `ReceiverTemplate`); the testnet deploy, Sourcify-verified |
+| Perpl | desks through Perpl's `DelegatedAccount`, caps checked before signing, standing exits, the risk tool, the fork keeper (`server/src/monad/perpl-*.ts`, `app/perps.tsx`, `app/perpl.tsx`) |
+| Kuru, Chainlink, Uniswap on Monad | routing measured per order and shown per fill; the price gate on every buy; MON priced three ways |
+| Mera | passkey accounts on web and native, the signing session and its lock, private notes under a second PRF key (`src/auth/mera/`, `server/src/auth/passkey-session.ts`) |
+| Council | Monad readings for every desk; Kimi as the Strategist |
+| Envio | the HyperIndex indexer and `GET /indexed` (`indexer/`) |
+| Chainlink CRE | the MON/USD workflow for testnet (`cre/`) |
+| MetaMask | the `mm perpl` Agent Wallet plugin (`mm-plugin-perpl/`) |
+| Tests | the browser journey, flows and the 375 px crawl (`e2e/web/`); fork proofs for the delegation and the Perpl desk |
 
 **AI tools.** This project is built with AI coding assistance: Claude Code (Anthropic) wrote and ran much of the code,
 the tests and the on-chain proofs under the author's direction, and is credited as co-author on those commits.
