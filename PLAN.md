@@ -1,142 +1,151 @@
 # xorr on Monad — the plan (source of truth)
 
-Started 2026-09-24 from a snapshot of xorr-arbitrum (`fea3073`), the root commit `5681467` of this repository. Update the
-status tags as work lands; nothing is DONE until its verification has been run and the evidence is named. The hackathon,
-its rules and the ranked bounties: `docs/METROPOLIS.md`. Superseded: `docs/archive/PLAN-arbitrum-2026-09-23.md`.
+Rewritten 2026-10-06 for the master pipeline (coordinator's `METROPOLIS-ORCHESTRATION.md`): goals, phases, tasks, an
+honest gap audit, and completion measured against the checklist in §5. Nothing is DONE until it was run for real and the
+evidence is named. The previous plan (24 Sep – 5 Oct) is in git history at `ecc9d6b`.
+
+**Standing constraints (6 Oct):** no Monad testnet or mainnet transactions and no hosting until the owner funds the
+deployers and says go; everything on-chain runs as real signed transactions on a local anvil fork of Monad mainnet
+(`infra/monad-fork/local-stack.sh`). No production mocks: a missing credential shows an honest "not configured" state.
 
 ## 1. Goals
 
-**Pitch.** xorr is a non-custodial AI trading desk on Monad: you sign in with a passkey, grant a council of agents a
-capped, revocable, on-chain permission, and they trade for you — spot through Kuru's order book and Uniswap, perps on
-Perpl — every vote shown beside the transaction it produced. Monad's 400 ms blocks are why a council can deliberate and
-still fill at the price it voted on. The permission is the product.
+**Pitch.** xorr is a non-custodial AI trading desk on Monad. You sign in with a passkey (Mera), grant a council of agents
+a capped, revocable, on-chain permission, and they trade for you — spot through Kuru's order book or Uniswap, whichever
+delivers more, perps on Perpl through Perpl's own DelegatedAccount — each vote shown beside the transaction it produced.
+Monad's 400 ms blocks are why a council can deliberate and still fill at the price it voted on.
 
-**Hackathon.** Monad Metropolis, track **Onchain Finance & Trading**. Deadline **2026-10-13 11:59 PM ET**. Must be
-deployed on Monad mainnet or testnet, open source with an OSI licence, the foundation and AI tools disclosed in the README,
-a demo video of 3 minutes or less.
+**Done** (for Metropolis, track 01 Onchain Finance & Trading, deadline 2026-10-13 23:59 ET):
+- every flow a judge would try works end to end with real signed transactions, verified in a real browser with console and
+  network clean;
+- every sponsor requirement we claim is met by running code, or recorded as blocked with the exact missing dependency;
+- the judge package is complete: README, SUBMISSION.md with the portal's fields and a 3-minute demo script,
+  DEPLOY-LATER.md so that "go" to live takes under an hour.
 
-**Definition of done**
-- **Qualified** — `XorrDelegation` + `XorrAuditAnchor` deployed and Sourcify-verified on **Monad testnet**; repository
-  public; MIT licence; README discloses foundation and AI tools.
-- **Product** — a judge can: sign in with a passkey → see an AUSD and USDC balance → grant a cap → hire agents → watch
-  the council vote and fill MON on Kuru (or Uniswap, whichever quotes better) → open a Perpl position from an agent → stop
-  everything on-chain in one tap → withdraw.
-- **Honest** — every price has a named source (Uniswap pool, Kuru book, Chainlink, Perpl); the gap between them gates a
-  spend; a fork is always labelled a fork; nothing in a product path is fixture data.
-- **Technical** — typecheck, lint, unit tests, `forge test`, `prove-monad.ts`, and CI green on `main`.
-- **Submitted** — demo video, hackathon.monad.xyz form with contract addresses and the bounties below.
-
-**Bounties we build for** (ranking and reasons in `docs/METROPOLIS.md`): Agora Best Mobile Trading App ($10K), Perpl
-API ($5K), Kuru Next Consumer Trading App ($5K), Mera One Passkey Many Keys ($2.5K), Mera-Powered UX ($2.5K); then
-Perpl Risk Tool ($3K), Chainlink CRE ($3K), Envio ($1K), Nansen ($5K pool), MetaMask Agent Wallet Plugin ($2.5K).
+**Winning.** Bounty scoring weights *meets the stated requirement* at 40%, technical 30%, Monad integration 20%,
+innovation 10%. So: requirements first, then proof. Track-1-locked bounties (Agora Mobile, Kuru ×2, Perpl Risk, MetaMask
+plugin) have the fewest competitors; Agora Mobile ($10k) is the largest single prize and stacks with Perpl API and both Mera
+bounties.
 
 ## 2. Architecture (decided)
 
 | Piece | Decision |
 |---|---|
-| Chains | `monad-fork` (anvil fork of Monad mainnet 143: real USDC, AUSD, Uniswap v3, Kuru, Chainlink state) where fills are real with test money; `monad-testnet` (10143) where the contracts are deployed and verified; `monad` (143) only with ALLOW_MAINNET. |
-| Permission | `XorrDelegation` (daily cap, venue allowlist, expiry, revoke, min-out, `spendVia`), settlement token USDC on spot. |
-| Spot venues | Uniswap v3 (QuoterV2 + SwapRouter02) — wired and proven. Kuru's CLOB (MON/USDC) — read; routing next. Best quote wins. |
-| Perps | Perpl (AUSD margin; Ed25519 API key enrolled once with a wallet signature). |
-| Price truth | Uniswap pool, Kuru mid, Chainlink feed, read from Monad mainnet live; the widest gap between them gates a spend. |
-| Accounts | Mera passkeys (web + Expo via react-native-passkey) replace Privy on this build (D1). |
-| Hosting | Railway project (to create): `monad-fork` (infra/monad-fork, volume /data), `executor-monad-fork`, Postgres. Vercel project `xorr-metropolis`. |
+| Chains | `monad-fork` (anvil fork of mainnet 143, real Kuru/Uniswap/Perpl/Chainlink/AUSD state) for development and the demo; `monad-testnet` (10143) where the contracts are deployed and verified; `monad` (143) only with `ALLOW_MAINNET`. |
+| Permission | `XorrDelegation`: daily cap, venue allowlist, expiry, revoke, min-out measured on the owner's balance. |
+| Spot | Kuru's MON/USDC book through `KuruVenue`, or Uniswap v3 — both measured per order through the contract; the better one fills. |
+| Perps | Perpl via Perpl's own `DelegatedAccount` (operator trades, never withdraws); standing exits; on the fork, a local keeper posts Perpl's marks. |
+| Prices | Chainlink on Monad (live on mainnet/testnet; on a fork, the fork's own, aged at the fork block), Kuru mid, Perpl API; the fill-to-Chainlink gap gates every buy. Testnet MON: a CRE workflow. |
+| Accounts | Mera passkeys on web and native (D1); Privy email sign-in remains for people without a PRF passkey. |
+| Data | Postgres (executor); Envio HyperIndex into its own schema of the same database; `GET /indexed`. |
+| AI | Four rule-based desks + Kimi (Moonshot) as the Strategist seat; no key → "not configured", the seat does not sit. |
 
-**Decisions**
-- **D1** Mera, not Privy, is the account layer: Agora requires Mera authentication and Mera's UX bounty requires it to be
-  the whole account layer; Privy's own bounty requires more than login. $15K against $5K.
-- **D2** USDC settles spot (Uniswap's and Kuru's deep MON books are USDC); AUSD is the Perpl margin and is shown as a
-  balance (Agora). AUSD's Uniswap pools hold a few dollars and Kuru's MON/AUSD book was empty on 2026-09-24, so AUSD is
-  not a spot settlement token until that changes.
-- **D3** No stock screens: Monad has no tokenized equities (official token list, 2026-09-24).
-- **D4** Monad testnet settles in xorr's TestUSDC: the USDC published for the testnet before its reset has no code.
+**Decisions.** D1 Mera is the account layer (Agora + Mera bounties need it). D2 USDC settles spot on the fork (deep MON
+books are USDC); AUSD is Perpl's margin and shown as a balance. D3 No stock screens (Monad has no tokenized equities).
+D4 Testnet settles in AUSD.
 
 ## 3. Phases and tasks
 
-Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED** · **BLOCKED** (reason).
+Status: **DONE** (verified, evidence named) · **IN PROGRESS** · **NOT STARTED** · **BLOCKED** (exact dependency).
+Critical path: **P-B → P-D → P-E → P-F**, then P-G when the owner says go.
 
-### P0 — Foundation
-- P0.1 **DONE** Repository `github.com/nickthelegend/xorr-metropolis` (private until submission), root commit `5681467`
-  "Initial commit" = xorr-arbitrum `fea3073`. (`nickthelegend/xorr-monad` is a different, earlier project and untouched.)
-- P0.2 **DONE** Chain keys `monad`, `monad-testnet`, `monad-fork` on both sides, with verified token addresses. Evidence:
-  `79a25e5`; chain tests; `chain-agreement.test.ts`.
-- P0.3 **DONE** `infra/monad-fork` (anvil fork of 143, state on a volume, a block a second, clock kept to wall time).
-  Evidence: `b37b187`; ran locally, chain 143, mining.
-- P0.4 **DONE** Fork bootstrap on `monad-fork`: XorrDelegation + anchor deployed, delegate funded, 25,000 USDC paid.
-  Evidence: `b37b187`.
-- P0.5 **DONE** Monad testnet deployment, settling in Agora's AUSD: XorrDelegation
-  `0x5995925de0169574365cc7f6b65f765275b0bd4b`, anchor `0x5a717b204c77bfba8805ffe1f382b074a3d26203`, Sourcify-verified.
-  Evidence: `86f7900`, `contracts/deployments/monad-testnet.json`.
-- P0.6 **NOT STARTED** Hosting: Railway project + `monad-fork` + `executor-monad-fork` + Postgres; Vercel
-  `xorr-metropolis`. Deploy scripts refuse without an explicit target (`900cdcd`).
-- P0.7 **DONE** App builds for Monad: networks, hidden Arbitrum/Robinhood screens, Trade → Markets. Evidence: `aeddf20`;
-  app tests 2,748 pass.
+### P-A — Foundation (DONE)
+- A1 **DONE** Contracts `XorrDelegation`, `XorrAuditAnchor`, `KuruVenue`, `XorrPriceReceiver`; `forge test` 66 pass.
+- A2 **DONE** Deployed and Sourcify-verified on Monad testnet: XorrDelegation `0x5995…0bd4b`, anchor `0x5a71…6203`.
+- A3 **DONE** Repo public (since 1 Oct, after a secret scan), MIT, README discloses foundation and AI tools.
 
-### P1 — Spot on Monad
-- P1.1 **DONE** Uniswap v3 on 143 as the settlement venue; Monad token registry; prices. Evidence: `09b9443`.
-- P1.2 **DONE** `server/src/prove-monad.ts` on a Monad fork: faucet → grant $100/day → $50 MON filled (2,065.82 WMON) →
-  $60 refused off-chain and on-chain (`DailyCapExceeded(60000000, 50000000)`, mined) → close to USDC → revoke →
-  `PolicyRevoked()`. Evidence: `131f988`, `docs/evidence/prove-monad-fork-2026-09-24.txt`; one of four runs failed at the
-  close with the cause swallowed and did not recur.
-- P1.3 **DONE** Kuru fill path: `contracts/src/KuruVenue.sol` (the delegation calls it like any venue; it takes Kuru's
-  market order and forwards WMON/USDC to the owner), deployed by the fork bootstrap and on the grant's venues; the executor
-  measures Kuru and Uniswap through the contract and takes the better. Evidence: `e504cd2`; on the fork a sale
-  (`0x8244ec4c…`) and a buy (`0xe8397cea…`) filled on Kuru's book; forge round trip on the real book.
-- P1.4 **DONE** `closeHolding` records the raw error in an audit row and its response, as a failed buy does, so a failed
-  close says why (the swallowed cause in P1.2). Evidence: server unit tests 1,481 pass.
+### P-B — Product on the local fork (real signed transactions)
+Each: *objective* — *acceptance* — *verify* — status.
+- B1 Passkey account (Mera) — account from PRF, nothing that signs stored — `npm run e2e:fork` step 1 — **DONE**
+- B2 Stateless sign-in — storage cleared → same account — e2e step 4 — **DONE**
+- B3 Fund on the fork — USDC arrives, said on screen — e2e step 2 — **DONE**
+- B4 Grant the permission — Mera-signed, confirmed on chain, ≤ 5 s from landing — e2e step 3 (3.1 s) — **DONE**
+- B5 Manual buy — fills on the better venue; the run shows the other venue's number — e2e step 5 — **DONE**
+- B6 Close / sell a holding — USDC back in the owner's wallet, `Closed` event — `prove-monad.ts` step 5; browser: TP-F10 — **IN PROGRESS** (browser pass pending)
+- B7 Council round — live readings, vote, executed fill — council probe; TP-F07 — **DONE**
+- B8 Hire an agent; it trades on its own on the fork — a filled run by the agent's own key inside its cap — TP-F08 — **NOT STARTED** (last verified 24 Sep)
+- B9 Perpl desk lifecycle — create, fund, allow, long, close — e2e steps 7–8 — **DONE**
+- B10 Perpl exit guard — closes a live position by rule — `prove-perpl-desk.ts` step 6b — **DONE**
+- B11 Hold to stop — permission revoked and desk operator removed, read back — e2e step 9 — **DONE**
+- B12 Send / withdraw to an allowlisted address — both balances move on chain — TP-F12 — **NOT STARTED** (last verified 24 Sep)
+- B13 History with the Envio record — e2e step 6 — **DONE**
+- B14 Perpl risk screen — live data, alerts — TP-F14 — **DONE**
+- B15 Private notes (second PRF key) — sealed, server stores ciphertext, reopens — TP-F15 — **IN PROGRESS** (re-verify)
+- B16 Signing window: lock and unlock in Settings — TP-F16 — **IN PROGRESS** (re-verify)
 
-### P2 — Price truth
-- P2.1 **DONE** `server/src/monad/`: Chainlink feeds, Kuru top of book, Perpl markets, `crosscheckMon`; public
-  `/monad/crosscheck`, `/monad/perpl`. Evidence: `d4c76b4`; live test: Uniswap $0.024112, Kuru $0.024117, Chainlink
-  $0.024118, gap 2.2 bps.
-- P2.2 **DONE** The gap gates every buy: the council's price desk and a buy placed by hand (`manualPriceGate`) refuse a
-  fill > 150 bps from Chainlink on Monad or a stale round, naming the numbers. Evidence: `bf8b4f6`, `d9ff059` (WBTC
-  refused at 469 bps on the fork, WMON filled).
-- P2.3 **DONE** Council seats on Monad read Chainlink on Monad, the fill's venue, Kuru's book and Perpl funding (price desk,
-  risk keeper, trend reader, perps desk). Evidence: `bf8b4f6`; round #2 on the fork approved 2–1 and executed
-  (1,037.94 WMON, `0x6289f268…c9c121`, receipt status 1).
+### P-C — Sponsor integrations
+- C1 **DONE** Chainlink feeds gate every buy (council and manual).
+- C2 **DONE** Kuru routing with per-fill comparison; `docs/KURU.md`.
+- C3 **DONE** Perpl via DelegatedAccount, caps, exits, risk tool.
+- C4 **DONE** AUSD balance and Perpl margin.
+- C5 **DONE** Envio HyperIndex (`indexer/`), `GET /indexed`, History.
+- C6 Kimi Strategist seat — **IN PROGRESS → BLOCKED** after G1: the fixture is removed; live needs `MOONSHOT_API_KEY`.
+- C7 Chainlink CRE `cre/mon-price` — built, compiles — **BLOCKED** (`cre login`; simulate then).
+- C8 MetaMask `mm-plugin-perpl` — read commands run in `mm` 7.0.0 — **BLOCKED** (`mm login` + funded agent wallet for trading commands).
+- C9 Mera on the phone — built — **BLOCKED** (passkey domain files served; dev build with `EXPO_PUBLIC_MERA_RP_ID`).
 
-### P3 — Perps on Perpl (Agora, Perpl API)
-- P3.1 **DONE** Public market read (`monad/perpl.ts`).
-- P3.2 **DONE** Orders from an agent through Perpl's own `DelegatedAccount` — on chain, no API key: the owner owns the desk,
-  xorr's key is its operator (trades, never withdraws). Evidence: `2c5fde5`,
-  `docs/evidence/prove-perpl-desk-testnet-2026-09-24.txt` (desk `0xa21F…98b5`, account #692); UI flow on desk `0x3323…11b8`.
-- P3.3 **DONE** The perps permission: per-order, per-day and leverage limits the owner sets on Perps (`9c0a894`), enforced
-  before every order; removing the operator (Perps' hold, or Safety's stop, `9e101cf`) stops orders on chain.
-- P3.4 **DONE** Positions with entry, mark, PnL, liquidation price and a meter (`9b84ce2`); Perpl live, every market's open
-  interest and funding (`16c4fcb`).
+### P-D — Zero-mock verification
+- D1 **IN PROGRESS** `docs/TEST-PLAN-ZERO-MOCK.md`: every screen, endpoint, contract interaction and flow, with "correct" defined.
+- D2 **NOT STARTED** Execute it in Claude in Chrome on the local stack, console and network checked; fix every FAIL at the root; re-run.
+- D3 **IN PROGRESS** Remove production mocks (G1).
 
-### P4 — Accounts: Mera (Agora, Mera ×2)
-- P4.1 **DONE (web)** Mera passkey sign-in: PRF → BIP-39 → `m/44'/60'/0'/0/0` on the device; the executor verifies a signed
-  challenge and issues its own session (`server/src/auth/passkey-session.ts`); signing from a Mera session behind a
-  wallet-shaped shim. Evidence: `7b64c9e`, Chromium with a virtual PRF authenticator (create → fund → grant → buy).
-  Expo: not started (needs react-native-passkey, a passkey domain, a development build). Privy stays for email sign-in.
-- P4.2 **DONE** AUSD named on Home, Deposit and Portfolio with its Chainlink peg (`cbd0dc3`, `665570d`); Agora's faucet
-  (empty on 2026-09-24, so the deployment's AUSD reserve) behind the test-funds buttons on Fund and Perps (`5ebb4e2`).
-- P4.3 **IN PROGRESS** A second key from the passkey (PRF under its own salt) encrypts private notes on each run; the
-  executor stores only ciphertext (`d5239c1`). Per-agent identity keys: not built — no action here for one to authorize
-  (agents trade with executor-derived keys; no screen edits an agent's limits), so it would be forced.
-- P4.4 **DONE** The signing session is bounded (15 minutes, a countdown and a lock in Settings, then one passkey prompt);
-  agents trade without a prompt inside the on-chain grant; identity rebuilt with every byte of storage cleared (same
-  account, same grant, same notes). Evidence: `7b64c9e`, `d5239c1`.
+### P-E — Quality gate
+- E1 **DONE** typecheck (app, executor), lint 0 errors, unit suites, forge, CI green.
+- E2 **NOT STARTED** slither over `contracts/src`.
+- E3 **NOT STARTED** Secret scan over every tracked file; no `.env`, keys or `*.key` tracked.
+- E4 **NOT STARTED** 375 px widths on every screen (crawl at 375).
+- E5 **DONE** Route crawl (`npm run e2e:crawl`) — 116 screens, 0 errors; now also flags copy naming an older chain.
 
-### P5 — Data and orchestration
-- P5.1 **NOT STARTED** Envio HyperIndex for `XorrDelegation` (grants, spends, revokes) driving History and Verify.
-- P5.2 **NOT STARTED** Chainlink CRE workflow: price gate + council round hash → `XorrAuditAnchor` (simulation accepted).
-- P5.3 **NOT STARTED** Nansen smart-money seat (needs a key).
-- P5.4 **NOT STARTED** MetaMask Agent Wallet plugin.
+### P-F — Judge package
+- F1 **IN PROGRESS** README: one-command demo, new-in-window vs base, AI disclosure, why Monad, architecture diagram, sponsors.
+- F2 **IN PROGRESS** SUBMISSION.md: track and pitch, the portal's fields per bounty, evidence, a 3-minute script with timestamps.
+- F3 **NOT STARTED** `docs/DEPLOY-LATER.md`: ordered runbook, addresses and MON, keys and where set, deploy/verify/host commands, smoke test, video shot list, executor host options with a recommendation.
+- F4 **NOT STARTED** A demo video recorded from the local fork (≤ 3 min), replacing the 24 Sep one.
 
-### P6 — Submission
-- P6.1 **IN PROGRESS** README Monad-first with the foundation and AI tools disclosed; MIT licence.
-- P6.2 **BLOCKED (owner)** Repository public; register on hackathon.monad.xyz; demo video ≤ 3 min; submit before
-  2026-10-13 11:59 PM ET.
+### P-G — Go live (awaiting the owner's go)
+- G-1 **BLOCKED** MON for the testnet keys; testnet runs of B4/B8/B9 and the CRE broadcast.
+- G-2 **BLOCKED** Hosting (executor + web) per DEPLOY-LATER.md.
+- G-3 **BLOCKED** Registration (Oct 6 23:59 UTC) and submission on hackathon.monad.xyz.
 
-## 4. Owner actions
+## 4. Gaps (audit from the code, 6 Oct)
 
-1. Top up the Monad testnet deployer `0x5C1948d90570BA8547956B2Be2d3179454D22938` with test MON (faucet.monad.xyz): it
-   is the faucet key for `/perps/fund-test` and the delegate's gas, and holds ~0.009 MON after the testnet runs.
-2. Register on https://hackathon.monad.xyz (bounty pages are visible only to registered participants).
-3. Make the repository public before submitting (the rules require it).
-4. Keys when those phases start: Perpl API enrolment (a wallet signature), Nansen API key, a Monad archive RPC for the
-   hosted fork (optional).
-5. Perpl blocks US and GB users: record the Perpl part of the demo from where it is offered.
+`git grep -iE "mock|stub|fake|dummy|placeholder|TODO|FIXME|hardcod|fixture"` over `app/`, `src/`, `server/src` (tests,
+proofs and dev screens excluded): 173 hits. All but the rows below are comments recording a mock that was already removed,
+product configuration in files named `fixtures/` (the market catalog — no prices —, onboarding choices, sleeve weights), or
+the inactive Solana path.
+
+| # | Gap | Evidence | Impact | Sev | Fix | Blocks |
+|---|---|---|---|---|---|---|
+| G1 | Kimi seat has a fixture answer in the product path | `server/src/council/strategist.ts` `fixtureAnswer`, `kimiMode` | a fake model answer runs through the council | P1 | remove; no key → the seat does not sit and the council says "not configured" | C6, D3 |
+| G2 | Agent autonomy not re-verified since 24 Sep | `docs/evidence/` has no 6 Oct agent fill | a core flow unproven on the current code | P1 | hire on the fork, wait for the sweep, read the run | B8 |
+| G3 | Send/withdraw not re-verified | as above | flow unproven on current code | P2 | browser pass on the fork | B12 |
+| G4 | No static analysis of the contracts | — | security claims unbacked | P2 | slither | E2 |
+| G5 | Secret scan not re-run since 1 Oct | — | a key could have been committed since | P1 | gitleaks or git grep over tracked files | E3 |
+| G6 | 375 px not checked | crawl ran at 390 | broken layouts on small phones | P2 | crawl at 375, fix | E4 |
+| G7 | No DEPLOY-LATER runbook | — | "go" to live is improvised | P1 | write it | F3 |
+| G8 | Demo video predates 6 Oct | `docs/demo/xorr-monad-demo.mp4` (24 Sep) | judges see an older product | P1 | record from the fork | F4 |
+| G9 | Product config lives under `src/data/fixtures/` | file names | reads like mock data to an auditor | P3 | rename or note | — |
+| G10 | `src/chain.test.ts` first test times out (5 s) under machine load | local runs, 6 Oct | flaky locally; CI green | P3 | longer timeout for the cold import | E1 |
+| G11 | Inherited Solana/Base/Arbitrum code remains in the tree | `server/src/solana/`, `server/src/venues/gmx/` | size, not product path on Monad | P3 | leave; hidden on Monad | — |
+
+## 5. Completion checklist (46 items) and measurement
+
+Features and flows on the fork: B1–B16 (16). Integrations: C1–C9 (9). Quality: typecheck, lint, app unit, executor unit,
+forge, slither, secret scan, e2e journey, crawl, 375 px, zero-mock plan executed, CI (12). Deploy and submission: testnet
+contracts, repo/licence/disclosure, README package, SUBMISSION package, DEPLOY-LATER, current demo video, live testnet
+transactions, hosted build, registration and submission (9).
+
+**Initial (6 Oct, start of the pipeline): 28 of 46 — 61%.** Done: 13 flows (B1–B5, B6 by `prove-monad.ts`, B7, B9, B10,
+B11, B13, B14, B15 by its 24 Sep run), 5 integrations (C1–C5), 8 quality items (typecheck, lint, app unit, executor unit,
+forge, e2e journey, crawl, CI), 2 deploy items (testnet contracts; repo, licence and disclosure).
+
+**Final:** measured at the end of the pipeline, same checklist — see §6.
+
+## 6. Owner actions (USER_ACTION_REQUIRED)
+
+- Register and create the team/project on hackathon.monad.xyz (Oct 6 23:59 UTC); submit before Oct 13 23:59 ET.
+- Say go for testnet, and fund: faucet key `0x5C1948d90570BA8547956B2Be2d3179454D22938`, delegate `0xEe7d…c49f`, Perpl
+  operator `0x0b21B4DdcC9753878F3d8A99A2f65b964fba453f`, ~0.12 MON for the CRE receiver (DEPLOY-LATER.md has the amounts).
+- Keys and sign-ins: `MOONSHOT_API_KEY` (Kimi), `cre login`, `mm login`, an Envio API token.
+- Passkey domain: Apple team id and Android signing fingerprint for `docs/passkey-domain/`, then serve the files.
+- Hosting choice for the executor (DEPLOY-LATER.md recommends one).

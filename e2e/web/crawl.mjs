@@ -37,6 +37,8 @@ function routes(dir = APP) {
 }
 
 const ERROR_TEXT = /couldn[’']t load|Failed to fetch|Something went wrong|Unexpected error|is not a function|undefined is not/i;
+/** Earlier xorr builds' chains: copy naming them on the Monad build is stale. */
+const OLD_CHAIN = /\b(Arbitrum|Robinhood|Solana|Base Sepolia|on Base|X Layer|GMX|Hyperliquid|1inch)\b/;
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -122,6 +124,9 @@ for (const r of routes()) {
     if (bad) {
       status = 'error-state';
       note = text.split('\n').find((l) => ERROR_TEXT.test(l))?.slice(0, 120) ?? bad[0];
+    } else if (status !== 'hidden' && OLD_CHAIN.test(text)) {
+      status = 'old-chain-copy';
+      note = text.split('\n').find((l) => OLD_CHAIN.test(l))?.slice(0, 120) ?? '';
     }
   } catch (e) {
     status = 'load-failed';
@@ -135,5 +140,5 @@ for (const r of routes()) {
 await browser.close();
 
 const count = (s) => results.filter((x) => x.status === s).length;
-console.log(`\n${results.length} screens: ${count('ok')} ok, ${count('hidden')} hidden here, ${count('error-state')} error states, ${count('console-error')} console errors, ${count('load-failed')} failed to load`);
-process.exit(count('error-state') + count('console-error') + count('load-failed') > 0 ? 1 : 0);
+console.log(`\n${results.length} screens: ${count('ok')} ok, ${count('hidden')} hidden here, ${count('error-state')} error states, ${count('console-error')} console errors, ${count('old-chain-copy')} naming an old chain, ${count('load-failed')} failed to load`);
+process.exit(count('error-state') + count('console-error') + count('old-chain-copy') + count('load-failed') > 0 ? 1 : 0);
