@@ -42,7 +42,7 @@ import { useAsync } from '@/data/useAsync';
 import { useIntentKeys } from '@/data/useIntentKeys';
 import { useDebounced } from '@/data/useDebounced';
 import { useStore } from '@/state/store';
-import { DEFAULT_BUY } from '@/data/tradable';
+import { DEFAULT_BUY, settlementSymbol as tradesAs } from '@/data/tradable';
 import { useSettleable } from '@/data/useSettleable';
 import { ApiError, wasReplayed } from '@/data/apiError';
 import { placementOf } from '@/markets/placed';
@@ -75,10 +75,12 @@ const SIDES = [
 const QUICK = ['$100', '$500', 'Max'] as const;
 
 export default function OrderTicket() {
-  const { symbol = DEFAULT_BUY, side: sideParam } = useLocalSearchParams<{
+  const { symbol: asked = DEFAULT_BUY, side: sideParam } = useLocalSearchParams<{
     symbol: string;
     side?: string;
   }>();
+  // A market symbol opens the ticket for the token it trades as (MON → WMON on Monad), not a dead end.
+  const symbol = tradesAs(asked);
   const goBack = useGoBack();
   /*
    * An order ticket for something this chain cannot settle is a ticket that can never be filled.

@@ -1,0 +1,17 @@
+# e2e/web/fork-journey.mjs — Chromium, a WebAuthn virtual authenticator with PRF, the web app against the fork executor; 2026-10-05T20:19:58Z
+# Fork of Monad mainnet at block 110,838,470 (chain 143), Perpl keeper running. Every step reads the screen; the last reads the chain back.
+
+  account 0xDfA737Ce0FfD1019343D97E646E47Aeb47A5F617 (derived from the passkey; nothing that signs is stored)
+✓ create a passkey account (1.3 s)
+✓ fund from the fork faucet (1.9 s)
+✓ sign the trading permission (Mera signing session, no popup) (1.2 s)
+  Kuru measured 634.44 WMON; Uniswap v3 would have delivered 633.51 — 0.15% more by routing here.
+✓ buy $20 of MON, and see where it filled (25.3 s)
+  AUSD in the wallet: 350.00; desk open on Perpl
+✓ perps: test MON and AUSD, then open a Perpl desk (5.5 s)
+  position: open
+✓ long MON on Perpl, then close it (3.3 s)
+  Trading stopped · The permission is revoked on-chain. No agent, strategy or stop-loss can place an order. Your funds never left your wallet. · Nothing was running when you stopped it.
+  desk operator active: false; delegation: {"delegatePubkey":"0xfaf84A0357A88F9792e150CC32db3b841F6c6B1d","delegateName":null,"delegateIsCurrent":true,"ownerPubkey
+✓ hold to stop: permission revoked, desk operator removed (4.3 s)
+console errors: 0

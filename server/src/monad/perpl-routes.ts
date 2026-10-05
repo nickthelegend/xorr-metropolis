@@ -205,7 +205,7 @@ perplRoutes.post('/perps/fund-test', async (c) => {
       const sent: { what: string; tx: string; explorer: string }[] = [];
       if (gasHave < TEST_GAS) {
         await anvil(rpcUrl, 'anvil_setBalance', [owner, `0x${TEST_GAS.toString(16)}`]);
-        sent.push({ what: `${formatEther(TEST_GAS - gasHave)} MON for gas (fork)`, tx: '', explorer: '' });
+        sent.push({ what: `${Number(formatEther(TEST_GAS - gasHave)).toFixed(3)} MON for gas (fork)`, tx: '', explorer: '' });
       }
       await fundAusd(rpcUrl, owner, TEST_AUSD);
       sent.push({ what: `${Number(TEST_AUSD) / 1e6} AUSD (fork)`, tx: '', explorer: '' });

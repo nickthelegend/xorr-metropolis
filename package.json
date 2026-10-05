@@ -17,7 +17,8 @@
     "postinstall": "patch-package",
     "build:base": "node scripts/build-base.mjs",
     "deploy:web": "node scripts/build-web.mjs && cd dist-web && vercel link --yes --project xorr-metropolis && vercel deploy --prod --yes",
-    "deploy:executor": "node scripts/deploy-executor.mjs"
+    "deploy:executor": "node scripts/deploy-executor.mjs",
+    "e2e:fork": "node e2e/web/fork-journey.mjs"
   },
   "dependencies": {
     "@category-labs/mera": "^0.2.0",
