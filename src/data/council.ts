@@ -7,7 +7,7 @@
 import { api } from './api';
 
 export type CouncilVote = 'yes' | 'no' | 'veto' | 'abstain';
-export type CouncilSeatId = 'session-desk' | 'risk-keeper' | 'trend-reader' | 'macro-desk';
+export type CouncilSeatId = 'session-desk' | 'risk-keeper' | 'trend-reader' | 'macro-desk' | 'strategist';
 
 export type CouncilBallot = { persona: CouncilSeatId; vote: CouncilVote; confidence: number; reason: string; cites: string[] };
 

@@ -21,7 +21,7 @@
 import type { CouncilInputs } from './inputs.js';
 import type { MonadCouncilInputs } from './monad-inputs.js';
 
-export type SeatId = 'session-desk' | 'risk-keeper' | 'trend-reader' | 'macro-desk';
+export type SeatId = 'session-desk' | 'risk-keeper' | 'trend-reader' | 'macro-desk' | 'strategist';
 export type Vote = 'yes' | 'no' | 'veto' | 'abstain';
 export type Ballot = { persona: SeatId; vote: Vote; confidence: number; reason: string; cites: string[] };
 export type Decision = 'approved' | 'rejected' | 'vetoed';
@@ -39,6 +39,7 @@ export const MONAD_SEATS: readonly { id: SeatId; name: string; role: string }[] 
   { id: 'risk-keeper', name: 'Risk Keeper', role: 'Does it fit the permission and the position limit?' },
   { id: 'trend-reader', name: 'Trend Reader', role: 'Which way is Chainlink moving?' },
   { id: 'macro-desk', name: 'Perps Desk', role: 'Are Perpl longs crowded, per who pays funding on BTC, ETH and MON?' },
+  { id: 'strategist', name: 'Strategist (Kimi)', role: 'Weighs the four desks against each other and decides the close calls; cannot veto.' },
 ];
 
 /** The share of the whole grant one symbol may reach (the pacing rule the Solana build enforced: 25%). */

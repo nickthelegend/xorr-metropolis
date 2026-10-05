@@ -12,6 +12,7 @@ import { THIS_CHAIN } from '../db/chain-scope.js';
 import { IS_MONAD, explorerTx } from '../evm/chains.js';
 import { readCouncilInputs, type CouncilInputs, type Proposal } from './inputs.js';
 import { readMonadCouncilInputs, type MonadCouncilInputs } from './monad-inputs.js';
+import { strategistBallot } from './strategist.js';
 import { castBallots, tally, type Ballot, type Decision } from './personas.js';
 
 /** What a fill bought or sold: token units, the price per token, and the dollars. */
@@ -102,6 +103,8 @@ export async function convene(p: {
   // Monad reads its own inputs (Chainlink on Monad, the fill's venue, Kuru, Perpl); the seats and the tally are shared.
   const inputs = IS_MONAD ? await readMonadCouncilInputs(p.owner, p.proposal, agentId) : await readCouncilInputs(p.owner, p.proposal, agentId);
   const ballots = castBallots(inputs);
+  // On Monad, the fifth seat: Kimi weighs the four desks and decides a split (`strategist.ts`). It never vetoes.
+  if (IS_MONAD) ballots.push(await strategistBallot({ proposal: inputs.proposal, inputs, ballots: [...ballots] }));
   const t = tally(ballots);
   const row = await one<RoundRow>(
     `INSERT INTO council_rounds (wallet_id, owner, proposal, inputs, decision, outcome, convened_by)

@@ -42,8 +42,8 @@ import { CHAIN_KEY, onMonad } from '@/chain';
 import { useNow } from '@/state/useNow';
 
 const SEAT_NAMES: Record<CouncilBallot['persona'], string> = onMonad
-  ? { 'session-desk': 'Price Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Perps Desk' }
-  : { 'session-desk': 'Session Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Macro Desk' };
+  ? { 'session-desk': 'Price Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Perps Desk', strategist: 'Strategist (Kimi)' }
+  : { 'session-desk': 'Session Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Macro Desk', strategist: 'Strategist' };
 // What the executor's council can be asked about here (`/council/seats`): Stock Tokens, or on Monad MON, ETH and BTC.
 const SYMBOLS: readonly string[] = onMonad ? ['MON', 'ETH', 'BTC'] : ['NVDA', 'TSLA', 'AAPL', 'SPY'];
 const SIZES = [25, 50, 100] as const;
