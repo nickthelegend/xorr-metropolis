@@ -1,0 +1,28 @@
+# server/src/kuru-vs-uniswap.ts — read-only eth_calls on Monad mainnet, two runs 33 s apart.
+# Which venue delivers more flips between runs at $1k–$5k: the reason xorr measures both for every order.
+
+== Run 1
+Kuru vs Uniswap, selling MON for USDC on Monad mainnet (chain 143), block 110718471, 2026-10-05T09:38:32.936Z
+Kuru MON/USDC 0x065C9d28E428A0db40191a54d33d5b7c71a9C394: bid $0.032318 / ask $0.032362; taker fee 0 bps. Uniswap QuoterV2 0x661e93cca42afacb172121ef892830ca3b70f08d, fee tiers 500, 3000, 10000.
+
+size        MON          Kuru delivers   Uniswap delivers (tier)   Kuru vs Uniswap
+$10         309.2        $9.99           $9.99 (0.3%)              +2.2 bps
+$100        3092.1       $99.93          $99.91 (0.3%)             +2.4 bps
+$1000       30921.5      $998.47         $998.87 (0.3%)            -4.0 bps
+$5000       154607.3     $4987.83        $4989.68 (0.3%)           -3.7 bps
+$20000      618429.2     $19678.12       $19889.15 (0.3%)          -106.1 bps
+
+Kuru delivered more at 2 of 5 sizes compared.
+
+== Run 2
+Kuru vs Uniswap, selling MON for USDC on Monad mainnet (chain 143), block 110718578, 2026-10-05T09:39:05.542Z
+Kuru MON/USDC 0x065C9d28E428A0db40191a54d33d5b7c71a9C394: bid $0.032339 / ask $0.032394; taker fee 0 bps. Uniswap QuoterV2 0x661e93cca42afacb172121ef892830ca3b70f08d, fee tiers 500, 3000, 10000.
+
+size        MON          Kuru delivers   Uniswap delivers (tier)   Kuru vs Uniswap
+$10         309.0        $9.99           $9.98 (0.3%)              +8.7 bps
+$100        3089.6       $99.92          $99.83 (0.3%)             +8.9 bps
+$1000       30896.1      $998.27         $998.05 (0.3%)            +2.3 bps
+$5000       154480.7     $4986.84        $4985.60 (0.3%)           +2.5 bps
+$20000      617922.9     $19671.57       $19872.94 (0.3%)          -101.3 bps
+
+Kuru delivered more at 4 of 5 sizes compared.
