@@ -53,9 +53,16 @@ wait_for() { # url, seconds
 }
 
 up() {
-  start fork "FORK_DATA_DIR='$STATE' PORT=$FORK_PORT REFORKED_AT='${REFORKED_AT:-}' sh infra/monad-fork/entrypoint.sh"
+  # The entrypoint re-forks whenever REFORKED_AT differs from the mark it saved, so `up` passes the saved mark: resume.
+  mark="${REFORKED_AT:-$(cat "$STATE/reforked-at" 2>/dev/null || true)}"
+  start fork "FORK_DATA_DIR='$STATE' PORT=$FORK_PORT REFORKED_AT='$mark' sh infra/monad-fork/entrypoint.sh"
   wait_for "$RPC" 120
-  if [ "${REBUILD:-0}" = 1 ] || [ ! -s "$ROOT/server/.env.fork" ] || ! grep -q "FORK_RPC=$RPC" "$ROOT/server/.env.fork"; then
+  # Rebuild when asked, when nothing was built for this RPC, or when the contracts it built are not on this chain.
+  built=$(sed -n 's/^DELEGATION_ADDRESS=//p' "$ROOT/server/.env.fork" 2>/dev/null || true)
+  code=$( [ -n "$built" ] && cast code "$built" --rpc-url "$RPC" 2>/dev/null || echo 0x)
+  if [ "${REBUILD:-0}" = 1 ] || [ ! -s "$ROOT/server/.env.fork" ] || ! grep -q "FORK_RPC=$RPC" "$ROOT/server/.env.fork" || [ "$code" = "0x" ]; then
+    psql "${DATABASE_URL:-postgres://localhost:5432/xorr_metropolis}" -qc 'DROP SCHEMA IF EXISTS envio CASCADE' || true
+    psql "${DATABASE_URL:-postgres://localhost:5432/xorr_metropolis}" -qc "DELETE FROM perpl_desks WHERE chain = 'monad-fork'" || true
     (cd "$ROOT/server" && set -a && . ./.env.local-monad && set +a && FORK_RPC=$RPC XORR_CHAIN=monad-fork OWNER_ADDRESS=$OWNER FORK_GRANT_CAP_USD=1600 npm run rebuild:fork)
   fi
   start keeper "cd server && FORK_RPC=$RPC npx tsx src/fork/perpl-keeper.ts"
@@ -79,9 +86,7 @@ case "${1:-up}" in
   refork)
     down
     sleep 2
-    # A new fork is a new chain history: the old fork's index and its Perpl desks (contracts that no longer exist) go.
-    psql "${DATABASE_URL:-postgres://localhost:5432/xorr_metropolis}" -qc 'DROP SCHEMA IF EXISTS envio CASCADE' || true
-    psql "${DATABASE_URL:-postgres://localhost:5432/xorr_metropolis}" -qc "DELETE FROM perpl_desks WHERE chain = 'monad-fork'" || true
+    # A new fork is a new chain history: `up` drops the old fork's index and Perpl desks when it rebuilds.
     REFORKED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)" REBUILD=1 up
     ;;
   *) echo "usage: $0 up|down|refork" >&2; exit 2 ;;

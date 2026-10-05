@@ -1,7 +1,7 @@
-# e2e/web/crawl.mjs — every route under app/, signed in with a passkey account that has funds, a permission and a fill; fork of Monad mainnet at block 110857492; 2026-10-05T22:15:52Z
-# 'hidden' = a route this build hides on Monad (it shows its own 'not here' page); everything else rendered with no console error and no error state.
+# e2e/web/crawl.mjs at 375 px — every route under app/, signed in (funds, a permission, a fill); fork of Monad mainnet at block 110874062; 2026-10-05T23:11:36Z
+# Per screen: console errors, API responses >= 400, error states, copy naming an older chain, horizontal overflow. 'hidden' = a route this build hides on Monad.
 
-sample ids {"id":"a8fc219b-d023-4ab2-a2b5-3b94bdd95df4","symbol":"MON","seq":"266","agent":"momentum-scout","strategy":"b9d0c8a7-4ea6-4628-838f-893631cfdd2f","position":"d1f2a431-6f8e-45dd-bcfa-bd29f92f27de","library":"b200_sess_8"}
+sample ids {"id":"f6123378-ea8f-406b-93e8-22576919cb00","symbol":"MON","seq":"348","agent":"momentum-scout","strategy":"7601a885-27a3-4fd7-966c-b57629873c79","position":"ed06b75b-c04f-4a0e-8ec1-bc20c3861d98","library":"b200_sess_8"}
 ok            /
 ok            /activity
 ok            /agent/momentum-scout
@@ -15,11 +15,11 @@ hidden        /allocation
 ok            /allowlist
 ok            /approvals
 ok            /asset/MON
-ok            /audit/266
+ok            /audit/348
 ok            /audit/anchor
 ok            /audit/chain
-ok            /auto-close/d1f2a431-6f8e-45dd-bcfa-bd29f92f27de
-hidden        /backtest
+ok            /auto-close/ed06b75b-c04f-4a0e-8ec1-bc20c3861d98
+ok            /backtest
 hidden        /balance
 hidden        /basename
 ok            /bot
@@ -42,7 +42,7 @@ ok            /delegation
 ok            /deposit
 ok            /disposals
 hidden        /earnings
-ok            /explain/266
+ok            /explain/348
 ok            /explore
 ok            /export
 ok            /flatten
@@ -78,7 +78,7 @@ ok            /perps
 ok            /pnl
 ok            /policy
 ok            /portfolio
-ok            /position/d1f2a431-6f8e-45dd-bcfa-bd29f92f27de
+ok            /position/ed06b75b-c04f-4a0e-8ec1-bc20c3861d98
 ok            /profile
 ok            /proposal
 ok            /proposals
@@ -88,7 +88,7 @@ ok            /risk
 ok            /roster-compare
 ok            /route/MON
 ok            /runs
-ok            /runs/a8fc219b-d023-4ab2-a2b5-3b94bdd95df4
+ok            /runs/f6123378-ea8f-406b-93e8-22576919cb00
 ok            /safety
 ok            /schedule
 ok            /search
@@ -101,7 +101,7 @@ hidden        /sponsors
 hidden        /stocks
 ok            /strategies
 ok            /strategy-library/b200_sess_8
-ok            /strategy/b9d0c8a7-4ea6-4628-838f-893631cfdd2f
+ok            /strategy/7601a885-27a3-4fd7-966c-b57629873c79
 ok            /strategy/dca
 ok            /strategy/grid
 hidden        /strategy/yield
@@ -119,4 +119,4 @@ hidden        /xstock/MON
 hidden        /xstocks
 hidden        /yield
 
-116 screens: 90 ok, 26 hidden here, 0 error states, 0 console errors, 0 failed to load
+116 screens: 91 ok, 25 hidden here, 0 error states, 0 console errors, 0 naming an old chain, 0 too wide at 375px, 0 failed to load

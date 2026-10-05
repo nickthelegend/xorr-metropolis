@@ -41,7 +41,8 @@ const ERROR_TEXT = /couldn[’']t load|Failed to fetch|Something went wrong|Unex
 const OLD_CHAIN = /\b(Arbitrum|Robinhood|Solana|Base Sepolia|on Base|X Layer|GMX|Hyperliquid|1inch)\b/;
 
 const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+// 375 px: the narrowest phone the brief names; every screen must fit it with no sideways scroll.
+const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
 const page = await context.newPage();
 const cdp = await context.newCDPSession(page);
 await cdp.send('WebAuthn.enable');
@@ -51,6 +52,10 @@ await cdp.send('WebAuthn.addVirtualAuthenticator', {
 let errors = [];
 page.on('console', (m) => {
   if (m.type() === 'error') errors.push(m.text().slice(0, 200));
+});
+// Every API answer of 400 or more, by path: the network half of "clean".
+page.on('response', (r) => {
+  if (r.url().startsWith(API) && r.status() >= 400) errors.push(`${r.status()} ${r.request().method()} ${r.url().slice(API.length)}`);
 });
 page.on('pageerror', (e) => errors.push(`pageerror ${e.message.slice(0, 200)}`));
 const visible = (l) => l.filter({ visible: true }).first();
@@ -120,8 +125,13 @@ for (const r of routes()) {
     await page.waitForTimeout(SETTLE_MS);
     const text = await page.evaluate(() => document.body.innerText);
     if (/Not in this app yet|That screen has nothing behind it here/.test(text)) status = 'hidden';
+    const wide = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    if (wide > 1) {
+      status = 'overflow';
+      note = `${wide}px wider than the 375px screen`;
+    }
     const bad = text.match(ERROR_TEXT);
-    if (bad) {
+    if (bad && status !== 'overflow') {
       status = 'error-state';
       note = text.split('\n').find((l) => ERROR_TEXT.test(l))?.slice(0, 120) ?? bad[0];
     } else if (status !== 'hidden' && OLD_CHAIN.test(text)) {
@@ -140,5 +150,5 @@ for (const r of routes()) {
 await browser.close();
 
 const count = (s) => results.filter((x) => x.status === s).length;
-console.log(`\n${results.length} screens: ${count('ok')} ok, ${count('hidden')} hidden here, ${count('error-state')} error states, ${count('console-error')} console errors, ${count('old-chain-copy')} naming an old chain, ${count('load-failed')} failed to load`);
-process.exit(count('error-state') + count('console-error') + count('old-chain-copy') + count('load-failed') > 0 ? 1 : 0);
+console.log(`\n${results.length} screens: ${count('ok')} ok, ${count('hidden')} hidden here, ${count('error-state')} error states, ${count('console-error')} console errors, ${count('old-chain-copy')} naming an old chain, ${count('overflow')} too wide at 375px, ${count('load-failed')} failed to load`);
+process.exit(count('error-state') + count('console-error') + count('old-chain-copy') + count('overflow') + count('load-failed') > 0 ? 1 : 0);
