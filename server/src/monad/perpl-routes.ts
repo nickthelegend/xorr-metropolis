@@ -8,6 +8,8 @@
  *   POST /perps/desk/create        submit it (the executor pays gas) → the desk
  *   POST /perps/desk/consent       xorr's operator consent, for the owner's `addOperator` (resume)
  *   PUT  /perps/caps               the owner's per-order / per-day / leverage limits for agents
+ *   GET  /perps/exits              the exit rules, and what they would do to each open position now (nothing is sent)
+ *   PUT  /perps/exits              take-profit, stop-loss, liquidation buffer, funding limit (null: off)
  *   POST /perps/order              an order through the desk by xorr's operator, within the caps
  *   GET  /perps/orders             the orders the agent sent for this owner
  *   POST /perps/fund-test          testnet only: MON for gas and AUSD (Agora's faucet, else the deployment's AUSD reserve)
@@ -34,6 +36,7 @@ import {
   recentOrders,
   setCaps,
 } from './perpl-desk.js';
+import { checkExits, setExitRules } from './perpl-exits.js';
 import { perplHere } from './perpl-chain.js';
 
 export const perplRoutes = new Hono();
@@ -118,6 +121,35 @@ perplRoutes.put('/perps/caps', async (c) => {
     if (body.data.maxOrderUsd > body.data.maxDayUsd) return c.json({ error: 'invalid_request', detail: 'The per-order limit cannot be above the daily limit.' }, 400);
     await setCaps(owner, body.data);
     return c.json(json(await deskState(owner)));
+  } catch (e) {
+    return refusal(c, e);
+  }
+});
+
+/** Percent, or null for off. A stop past 100% of the margin would never fire before Perpl liquidates. */
+const ExitsInput = z.object({
+  takeProfitPct: z.number().positive().max(1_000).nullable(),
+  stopLossPct: z.number().positive().max(100).nullable(),
+  liqBufferPct: z.number().positive().max(50).nullable(),
+  maxFundingAprPct: z.number().positive().max(10_000).nullable(),
+});
+
+perplRoutes.get('/perps/exits', async (c) => {
+  try {
+    const { owner } = await caller(c);
+    return c.json(json(await checkExits(owner)));
+  } catch (e) {
+    return refusal(c, e);
+  }
+});
+
+perplRoutes.put('/perps/exits', async (c) => {
+  try {
+    const { owner } = await caller(c);
+    const body = ExitsInput.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'invalid_request', detail: body.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') }, 400);
+    await setExitRules(owner, body.data);
+    return c.json(json(await checkExits(owner)));
   } catch (e) {
     return refusal(c, e);
   }

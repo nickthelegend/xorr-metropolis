@@ -41,7 +41,7 @@ import { chainLabel } from '@/chain';
 import { useAsync } from '@/data/useAsync';
 import { apiProse } from '@/data/apiError';
 import { classify } from '@/data/failures';
-import { deskCalls, perps, type Desk, type DeskPosition, type PerpMarket, type PerpOrder } from '@/data/perps';
+import { deskCalls, perps, type Desk, type DeskPosition, type ExitRules, type Exits, type PerpMarket, type PerpOrder } from '@/data/perps';
 
 const SIZES = [25, 50, 100] as const;
 /** The limits an owner can pick for the agent on this desk. Leverage stays within what Perpl opens MON at (3x). */
@@ -124,6 +124,92 @@ function orderLine(o: PerpOrder): string {
   const what = { open_long: 'Opened long', open_short: 'Opened short', close_long: 'Closed long', close_short: 'Closed short' }[o.side];
   const by = o.placed_by === 'owner' ? 'you' : o.placed_by;
   return `${what} ${Number(o.lots).toLocaleString()} ${o.market} · ≈${money(Number(o.notional_usd))} · ${o.status} · by ${by}`;
+}
+
+const EXIT_STOP = [null, 25, 50, 75] as const;
+const EXIT_TAKE = [null, 20, 50, 100] as const;
+const EXIT_LIQ = [null, 5, 10, 20] as const;
+const EXIT_FUNDING = [null, 25, 50, 100] as const;
+
+/** The standing exits in one sentence, each one named even when off. */
+function exitsLine(r: ExitRules): string {
+  return [
+    r.stopLossPct !== null ? `stop at −${r.stopLossPct}% of margin` : 'no stop-loss',
+    r.takeProfitPct !== null ? `take profit at +${r.takeProfitPct}%` : 'no take-profit',
+    r.liqBufferPct !== null ? `close within ${r.liqBufferPct}% of liquidation` : 'no liquidation buffer',
+    r.maxFundingAprPct !== null ? `close a loser paying ${r.maxFundingAprPct}% a year in funding` : 'no funding limit',
+  ].join(' · ');
+}
+
+function ExitChoice({ label, values, value, unit, onPick }: { label: string; values: readonly (number | null)[]; value: number | null; unit: (n: number) => string; onPick: (n: number | null) => void }) {
+  return (
+    <>
+      <Text variant="footnote" color={colors.ink55}>{label}</Text>
+      <PillRow>
+        {values.map((n) => (
+          <Pill key={String(n)} label={n === null ? 'Off' : unit(n)} selected={value === n} onPress={() => onPick(n)} />
+        ))}
+      </PillRow>
+    </>
+  );
+}
+
+/**
+ * The desk's standing exits (2026-10-05): the executor checks every open position against them each tick and closes
+ * through the desk when one applies — before liquidation, at a stop, at a take-profit, or when a losing position pays
+ * heavy funding. Below the rules, what they would do to each position right now (`GET /perps/exits`, nothing sent).
+ */
+function ExitsCard({ deskKey, busy, run }: { deskKey: unknown; busy: string | null; run: (key: string, f: () => Promise<{ text: string } | void>) => Promise<void> }) {
+  const exits = useAsync(() => perps.exits(), [deskKey]);
+  const [edit, setEdit] = useState<ExitRules | null>(null);
+  // The save's own answer, shown until a later read replaces it — not the read from before the save.
+  const [saved, setSaved] = useState<{ value: Exits; at: number } | null>(null);
+  const shown = saved && saved.at > (exits.settledAt ?? 0) ? saved.value : exits.data;
+  const r = shown?.rules;
+  if (exits.error && !shown) return <ErrorState error={exits.error} onRetry={exits.reload} />;
+  if (!shown || !r) return null;
+  return (
+    <SheetCard bordered borderRadius={radius.panel} padding={space.s14}>
+      <Press onPress={() => setEdit(edit ? null : r)} accessibilityRole="button" accessibilityLabel="Change the exits" testID="perps-exits">
+        <Text variant="rowPrimary">Exits, checked every 30 s</Text>
+        <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>
+          {exitsLine(r)} · {edit ? 'Close' : 'Change ›'}
+        </Text>
+      </Press>
+      {shown.positions.map((p) => (
+        <Text key={p.perpId} variant="footnote" color={p.exit ? colors.warn : colors.ink55} style={{ marginTop: space.s6 }}>
+          {`${p.market} ${p.long ? 'long' : 'short'}: ${p.exit ? `closing — ${p.exit.text}` : `nothing to do${p.pnlPctOfMargin !== null ? ` (${p.pnlPctOfMargin >= 0 ? '+' : '−'}${share(Math.abs(p.pnlPctOfMargin))} of margin)` : ''}`}`}
+        </Text>
+      ))}
+      {!shown.operatorActive ? (
+        <Text variant="footnote" color={colors.ink40} style={{ marginTop: space.s6 }}>
+          xorr is not this desk’s operator now, so no exit can run — add it back to resume them.
+        </Text>
+      ) : null}
+      {edit ? (
+        <View style={{ gap: space.s8, marginTop: space.s10 }}>
+          <ExitChoice label="Stop-loss, share of the margin lost" values={EXIT_STOP} value={edit.stopLossPct} unit={(n) => `−${n}%`} onPick={(n) => setEdit({ ...edit, stopLossPct: n })} />
+          <ExitChoice label="Take-profit, share of the margin gained" values={EXIT_TAKE} value={edit.takeProfitPct} unit={(n) => `+${n}%`} onPick={(n) => setEdit({ ...edit, takeProfitPct: n })} />
+          <ExitChoice label="Close this close to liquidation" values={EXIT_LIQ} value={edit.liqBufferPct} unit={(n) => `${n}%`} onPick={(n) => setEdit({ ...edit, liqBufferPct: n })} />
+          <ExitChoice label="Close a loser paying funding of, a year" values={EXIT_FUNDING} value={edit.maxFundingAprPct} unit={(n) => `${n}%`} onPick={(n) => setEdit({ ...edit, maxFundingAprPct: n })} />
+          <Button
+            label="Save the exits"
+            variant="ghost"
+            loading={busy === 'exits'}
+            testID="perps-exits-save"
+            onPress={() =>
+              run('exits', async () => {
+                const next = await perps.setExits(edit);
+                setSaved({ value: next, at: Date.now() });
+                setEdit(null);
+                return { text: `Saved: ${exitsLine(next.rules)}.` };
+              })
+            }
+          />
+        </View>
+      ) : null}
+    </SheetCard>
+  );
 }
 
 export default function Perps() {
@@ -433,6 +519,8 @@ export default function Perps() {
                 />
               ))
             )}
+
+            <ExitsCard deskKey={d} busy={busy} run={run} />
 
             <Text variant="control" color={colors.ink55}>The agent’s leash</Text>
             {d.operatorActive ? (

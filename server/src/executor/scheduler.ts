@@ -17,6 +17,7 @@ import { log } from '../http/request-id.js';
 import { runStrategy, type StrategyRow } from './run.js';
 import { autonomousAgentSweep } from '../bot/autonomous.js';
 import { councilSweep } from '../council/sweep.js';
+import { perplExitSweep } from '../monad/perpl-exits.js';
 import { basketSweep } from '../bot/basket.js';
 import { observeSweep } from '../market/observe.js';
 import { seedHistory, historyComplete } from '../market/history.js';
@@ -112,6 +113,19 @@ export async function tick(now: Date = new Date()): Promise<number> {
       ran += await solanaExitSweep(now);
     } catch (e) {
       log.error('[scheduler] exit sweep failed:', e instanceof Error ? e.message : e);
+    }
+  }
+
+  /*
+   * Exits on Perpl desks, every tick (2026-10-05): take-profit, stop-loss, the liquidation buffer and the funding limit
+   * each desk's owner set (`monad/perpl-exits.ts`). Before the agents' turn, so a round never adds to a position a rule
+   * is about to close.
+   */
+  if (IS_MONAD) {
+    try {
+      ran += await perplExitSweep(now);
+    } catch (e) {
+      log.error('[scheduler] Perpl exit sweep failed:', e instanceof Error ? e.message : e);
     }
   }
 

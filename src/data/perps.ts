@@ -109,6 +109,32 @@ export type PerplLiveMarket = {
   at: string | null;
 };
 
+/** Standing exits on the desk, checked every scheduler tick (`server/src/monad/perpl-exits.ts`). Percent; null is off. */
+export type ExitRules = {
+  /** Close at this profit, % of the position's margin. */
+  takeProfitPct: number | null;
+  /** Close at this loss, % of the margin. */
+  stopLossPct: number | null;
+  /** Close when the mark is this close to liquidation, % of the mark. */
+  liqBufferPct: number | null;
+  /** Close a losing position paying funding at this yearly rate or more. */
+  maxFundingAprPct: number | null;
+};
+
+export type ExitCheck = {
+  perpId: number;
+  market: string;
+  long: boolean;
+  pnlUsd: number | null;
+  pnlPctOfMargin: number | null;
+  liqDistance: number | null;
+  fundingPctPerHour: number | null;
+  /** What the guard would do now; null is nothing. */
+  exit: { rule: 'liquidation' | 'stop_loss' | 'take_profit' | 'funding'; text: string } | null;
+};
+
+export type Exits = { rules: ExitRules; operatorActive: boolean; positions: ExitCheck[] };
+
 /** One market's risk over a window, as `/monad/perpl/risk` reads it from Perpl's public API (`server/src/monad/perpl-risk.ts`). */
 export type PerplMarketRisk = {
   id: number;
@@ -146,6 +172,9 @@ export const perps = {
   order: (p: { perpId: number; side: PerpOrder['side']; usd?: number; leverage?: number; agent?: string }) =>
     api.post<PerpOrderResult>('/perps/order', p),
   orders: () => api.get<{ orders: PerpOrder[] }>('/perps/orders'),
+  /** The desk's exit rules and what they would do to each open position now (a dry run: nothing is sent). */
+  exits: () => api.get<Exits>('/perps/exits'),
+  setExits: (rules: ExitRules) => api.put<Exits>('/perps/exits', rules),
   fundTest: () => api.post<{ sent: { what: string; tx: string; explorer: string }[] }>('/perps/fund-test', {}),
 };
 
