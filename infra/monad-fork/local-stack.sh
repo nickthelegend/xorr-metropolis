@@ -34,11 +34,14 @@ start() { # name, command...
   (cd "$ROOT" && nohup sh -c "$*" < /dev/null > "$LOGS/$name.log" 2>&1 & echo $! > "$PIDS/$name") < /dev/null > /dev/null 2>&1
   echo "$name: started ($(cat "$PIDS/$name")), log $LOGS/$name.log"
 }
+# Every process under a pid, deepest first: npm → node, sh → anvil — stopping only the top leaves the server running.
+tree() {
+  for child in $(pgrep -P "$1" 2>/dev/null); do tree "$child"; done
+  echo "$1"
+}
 stop() {
   if running "$1"; then
-    pid=$(cat "$PIDS/$1")
-    pkill -TERM -P "$pid" 2>/dev/null || true
-    kill -TERM "$pid" 2>/dev/null || true
+    for pid in $(tree "$(cat "$PIDS/$1")"); do kill -TERM "$pid" 2>/dev/null || true; done
     echo "$1: stopped"
   fi
   rm -f "$PIDS/$1"
