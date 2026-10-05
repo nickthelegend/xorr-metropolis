@@ -1,0 +1,44 @@
+# mm-plugin-perpl run inside the MetaMask Agent Wallet CLI (@metamask/agent-wallet/7.0.0 darwin-arm64 node-v26.5.0), 2026-10-05T10:10:44Z
+# installed with: mm plugins install "file:$PWD" --accept-permissions (experimentalPlugins on)
+
+$ mm perpl markets
+Perpl testnet: 8 open markets
+BTC    $86,031.4  longs pay 0.0014%/h  $1,901,888 open  up to 15x
+ZEC    $1,315.24  longs pay 0.0042%/h  $1,150,493 open  up to 3x
+ETH    $2,717.31  longs pay 0.0028%/h  $699,153 open  up to 12x
+LIT    $3.89007  funding flat  $401,379 open  up to 3x
+NEAR   $5.0104  longs pay 0.0028%/h  $388,956 open  up to 3x
+SOL    $120.67  funding flat  $294,261 open  up to 10x
+PUMP   $0.006371  funding flat  $223,917 open  up to 5x
+MON    $0.0323  longs pay 0.0042%/h  $91,737 open  up to 3x
+
+$ mm perpl markets --network mainnet
+Perpl: 11 open markets
+BTC    $86,041.9  longs pay 0.0056%/h  $740,530 open  up to 15x
+ETH    $2,716.73  shorts pay 0.0056%/h  $488,218 open  up to 12x
+SOL    $120.643  funding flat  $108,012 open  up to 12x
+MON    $0.032309  funding flat  $101,304 open  up to 10x
+PUMP   $0.006376  longs pay 0.0014%/h  $49,595 open  up to 5x
+ZEC    $1,314.57  funding flat  $40,437 open  up to 10x
+HYPE   $92.8265  longs pay 0.0056%/h  $28,496 open  up to 10x
+LIT    $3.88999  funding flat  $17,657 open  up to 3x
+VVV    $29.7044  longs pay 0.0056%/h  $14,667 open  up to 3x
+NEAR   $5.0137  shorts pay 0.0056%/h  $5,449 open  up to 3x
+UNI    $8.9983  funding flat  $3,606 open  up to 3x
+
+$ mm perpl risk --hours 24
+Perpl testnet, last 24h
+· MON, ZEC: longs pay 37% a year at the current rate.
+· LIT rose 6.5% in 24h.
+
+MON    longs paid 0.027% (9.7% a year) in 24h · price −4.18% · 7129 trades
+ZEC    longs paid 0.090% (32.4% a year) in 24h · price −1.10% · 7077 trades
+ETH    longs paid 0.083% (29.8% a year) in 24h · price +0.66% · 7013 trades
+NEAR   longs paid 0.080% (28.8% a year) in 24h · price +3.95% · 7255 trades
+BTC    longs paid 0.081% (29.1% a year) in 24h · price +0.99% · 6542 trades
+SOL    longs paid 0.026% (9.3% a year) in 24h · price −0.49% · 7205 trades
+LIT    longs were paid 0.076% (27.3% a year) in 24h · price +6.54% · 7425 trades
+PUMP   no funding changed hands in 24h · price −0.22% · 6697 trades
+
+$ mm perpl account   (not signed in to mm: the host gates it)
+AUTH_FAILED - No CLI refresh token available — run `mm login` to sign in.

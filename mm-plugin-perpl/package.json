@@ -1,0 +1,107 @@
+{
+  "name": "mm-plugin-perpl",
+  "version": "0.1.0",
+  "description": "Perpl perpetuals on Monad for the MetaMask Agent Wallet (mm): markets, risk, account, open and close",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "oclif-plugin",
+    "metamask",
+    "agent-wallet",
+    "monad",
+    "perpl",
+    "perps"
+  ],
+  "files": [
+    "dist",
+    "oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && oclif manifest",
+    "prepack": "tsc -p tsconfig.json && oclif manifest",
+    "test": "vitest run"
+  },
+  "oclif": {
+    "bin": "mm",
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "topics": {
+      "perpl": {
+        "description": "Perpl, Monad's on-chain perpetuals exchange"
+      }
+    }
+  },
+  "mm": {
+    "schemaVersion": 1,
+    "minCliVersion": "^7.0.0",
+    "capabilities": [],
+    "commands": [
+      {
+        "id": "perpl:markets",
+        "capabilities": [],
+        "dataAccess": []
+      },
+      {
+        "id": "perpl:risk",
+        "capabilities": [],
+        "dataAccess": []
+      },
+      {
+        "id": "perpl:account",
+        "capabilities": [
+          "wallet-read"
+        ],
+        "dataAccess": [
+          "accounts",
+          "balances"
+        ]
+      },
+      {
+        "id": "perpl:deposit",
+        "capabilities": [
+          "wallet-read",
+          "wallet-submit"
+        ],
+        "dataAccess": [
+          "accounts",
+          "balances"
+        ]
+      },
+      {
+        "id": "perpl:open",
+        "capabilities": [
+          "wallet-read",
+          "wallet-submit"
+        ],
+        "dataAccess": [
+          "accounts",
+          "balances"
+        ]
+      },
+      {
+        "id": "perpl:close",
+        "capabilities": [
+          "wallet-read",
+          "wallet-submit"
+        ],
+        "dataAccess": [
+          "accounts",
+          "balances"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "viem": "^2.34.0"
+  },
+  "peerDependencies": {
+    "@metamask/agent-wallet": "^7.0.0"
+  },
+  "devDependencies": {
+    "@metamask/agent-sdk": "^7.0.0",
+    "@metamask/agent-wallet": "^7.0.0",
+    "oclif": "^4",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}

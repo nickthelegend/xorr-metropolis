@@ -28,6 +28,7 @@
     ".scaffold",
     "contracts",
     "cre",
+    "mm-plugin-perpl",
     "dist",
     "landing",
     "node_modules",

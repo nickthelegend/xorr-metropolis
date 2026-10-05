@@ -21,6 +21,10 @@ module.exports = [
       'contracts/**',
       'subgraph/**',
       'subgraph-aqua/**',
+      // Separate packages with their own toolchains and dependencies: the Chainlink CRE workflow (bun, cre-compile) and
+      // the MetaMask Agent Wallet plugin (oclif). CI installs neither, so their imports cannot resolve here.
+      'cre/**',
+      'mm-plugin-perpl/**',
     ],
   },
 ];
