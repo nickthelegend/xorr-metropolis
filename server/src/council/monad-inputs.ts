@@ -132,6 +132,25 @@ async function fillPrice(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], proposa
 }
 
 /**
+ * On a fork, the reference the fill is held to is the fork's own (2026-10-06): its Chainlink feed and Kuru's book as they
+ * stood at the fork block — the same frozen state the fill comes from — with the round's age measured at that block. Live
+ * mainnet moves on (MON a percent or two an hour), and holding a fork fill to it refused trades for a drift no venue on
+ * the fork can close. Mainnet and testnet keep live references. Undefined off a fork.
+ */
+let forkRef: Promise<{ client: PublicClient; nowSec: number } | null> | undefined;
+export function forkReference(): Promise<{ client: PublicClient; nowSec: number } | null> {
+  if (CHAIN_KEY !== 'monad-fork') return Promise.resolve(null);
+  forkRef ??= (async () => {
+    const info = (await publicClient.request({ method: 'anvil_nodeInfo' as never, params: [] as never })) as { forkConfig?: { forkBlockNumber?: number } };
+    const at = info.forkConfig?.forkBlockNumber;
+    if (at === undefined) return null;
+    const block = await publicClient.getBlock({ blockNumber: BigInt(at) });
+    return { client: publicClient, nowSec: Number(block.timestamp) };
+  })().catch(() => null);
+  return forkRef;
+}
+
+/**
  * What MON is checked against: on Monad testnet, the CRE workflow's report when a receiver is configured and has reported
  * (`monad/cre-price.ts`); otherwise, and for every other symbol, Chainlink's feed on Monad mainnet.
  */
@@ -149,8 +168,10 @@ async function anchorOf(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], feedSymb
       halt: cre.halt ? `the CRE workflow's latest MON/USD report says halt (a market ${cre.anchorGapBps} bps from Chainlink, ${cre.sources} sources)` : null,
     };
   }
-  const feed = await readFeed(feedSymbol, { client, maxAgeSec: FEED_MAX_AGE_SEC });
-  return { price: feed.price, ageSec: feed.ageSec, feed: feed.feed, updatedAt: feed.updatedAt, label: `Chainlink ${feedSymbol}/USD ${feed.feed} on Monad mainnet`, halt: null };
+  const ref = await forkReference();
+  const feed = await readFeed(feedSymbol, { client: ref?.client ?? client, maxAgeSec: FEED_MAX_AGE_SEC, nowSec: ref?.nowSec });
+  const where = ref ? 'on this fork, as of the fork block' : 'on Monad mainnet';
+  return { price: feed.price, ageSec: feed.ageSec, feed: feed.feed, updatedAt: feed.updatedAt, label: `Chainlink ${feedSymbol}/USD ${feed.feed} ${where}`, halt: null };
 }
 
 async function priceOf(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], proposal: Proposal, client: PublicClient) {
@@ -159,7 +180,11 @@ async function priceOf(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], proposal:
   const feed = await anchorOf(symbol, feedSymbol, client);
   const [fill, kuru] = await Promise.all([
     fillPrice(symbol, proposal, feed.price),
-    symbol === 'MON' ? readBook('MON/USDC', client).then((b) => (b.mid !== null ? { mid: b.mid, spreadBps: b.spreadBps } : null), () => null) : Promise.resolve(null),
+    symbol === 'MON'
+      ? forkReference()
+          .then((ref) => readBook('MON/USDC', ref?.client ?? client))
+          .then((b) => (b.mid !== null ? { mid: b.mid, spreadBps: b.spreadBps } : null), () => null)
+      : Promise.resolve(null),
   ]);
   const gapBps = (Math.abs(fill.price - feed.price) / feed.price) * 10_000;
   return {

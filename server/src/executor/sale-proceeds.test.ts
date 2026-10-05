@@ -139,8 +139,9 @@ describe('a stop that sells', () => {
     const out = await runStrategy(strategy(), at);
 
     expect(out.status).toBe('filled');
-    // run, signature, units, price, usd, quoted_units, venue, side, quoted_usd, asset_class
-    expect(filledUpdate().params.slice(2)).toEqual([0.04, 2_500, 98.7, 0.04, '1inch', 'sell', 100, 'crypto']);
+    // run, signature, units, price, usd, quoted_units, venue, side, quoted_usd, asset_class, then the venue comparison
+    // (compared_venue, compared_units, measured_units) — null here: only one venue was measured.
+    expect(filledUpdate().params.slice(2)).toEqual([0.04, 2_500, 98.7, 0.04, '1inch', 'sell', 100, 'crypto', null, null, null]);
     expect(vi.mocked(applyFill).mock.calls[0]![1]).toMatchObject({ symbol: 'WETH', units: -0.04, usd: -98.7 });
     // Closing is not spending.
     expect(recordSpend).not.toHaveBeenCalled();
@@ -178,7 +179,7 @@ describe('a buy', () => {
 
     const params = filledUpdate().params;
     expect(params.slice(2, 5)).toEqual([0.0398, 2_500, 100]);
-    expect(params.slice(7)).toEqual(['buy', null, 'crypto']);
+    expect(params.slice(7)).toEqual(['buy', null, 'crypto', null, null, null]);
     expect(usdcRawOf).not.toHaveBeenCalled();
     expect(recordSpend).toHaveBeenCalledTimes(1);
   });

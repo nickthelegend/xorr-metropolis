@@ -35,6 +35,7 @@ import {
   placePerpOrder,
   recentOrders,
   setCaps,
+  withChainBook,
 } from './perpl-desk.js';
 import { checkExits, setExitRules } from './perpl-exits.js';
 import { perplHere } from './perpl-chain.js';
@@ -62,7 +63,8 @@ function refusal(c: Context, e: unknown) {
 
 perplRoutes.get('/perps/markets', async (c) => {
   if (!perplHere()) return c.json({ error: 'perpl_not_here', detail: `Perpl runs on Monad mainnet and testnet; this executor serves ${CHAIN_KEY}.` }, 409);
-  return c.json({ network: perplHere()!.name, markets: await perplMarkets() });
+  // The book top as the Exchange holds it now, the one an order meets (withChainBook).
+  return c.json({ network: perplHere()!.name, markets: await Promise.all((await perplMarkets()).map(withChainBook)) });
 });
 
 perplRoutes.get('/perps/desk', async (c) => {

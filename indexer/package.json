@@ -1,0 +1,23 @@
+{
+  "name": "xorr-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Envio HyperIndex for xorr on Monad: permissions, fills, revocations, Perpl desks and audit anchors",
+  "scripts": {
+    "codegen": "envio codegen",
+    "start": "envio start",
+    "test": "vitest run --test-timeout=60000"
+  },
+  "devDependencies": {
+    "@types/node": "24.12.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.0"
+  },
+  "dependencies": {
+    "envio": "3.12.1"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

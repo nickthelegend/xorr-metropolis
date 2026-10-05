@@ -102,6 +102,21 @@ await step('buy $20 of MON, and see where it filled', async () => {
   await shot('run');
 });
 
+await step('history: the on-chain record, indexed by Envio', async () => {
+  // The indexer (indexer/, RPC sync) follows the fork in realtime; give it a few blocks to see the buy.
+  for (let i = 0; i < 20; i++) {
+    await page.goto(`${WEB}/history`, { waitUntil: 'domcontentloaded' });
+    const card = page.getByTestId('history-indexed').filter({ visible: true });
+    await card.waitFor({ timeout: 15_000 }).catch(() => undefined);
+    if ((await card.count()) && /spent over 1 order/.test(await card.innerText())) {
+      say(`  ${(await card.innerText()).replace(/\n+/g, ' | ')}`);
+      return;
+    }
+    await page.waitForTimeout(3000);
+  }
+  throw new Error('the History screen never showed the indexed record of the buy');
+});
+
 await step('perps: test MON and AUSD, then open a Perpl desk', async () => {
   await page.goto(`${WEB}/perps`, { waitUntil: 'domcontentloaded' });
   await page.getByTestId('perps-fund-test').click({ timeout: T.ui });

@@ -26,15 +26,19 @@ import {
   Press,
   Price,
   Screen,
+  SheetCard,
   Text,
   colors,
   divider,
+  radius,
   size,
   space,
 } from '@/ui';
 import { money, quantity, when } from '@/format';
 import { useAsync } from '@/data/useAsync';
 import { history, unitsOf, type HistoryItem } from '@/data/history';
+import { indexed, indexedLines } from '@/data/indexed';
+import { useNow } from '@/state/useNow';
 import { useRefreshControl } from '@/ui/useRefreshControl';
 
 /** `SwapExactInput` reads as "Swap exact input". */
@@ -126,6 +130,35 @@ function HistoryRow({ item }: { item: HistoryItem }) {
   );
 }
 
+/**
+ * The wallet's on-chain record as Envio's HyperIndex holds it (`indexer/`, `GET /indexed`): the contracts' own events,
+ * added up by the indexer — spend, the day against its cap, where fills went, the Perpl desk. Said beside how far the
+ * index has read, and absent (not empty) where the indexer has not run.
+ */
+function IndexedRecordCard() {
+  const rec = useAsync(() => indexed(), []);
+  const now = useNow(60_000);
+  if (!rec.data) return null;
+  const today = new Date(now).toISOString().slice(0, 10);
+  return (
+    <SheetCard bordered borderRadius={radius.panel} padding={space.s14} style={{ marginBottom: space.s12 }} testID="history-indexed">
+      <Text variant="footnote" color={colors.ink55}>
+        ON CHAIN · INDEXED BY ENVIO
+      </Text>
+      {indexedLines(rec.data, today).map((line) => (
+        <Text key={line} variant="secondarySm" color={colors.ink70} style={{ marginTop: space.s6 }}>
+          {line}
+        </Text>
+      ))}
+      {rec.data.synced ? (
+        <Text variant="footnoteSm" color={colors.ink40} style={{ marginTop: space.s8 }}>
+          {`HyperIndex, read to block ${rec.data.synced.block.toLocaleString('en-US')} (${rec.data.synced.events.toLocaleString('en-US')} events since block ${rec.data.synced.fromBlock.toLocaleString('en-US')}).`}
+        </Text>
+      ) : null}
+    </SheetCard>
+  );
+}
+
 export default function History() {
   const goBack = useGoBack();
   const router = useRouter();
@@ -170,6 +203,7 @@ export default function History() {
           >
             {/* A pull that failed says so, over the rows it could not replace. A success says nothing. */}
             {refresh.notice}
+            <IndexedRecordCard />
             {items.map((item, i) => (
               <HistoryRow key={`${item.kind}:${item.txHash}:${i}`} item={item} />
             ))}

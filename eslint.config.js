@@ -25,6 +25,8 @@ module.exports = [
       // the MetaMask Agent Wallet plugin (oclif). CI installs neither, so their imports cannot resolve here.
       'cre/**',
       'mm-plugin-perpl/**',
+      // The Envio indexer: its own package (Node 22, generated types).
+      'indexer/**',
     ],
   },
 ];

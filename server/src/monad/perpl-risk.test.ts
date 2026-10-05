@@ -43,3 +43,13 @@ describe('Perpl on a fork', () => {
     expect(perplHere('monad-testnet', {})?.name).toBe('Perpl testnet');
   });
 });
+
+describe('the fork keeper', () => {
+  it('keeps the live mark inside the fork book', async () => {
+    const { markWithinBook } = await import('../fork/perpl-keeper.js');
+    expect(markWithinBook(31083, 31491, 31562)).toBe(31491); // live fell below the fork's best bid
+    expect(markWithinBook(31700, 31491, 31562)).toBe(31562);
+    expect(markWithinBook(31500, 31491, 31562)).toBe(31500);
+    expect(markWithinBook(31500, null, null)).toBe(31500);
+  });
+});

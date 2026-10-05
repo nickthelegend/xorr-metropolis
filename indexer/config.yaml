@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+#
+# xorr on Monad, indexed (Envio bounty, 2026-10-06). Synced over RPC — no HyperSync token — from any Monad node: the
+# local fork for development, mainnet or testnet later. The fork's addresses change on every re-fork, so they come from
+# the environment (`.env.example`).
+name: xorr-monad
+description: xorr's permissions, fills, revocations, Perpl desks and audit anchors on Monad
+disable_default_cross_chain: true
+field_selection:
+  transaction_fields:
+    - hash
+contracts:
+  - name: XorrDelegation
+    events:
+      - event: Granted(address indexed owner, address indexed delegate, uint256 dailyCap, uint64 expiresAt)
+      - event: Revoked(address indexed owner, address indexed delegate)
+      - event: VenueAllowed(address indexed owner, address indexed venue, bool allowed)
+      - event: Spent(address indexed owner, address indexed delegate, address indexed venue, address token, uint256 amount, uint256 spentToday)
+      - event: Closed(address indexed owner, address indexed delegate, address indexed venue, address token, uint256 amount)
+  - name: XorrAuditAnchor
+    events:
+      - event: Anchored(address indexed anchorer, address indexed subject, bytes32 head, uint64 entryCount, uint64 blockNo)
+  # Perpl's own DelegatedAccount factory: every desk is created here, then indexed as a contract of its own.
+  - name: PerplDeskFactory
+    events:
+      - event: DelegatedAccountCreated(address indexed proxy, address indexed owner, address indexed operator)
+  - name: PerplDesk
+    events:
+      - event: OperatorAdded(address indexed operator)
+      - event: OperatorRemoved(address indexed operator)
+chains:
+  - id: ${ENVIO_CHAIN_ID}
+    start_block: ${ENVIO_START_BLOCK}
+    rpc:
+      - url: ${ENVIO_RPC_URL}
+        for: sync
+    contracts:
+      - name: XorrDelegation
+        address:
+          - ${ENVIO_DELEGATION}
+      - name: XorrAuditAnchor
+        address:
+          - ${ENVIO_ANCHOR}
+      - name: PerplDeskFactory
+        address:
+          - ${ENVIO_PERPL_FACTORY}

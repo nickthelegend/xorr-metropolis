@@ -1,4 +1,4 @@
-# Sponsor gap check — xorr on Monad (2026-10-05)
+# Sponsor gap check — xorr on Monad (5 Oct; status updated 6 Oct)
 
 Inputs: `Projects/METROPOLIS-SPONSORS.md` (fresh research, 5 Oct, requirement text per bounty, live testnet addresses),
 `docs/SPONSOR-AUDIT.md` (24 Sep, measured on the running stacks) and `docs/METROPOLIS.md` (rules, ranking). Status is what
@@ -15,7 +15,31 @@ Monad integration 20%, innovation 10% — so a requirement left unmet costs more
    the code; it does not satisfy a bounty that asks for fills "on Monad". Real fills need Kuru v2 test tokens (from Kuru)
    or small real funds on mainnet — both the owner's.
 
-## The table
+## Status after the 6 Oct local build (owner's direction: no Monad transactions, no hosting yet)
+
+Everything below was exercised on a local fork of Monad mainnet (`infra/monad-fork/local-stack.sh`), in a real browser
+(`npm run e2e:fork`, 0 console errors) and by the proofs. "Met locally" means the stated requirement works end to end on
+the fork; the live step each needs is in the last column. `docs/SUBMISSION.md` has the same, per bounty, for judges.
+
+| Bounty | Status | What changed on 6 Oct | Live step left |
+|---|---|---|---|
+| Agora — Mobile Trading App (T1) | ◐ built | Mera now in the native app (React Native client, Keychain session, native auth/signing); passkey → AUSD → Perpl long/close shown end to end in the browser on the fork | Serve `docs/passkey-domain/.well-known/*`, dev build with `EXPO_PUBLIC_MERA_RP_ID` |
+| Perpl — Best use of the API | ✓ met locally | Full cycle on the fork with a local keeper posting Perpl's marks; the exit guard closed a live position itself; orders priced from the on-chain book | Test MON for the operator, then the same on Perpl testnet |
+| Perpl — Risk Tool (T1) | ✓ met | (5 Oct) | — |
+| Kuru — Consumer App (T1) | ✓ met locally | Each fill records and shows what the other venue would have delivered | A fill on a real network (Kuru v2 tokens or a few real dollars) |
+| MetaMask — Agent Wallet Plugin (T1) | ◐ built | (5 Oct) | `mm login` + a funded agent wallet |
+| Mera — UX | ✓ met locally | Passkey account ~1.5 s, permission signed ~1.5 s later with no prompt, stop read back from the chain | The same on Monad testnet (test MON) |
+| Mera — One Passkey, Many Keys | ✓ met | — | A cross-device run on real hardware |
+| Chainlink — CRE | ◐ built | (5 Oct) | `cre login`, then simulate; ~0.12 MON for the receiver |
+| Envio | ✓ met locally | HyperIndex v3 (`indexer/`) over XorrDelegation, the anchor and Perpl's desk factory (desks as dynamic contracts); derived owner/day/venue/desk entities; RPC sync, no token; `GET /indexed` and a History card read it | An Envio API token or Envio Cloud for a hosted index |
+| Kimi | ◐ built | Fifth council seat decides split rounds; numbers checked against the desks'; labelled fixture without a key | `MOONSHOT_API_KEY` |
+| Qwen | — | Track 4 only: not eligible for xorr (Track 1) | — |
+
+**Keys and accounts the owner holds the only copy of:** `MOONSHOT_API_KEY` (Kimi), `cre login` (Chainlink CRE),
+`mm login` (MetaMask agent wallet), an Envio API token, the Apple team id and Android signing fingerprint for the passkey
+domain files.
+
+## The table (5 Oct)
 
 Value = prize × how likely this build meets the stated requirements once the gap is closed. Effort: S (hours), M (a day),
 L (days). ✓ met · ◐ partly · ✗ not met.

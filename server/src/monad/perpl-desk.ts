@@ -82,10 +82,31 @@ export async function perplMarkets(): Promise<PerpMarket[]> {
   return ctx.markets.map(marketFromContext).filter((m) => m.open);
 }
 
+const PERP_INFO_ABI = parseAbi([
+  'function getPerpetualInfo(uint256 perpId) view returns ((string name,string symbol,uint256 priceDecimals,uint256 lotDecimals,bytes32 linkFeedId,uint256 priceTolPer100K,uint256 marginTol,uint256 marginTolDecimals,uint256 refPriceMaxAgeSec,uint256 positionBalanceCNS,uint256 insuranceBalanceCNS,uint256 markPNS,uint256 markTimestamp,uint256 lastPNS,uint256 lastTimestamp,uint256 oraclePNS,uint256 oracleTimestampSec,uint256 longOpenInterestLNS,uint256 shortOpenInterestLNS,uint256 fundingStartBlock,int256 fundingRatePct100k,uint256 absFundingClampPctPer100K,uint256 status,uint256 basePricePNS,uint256 maxBidPriceONS,uint256 minBidPriceONS,uint256 maxAskPriceONS,uint256 minAskPriceONS,uint256 numOrders,bool ignOracle) perpetualInfo)',
+]);
+
+/**
+ * The book an order will actually meet: Perpl's Exchange read now, not the API's copy of it (2026-10-06). The two agree
+ * on a live network to within a block; on a fork they do not — the fork's resting orders stay where they were when it
+ * was taken while the API moves on — and an IOC priced off the API's ask then sits below every ask on the fork and fills
+ * nothing. A side with no resting order keeps the API's figure.
+ */
+export async function withChainBook(m: PerpMarket): Promise<PerpMarket> {
+  try {
+    const i = await publicClient.readContract({ address: net().exchange, abi: PERP_INFO_ABI, functionName: 'getPerpetualInfo', args: [BigInt(m.id)] });
+    const scale = 10 ** Number(i.priceDecimals);
+    const side = (ons: bigint) => (ons > 0n && ons < 2n ** 64n ? Number(i.basePricePNS + ons) / scale : null);
+    return { ...m, bid: side(i.maxBidPriceONS) ?? m.bid, ask: side(i.minAskPriceONS) ?? m.ask, mark: i.markPNS > 0n ? Number(i.markPNS) / scale : m.mark };
+  } catch {
+    return m;
+  }
+}
+
 async function market(perpId: number): Promise<PerpMarket> {
   const m = (await perplMarkets()).find((x) => x.id === perpId);
   if (!m) throw new PerplRefusal('unknown_market', `Perpl has no open market ${perpId}.`, 400);
-  return m;
+  return withChainBook(m);
 }
 
 // ---------------------------------------------------------------- the desk record

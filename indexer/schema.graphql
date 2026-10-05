@@ -1,0 +1,114 @@
+# xorr on Monad, indexed. Events are kept as they happened (Grant, Fill, Revocation, VenueChange, DeskOperatorChange,
+# AuditAnchor); the rest is derived from them as they arrive — what an owner has granted, spent and stopped, what a day
+# cost, which venue carried how much, and whether a desk can still be traded.
+
+# Derived: one row per owner, kept current by every event about them.
+type Owner {
+  id: ID!                      # the owner's address, lowercase
+  grants: Int!
+  dailyCap: BigInt!            # the latest grant's cap, in the settlement token's base units
+  expiresAt: BigInt!           # the latest grant's end, unix seconds
+  revoked: Boolean!            # stopped since the latest grant
+  spends: Int!
+  spentTotal: BigInt!          # every Spent amount, settlement token base units
+  closes: Int!
+  closedTotal: BigInt!         # every Closed amount, in the token closed (base units)
+  venues: Int!                 # venues currently allowed
+  firstSeen: Int!              # unix seconds
+  lastActive: Int!
+}
+
+type Grant {
+  id: ID!
+  owner: String! @index
+  delegate: String!
+  dailyCap: BigInt!
+  expiresAt: BigInt!
+  timestamp: Int!
+  block: Int!
+  txHash: String!
+}
+
+type Fill {
+  id: ID!
+  kind: String!                # spent (the agent committed money) | closed (it took risk off)
+  owner: String! @index
+  delegate: String!
+  venue: String! @index        # the venue's address
+  venueName: String!           # Kuru, Uniswap v3, or the address
+  token: String!
+  amount: BigInt!
+  spentToday: BigInt           # Spent only: the day's running total the contract held
+  timestamp: Int!
+  block: Int!
+  txHash: String!
+}
+
+# Derived: one row per owner per UTC day.
+type DailySpend {
+  id: ID!                      # owner-yyyy-mm-dd
+  owner: String! @index
+  day: String!
+  spent: BigInt!
+  fills: Int!
+  capAtDay: BigInt!            # the cap in force that day
+}
+
+# Derived: one row per venue.
+type Venue {
+  id: ID!                      # address, lowercase
+  name: String!
+  spends: Int!
+  spentVolume: BigInt!
+  closes: Int!
+  owners: Int!                 # distinct owners allowed this venue at least once
+}
+
+type Revocation {
+  id: ID!
+  owner: String! @index
+  delegate: String!            # the agent stopped, or the zero address: every agent at once
+  timestamp: Int!
+  block: Int!
+  txHash: String!
+}
+
+type VenueChange {
+  id: ID!
+  owner: String! @index
+  venue: String!
+  allowed: Boolean!
+  timestamp: Int!
+  txHash: String!
+}
+
+# Derived: a Perpl desk (Perpl's DelegatedAccount), from its creation and every operator change since.
+type Desk {
+  id: ID!                      # the desk's address, lowercase
+  owner: String! @index
+  operator: String!
+  operatorActive: Boolean!
+  operatorChanges: Int!
+  createdAt: Int!
+  createdTx: String!
+  lastChange: Int!
+}
+
+type DeskOperatorChange {
+  id: ID!
+  desk: String! @index
+  operator: String!
+  added: Boolean!
+  timestamp: Int!
+  txHash: String!
+}
+
+type AuditAnchor {
+  id: ID!
+  anchorer: String!
+  subject: String! @index
+  head: String!
+  entryCount: BigInt!
+  timestamp: Int!
+  txHash: String!
+}

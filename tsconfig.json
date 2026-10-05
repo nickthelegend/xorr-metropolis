@@ -28,6 +28,7 @@
     ".scaffold",
     "contracts",
     "cre",
+    "indexer",
     "mm-plugin-perpl",
     "dist",
     "landing",
