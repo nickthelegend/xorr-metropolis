@@ -109,6 +109,9 @@ export function fundingPctPerHour(m: Pick<PerpMarket, 'fundingPerInterval' | 'fu
 }
 
 /** What the fill would pay (or get) per unit, from the venue the executor would send it to on this chain. */
+/** The chain, as a person reads it in a vote's reason. */
+const chainWords = () => (CHAIN_KEY === 'monad-fork' ? 'the fork' : CHAIN_KEY === 'monad-testnet' ? 'Monad testnet' : 'Monad');
+
 async function fillPrice(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], proposal: Proposal, chainlink: number): Promise<{ price: number; venue: string }> {
   if (CHAIN_KEY === 'monad-testnet') {
     // No spot venue on Monad testnet: agents trade Perpl's book, so its top of book is the fill.
@@ -123,12 +126,12 @@ async function fillPrice(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], proposa
   if (proposal.side === 'buy') {
     const q = await quote({ inSymbol: 'USDC', outSymbol: token, amount: proposal.usd, skipPriceImpact: true });
     if (!(q.outAmount > 0)) throw new Error(`Uniswap v3 quoted no ${token} for $${proposal.usd}`);
-    return { price: proposal.usd / q.outAmount, venue: `Uniswap v3 USDC→${token} on ${CHAIN_KEY}, $${proposal.usd} quoted` };
+    return { price: proposal.usd / q.outAmount, venue: `Uniswap v3 USDC→${token} on ${chainWords()}, $${proposal.usd} quoted` };
   }
   const units = proposal.usd / chainlink;
   const q = await quote({ inSymbol: token, outSymbol: 'USDC', amount: units, skipPriceImpact: true });
   if (!(q.outAmount > 0)) throw new Error(`Uniswap v3 quoted no USDC for ${units} ${token}`);
-  return { price: q.outAmount / units, venue: `Uniswap v3 ${token}→USDC on ${CHAIN_KEY}, ${units.toPrecision(4)} ${token} quoted` };
+  return { price: q.outAmount / units, venue: `Uniswap v3 ${token}→USDC on ${chainWords()}, ${units.toPrecision(4)} ${token} quoted` };
 }
 
 /**
@@ -308,7 +311,7 @@ async function deskPermission(owner: Address) {
   const d = await deskState(owner);
   if (!d.desk) throw new Error('no Perpl desk for this owner yet');
   return {
-    source: `Perpl desk ${d.desk} on ${CHAIN_KEY}: the owner's caps, and isOperator for xorr's key read now`,
+    source: `Perpl desk ${d.desk} on ${chainWords()}: the owner's caps, and isOperator for xorr's key read now`,
     dailyCapUsd: d.caps.maxDayUsd,
     remainingTodayUsd: Math.max(0, d.caps.maxDayUsd - d.caps.usedTodayUsd),
     // A desk does not expire; a year out keeps the expiry check honest without inventing a date the owner chose.
@@ -321,7 +324,7 @@ async function deskPermission(owner: Address) {
 async function deskHolding(owner: Address, symbol: string) {
   const d = await deskState(owner);
   const pos = d.positions.find((p) => p.market === symbol && p.long);
-  return { source: `Perpl desk ${d.desk ?? 'none'} positions on ${CHAIN_KEY}`, shares: pos?.lots ?? 0, valueUsd: pos ? pos.lots * (pos.mark ?? pos.entry) : 0 };
+  return { source: `Perpl desk ${d.desk ?? 'none'} positions on ${chainWords()}`, shares: pos?.lots ?? 0, valueUsd: pos ? pos.lots * (pos.mark ?? pos.entry) : 0 };
 }
 
 async function holdingNow(owner: Address, symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number]) {
@@ -329,7 +332,7 @@ async function holdingNow(owner: Address, symbol: (typeof MONAD_COUNCIL_SYMBOLS)
   await ensureRegistry();
   const token = canonicalSymbol(SPOT_TOKEN[symbol]);
   const held = (await holdings(owner)).find((h) => h.symbol === token);
-  return { source: `${token} balanceOf on ${CHAIN_KEY} (evm/balances.ts)`, shares: held?.units ?? 0, valueUsd: held?.usd ?? 0 };
+  return { source: `${token} balanceOf on ${chainWords()} (evm/balances.ts)`, shares: held?.units ?? 0, valueUsd: held?.usd ?? 0 };
 }
 
 export async function readMonadCouncilInputs(owner: Address, proposal: Proposal, agentId?: string, client: PublicClient = monadMainnet()): Promise<MonadCouncilInputs> {
