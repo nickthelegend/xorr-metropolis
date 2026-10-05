@@ -34,3 +34,12 @@ describe('Perpl risk', () => {
     expect(perplNetwork('monad-fork').name).toBe('Perpl');
   });
 });
+
+describe('Perpl on a fork', () => {
+  it('trades only while the local keeper posts marks', async () => {
+    const { perplHere } = await import('./perpl-chain.js');
+    expect(perplHere('monad-fork', {})).toBeNull();
+    expect(perplHere('monad-fork', { PERPL_FORK_KEEPER: '1' })).toMatchObject({ name: 'Perpl (fork)', exchange: '0x34B6552d57a35a1D042CcAe1951BD1C370112a6F' });
+    expect(perplHere('monad-testnet', {})?.name).toBe('Perpl testnet');
+  });
+});

@@ -47,6 +47,8 @@ fi
 # rule in the contract reads that clock. Measured at 00:00 UTC on 2026-09-20: the day rolled over, the executor's own
 # tally reset, and `remainingToday(owner)` still answered $4 because the last block was from the previous day. A
 # judge opening the live link after midnight would have seen yesterday's spend until somebody traded.
+# Only the last PRUNE_HISTORY blocks of state are kept in memory (2026-10-06): a fork running for hours on a block a
+# second otherwise holds every block's state, and this machine runs several sessions at once.
 # A remote read is bounded (2026-09-24). The fork loads mainnet state lazily from the public RPC, and anvil waits 45 s a
 # request with 5 retries by default: one slow fetch held every read behind it for about two minutes, the executor's
 # `/health` answered 503 for the whole of it ("delegation: no answer in 5000ms"), and Home showed "out of date". Ten
@@ -57,6 +59,7 @@ anvil \
   --timeout "${FORK_TIMEOUT_MS:-10000}" --retries "${FORK_RETRIES:-3}" \
   --chain-id 143 --accounts 10 --balance 10000 --no-rate-limit --silent \
   --block-time "${BLOCK_TIME_SEC:-1}" \
+  --prune-history "${PRUNE_HISTORY:-300}" \
   --state "$STATE" --state-interval "${STATE_INTERVAL_SEC:-30}" &
 ANVIL=$!
 

@@ -56,7 +56,7 @@ import { useStore } from '@/state/store';
 import { delegationOrUnknown, delegationScope } from '@/accounts/delegationScope';
 import { readDelegationIntoStore } from '@/wallet/readDelegation';
 import { useNow } from '@/state/useNow';
-import { CHAIN_KEY, pinnedDelegation, settlementSymbol } from '@/chain';
+import { PERPL_DESK_HERE, pinnedDelegation, settlementSymbol } from '@/chain';
 import { deskCalls, perps } from '@/data/perps';
 import { useAllowlist } from '@/wallet/allowlist';
 import { useApprovals, type ApprovalsView } from '@/wallet/useApprovals';
@@ -369,7 +369,7 @@ export default function Safety() {
          * desk, whose operator the delegation does not govern. So the same hold removes xorr's key from the desk — a
          * second signature — and a desk that could not be stopped is said, never assumed.
          */
-        if (CHAIN_KEY === 'monad-testnet') {
+        if (PERPL_DESK_HERE) {
           const desk = await perps.desk().catch(() => null);
           if (desk?.desk && desk.operatorActive) {
             try {
@@ -767,7 +767,7 @@ export default function Safety() {
             {killed || unusable || expired
               ? 'You’ll sign to confirm.'
               : /* A revoked policy refuses closePosition too (XorrDelegation.sol), so no stop-loss can fire after this. */
-                CHAIN_KEY === 'monad-testnet'
+                PERPL_DESK_HERE
                 ? 'Stops all trading, stop-losses and your Perpl desk too. Your funds stay yours.'
                 : 'Stops all trading, stop-losses too. Your funds stay in your wallet.'}
           </Text>

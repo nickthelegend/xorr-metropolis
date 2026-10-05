@@ -1,0 +1,50 @@
+# prove-perpl-desk.ts on a fork of Monad mainnet (block 110,838,470, chain 143) with the local Perpl keeper (src/fork/perpl-keeper.ts), 2026-10-06
+# Perpl's mainnet Exchange, factory and order book; marks posted from Perpl's live API every 5 s; AUSD and gas from anvil.
+
+xorr Perpl desk proof on monad-fork (Perpl (fork)) — Exchange 0x34B6552d57a35a1D042CcAe1951BD1C370112a6F, factory 0xc535276e3e446e4f28d95ed27ccd5c32e4c8907a
+
+1. Fresh owner 0x033F2414D6Aa540960FB9E01D7d6303C2704a0EE
+   fork: 10 MON for gas (anvil_setBalance) and 500 AUSD (written to AUSD's storage)
+   owner holds 500 AUSD (Agora) and 10 MON
+
+2. Owner signs Perpl's Create; xorr's operator consents; the executor submits createWithSignature
+   operator (xorr, this owner only): 0x7D5326d3822202C791BdE9ee849a55514396DdAd
+   createWithSignature (executor paid gas) 0x51a85a0d8ddabefabc37dfc4467f77053ecbb120ea275c3e7172d01eae4c243c
+   desk 0xa4582B8F094E984b6C94f125057045A003E3d58A — owner 0x033F2414D6Aa540960FB9E01D7d6303C2704a0EE, operator active: true
+
+3. Owner funds the desk with 150 AUSD and opens its Perpl account
+   AUSD.transfer(desk, 150): success    0xaa6b05e9609227664f8a214a260006a927027fc224d0c42a7c2dffec598d83dd
+   desk.createAccount(150 AUSD): success 0x9e4b7398464e9bc5ac38c1435f37b30f5f962c3b2352b37ac83e69e7aac4ac58
+   Perpl account #5408: balance 150 AUSD, operator active true
+   the desk does not allow the current execOrder (0x4d8dc985) — the owner enables it
+   desk.setOperatorAllowlist(0x4d8dc985, true): success 0xa6a2d239ed5fead3e2ac2b836a69c3619e96f892cc7c2a1076920523c3039999
+
+4. The agent opens a $100 MON long at 2x through the desk (placePerpOrder)
+   execOrder via desk: filled           0x51ee47774a8bbe62e6a32f6254869d77b26087ae342ada3c187de9012c4d33a5
+   position: long 3167 MON, entry $0.031562, mark $0.031529, margin 50.082938 AUSD, liquidation $0.016577 (47.4% away)
+
+5. An order over the $250 per-order cap is refused before signing
+   refused (order_cap): $300 is over your $250 per-order limit for agents on Perpl.
+
+6. The agent closes the long
+   execOrder CloseLong via desk: filled 0x65c80ae9516a17beac8b1136a3529000d8da32a8ddaed3f7fcadfd37430eaf2d
+   flat. Perpl balance 149.706249 AUSD
+
+6b. The exit guard closes a position on its own (the desk's standing exits, perpl-exits.ts)
+   execOrder via desk: filled           0x5a4d82468f8c195aaa4a4568bd8b63f880dda08bc2cd95666af784afddcb1e39
+   position 47.4% from liquidation; the owner's buffer set to 49%
+[perpl-exits] 0x033F2414D6Aa540960FB9E01D7d6303C2704a0EE MON: liquidation → filled 0x1ae7b6bdb04330687f91f0d6e5bbc54381eb6c73e6d877f91f999cc9e83d6d3c
+   exit guard close: filled             0x1ae7b6bdb04330687f91f0d6e5bbc54381eb6c73e6d877f91f999cc9e83d6d3c
+   why, as Activity shows it: The MON long was 47.4% from liquidation (your buffer: 49%), so it was closed before Perpl liquidated it.
+
+7. The owner removes xorr's operator — the one-tap stop
+   desk.removeOperator(operator): success 0x5c440ef9187111dde517eb35034cf755ba7766e0b7dfce2308215238cfaa0c4d
+   executor refused (operator_removed): You removed xorr from this desk on chain, so no agent can trade it. Add it back to resume.
+   raw operator order, mined: reverted  0xc7686173177ce27f77dbf61c945a6312c97bb0ace373906f3f5079cb078d7a09
+   Perpl's DelegatedAccount refused it on chain (OnlyOwnerOrOperator)
+
+8. The owner withdraws everything: it can only go to the owner
+   desk.withdrawCollateral(149.559419): success 0xcc286bbca7d38ba3242f32726d8ec6217ceb21d64d1c8f1e41f2e00e071a40af
+   owner AUSD 350 → 499.559419 (+149.559419)
+
+PROOF PASSED on monad-fork: desk 0xa4582B8F094E984b6C94f125057045A003E3d58A, owner 0x033F2414D6Aa540960FB9E01D7d6303C2704a0EE.

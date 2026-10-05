@@ -96,6 +96,14 @@ export const CHAIN_KEY = ASKED as ChainKey;
 export const onMonad = CHAIN_KEY.startsWith('monad');
 
 /**
+ * Whether this build trades a Perpl desk: Monad mainnet and testnet, and a fork of mainnet while its local keeper posts
+ * Perpl's marks (`server/src/fork/perpl-keeper.ts`; the build sets EXPO_PUBLIC_PERPL_FORK=1). Elsewhere Perps is the
+ * read-only markets view.
+ */
+export const PERPL_DESK_HERE =
+  CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-testnet' || (CHAIN_KEY === 'monad-fork' && process.env.EXPO_PUBLIC_PERPL_FORK === '1');
+
+/**
  * Every chain this app knows, which must be every chain the executor knows.
  *
  * `server/src/evm/chain-agreement.test.ts` holds the two lists to each other: a chain the executor can be

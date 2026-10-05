@@ -16,7 +16,7 @@ import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
 import { Button, ErrorState, HeaderBar, LoadingRows, Screen, Segmented, SheetCard, Tag, Text, colors, money, price, radius, size, space } from '@/ui';
-import { CHAIN_KEY } from '@/chain';
+import { CHAIN_KEY, PERPL_DESK_HERE } from '@/chain';
 import { percent } from '@/format';
 import { useAuth } from '@/auth/useAuth';
 import { useAsync } from '@/data/useAsync';
@@ -45,6 +45,7 @@ const WINDOWS = [
 const windowWords = (hours: number) => (hours >= 48 ? `${Math.round(hours / 24)} days` : `${hours}h`);
 
 const ON_TESTNET = CHAIN_KEY === 'monad-testnet';
+const ON_FORK = CHAIN_KEY === 'monad-fork';
 
 /** Who pays, in words, from funding per hour. Positive: longs pay shorts. */
 function whoPays(pctPerHour: number | null): string {
@@ -206,7 +207,7 @@ export default function PerplRisk() {
   const risk = useAsync(() => perps.risk(hours), [hours]);
   const { authenticated } = useAuth();
   // Your side of the risk: only where the desk trades (Perpl testnet), and only signed in — the desk is yours.
-  const withDesk = ON_TESTNET && authenticated;
+  const withDesk = PERPL_DESK_HERE && authenticated;
   const desk = useAsync(() => (withDesk ? perps.desk() : Promise.resolve(null)), [withDesk]);
   // Ticks every 5 s so "Updated 3s ago" keeps counting, and a render never reads the clock itself (lint, CI).
   const now = useNow(5_000);
@@ -228,7 +229,9 @@ export default function PerplRisk() {
         <Text variant="secondary" color={colors.ink55} style={{ marginTop: space.s6 }}>
           {ON_TESTNET
             ? 'Monad’s perps exchange on testnet, where your desk trades. Read live.'
-            : 'Monad’s perps exchange, read live from mainnet.'}
+            : ON_FORK && PERPL_DESK_HERE
+              ? 'Monad’s perps exchange, read live from mainnet; your desk trades its book on this fork.'
+              : 'Monad’s perps exchange, read live from mainnet.'}
         </Text>
         <Segmented options={WINDOWS} value={win} onChange={setWin} style={{ marginTop: space.s16 }} />
       </View>
@@ -281,7 +284,7 @@ export default function PerplRisk() {
         <Text variant="footnote" color={colors.ink40}>
           {`From Perpl’s public API${risk.data ? ` (${risk.data.network})` : ''}: market context, every funding payment and hourly candles. Bars above the line are payments longs made; below, payments shorts made. Funding is per hour.`}
         </Text>
-        {ON_TESTNET ? <Button label="Trade on your desk" onPress={() => router.push('/perps')} /> : null}
+        {PERPL_DESK_HERE ? <Button label="Trade on your desk" onPress={() => router.push('/perps')} /> : null}
       </ScrollView>
     </Screen>
   );

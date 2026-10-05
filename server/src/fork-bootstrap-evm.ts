@@ -145,6 +145,21 @@ async function main() {
     console.log(`\nfunded ${fundTarget}\n  ${formatUnits(bal, 6)} ${SETTLEMENT_SYMBOL} + ${formatUnits(GAS_ETH, 18)} ${GAS} for gas`);
   }
 
+  // Perpl on a Monad fork: stop its markets checking an oracle nobody can update here, and post the marks once. The keeper
+  // (`npx tsx src/fork/perpl-keeper.ts`) keeps them live; while it runs, Perpl trades on this fork.
+  let perplOnFork = false;
+  if (CHAIN_KEY === 'monad-fork') {
+    try {
+      const { setupPerplOnFork, pushMarks } = await import('./fork/perpl-keeper.js');
+      const { markets } = await setupPerplOnFork(RPC);
+      await pushMarks(RPC);
+      perplOnFork = true;
+      console.log(`Perpl            ${markets.length} markets on the fork; keep marks live with: FORK_RPC=${RPC} npx tsx src/fork/perpl-keeper.ts`);
+    } catch (e) {
+      console.warn(`Perpl            not set up on the fork: ${e instanceof Error ? e.message.split('\n')[0] : e}`);
+    }
+  }
+
   const envPath = path.resolve(process.cwd(), process.env.FORK_ENV_FILE ?? '.env.fork');
   await fs.writeFile(
     envPath,
@@ -160,6 +175,8 @@ async function main() {
       `EXPO_PUBLIC_DELEGATION_ADDRESS=${delegation}`,
       `ANCHOR_ADDRESS=${anchor}`,
       ...(kuruVenue ? [`KURU_VENUE_ADDRESS=${kuruVenue}`] : []),
+      // Perpl trades on this fork while src/fork/perpl-keeper.ts runs (it posts Perpl's live marks).
+      ...(perplOnFork ? ['PERPL_FORK_KEEPER=1', 'EXPO_PUBLIC_PERPL_FORK=1'] : []),
       '',
     ].join('\n'),
     { mode: 0o600 },

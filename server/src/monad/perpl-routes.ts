@@ -38,6 +38,8 @@ import {
 } from './perpl-desk.js';
 import { checkExits, setExitRules } from './perpl-exits.js';
 import { perplHere } from './perpl-chain.js';
+import { anvil } from '../fork/anvil.js';
+import { fundAusd } from '../fork/perpl-keeper.js';
 
 export const perplRoutes = new Hono();
 
@@ -197,7 +199,19 @@ const TEST_GAS = parseEther('0.08');
 perplRoutes.post('/perps/fund-test', async (c) => {
   try {
     const { owner, walletId } = await caller(c);
-    if (CHAIN_KEY !== 'monad-testnet') return c.json({ error: 'not_testnet', detail: 'Test funds are only on Monad testnet.' }, 409);
+    if (CHAIN_KEY === 'monad-fork' && perplHere()) {
+      // The fork: gas and AUSD from anvil itself (fork-only RPCs), so the desk flow runs end to end with no faucet.
+      const gasHave = await publicClient.getBalance({ address: owner });
+      const sent: { what: string; tx: string; explorer: string }[] = [];
+      if (gasHave < TEST_GAS) {
+        await anvil(rpcUrl, 'anvil_setBalance', [owner, `0x${TEST_GAS.toString(16)}`]);
+        sent.push({ what: `${formatEther(TEST_GAS - gasHave)} MON for gas (fork)`, tx: '', explorer: '' });
+      }
+      await fundAusd(rpcUrl, owner, TEST_AUSD);
+      sent.push({ what: `${Number(TEST_AUSD) / 1e6} AUSD (fork)`, tx: '', explorer: '' });
+      return c.json({ sent });
+    }
+    if (CHAIN_KEY !== 'monad-testnet') return c.json({ error: 'not_testnet', detail: 'Test funds are only on Monad testnet and a fork with Perpl.' }, 409);
     const faucet = faucetAccount();
     if (!faucet) return c.json({ error: 'no_faucet_key', detail: 'This deployment has no faucet key, so it has no test funds to send.' }, 409);
     const recent = await one<{ at: Date }>(

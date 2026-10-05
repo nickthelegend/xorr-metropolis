@@ -13,6 +13,10 @@
  *   8. The owner withdraws: the AUSD comes back to the owner's wallet — the only place it can go.
  *
  * Run: cd server && set -a && . ./.env.testnet-monad && set +a && npx tsx src/prove-perpl-desk.ts
+ *
+ * Or on a fork of Monad mainnet with the local keeper (2026-10-06): gas and AUSD come from anvil instead of faucets, MON
+ * is market 10, and the keeper posts Perpl's live marks before each order.
+ *   cd server && set -a && . ./.env.local-monad && . ./.env.fork && set +a && PERPL_FORK_KEEPER=1 npx tsx src/prove-perpl-desk.ts
  */
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
@@ -26,6 +30,9 @@ import { faucetAccount } from './evm/gasDrip.js';
 import { monadFees, sendWhenSpendable } from './evm/spendable.js';
 import { one, pool } from './db/index.js';
 import { DESK_ABI, execOrderData, perplHere, planOrder } from './monad/perpl-chain.js';
+import { fundAusd, pushMarks } from './fork/perpl-keeper.js';
+import { DEFAULT_EXITS, perplExitSweep, setExitRules } from './monad/perpl-exits.js';
+import { anvil } from './fork/anvil.js';
 import { PerplRefusal, createDesk, createTypedData, deskState, operatorConsent, operatorFor, perplMarkets, placePerpOrder } from './monad/perpl-desk.js';
 
 const line = (s = '') => console.log(s);
@@ -36,16 +43,22 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
-if (CHAIN_KEY !== 'monad-testnet') fail(`XORR_CHAIN=${CHAIN_KEY}; this proof runs on monad-testnet.`);
+const ON_FORK = CHAIN_KEY === 'monad-fork';
+if (CHAIN_KEY !== 'monad-testnet' && !ON_FORK) fail(`XORR_CHAIN=${CHAIN_KEY}; this proof runs on monad-testnet or monad-fork.`);
+if (!perplHere()) fail('No Perpl here: on the fork, run the keeper and set PERPL_FORK_KEEPER=1.');
 const net = perplHere()!;
 const AGORA_FAUCET = '0xd236c18D274E54FAccC3dd9DDA4b27965a73ee6C' as Address;
-const MON_PERP = 64;
+const MON_PERP = ON_FORK ? 10 : 64;
+/** On the fork, Perpl's marks are only as fresh as the keeper's last push: push before each order. */
+const fresh = async () => {
+  if (ON_FORK) await pushMarks(rpcUrl);
+};
 
 /*
  * The owner's key is kept (gitignored `.keys/`) and reused, so a rerun continues the same desk instead of stranding test MON
  * in a key that existed only in memory — which is what the first attempts did.
  */
-const OWNER_KEY_FILE = path.join(import.meta.dirname, '../.keys/prove-perpl-owner.key');
+const OWNER_KEY_FILE = path.join(import.meta.dirname, `../.keys/prove-perpl-owner${ON_FORK ? '-fork' : ''}.key`);
 const ownerKey = (fs.existsSync(OWNER_KEY_FILE) ? fs.readFileSync(OWNER_KEY_FILE, 'utf8').trim() : (() => {
   const k = generatePrivateKey();
   fs.mkdirSync(path.dirname(OWNER_KEY_FILE), { recursive: true });
@@ -79,7 +92,15 @@ try {
   line(`xorr Perpl desk proof on ${CHAIN_KEY} (${net.name}) — Exchange ${net.exchange}, factory ${net.factory}`);
 
   step('1', `Fresh owner ${owner.address}`);
-  const faucet = faucetAccount();
+  if (ON_FORK) {
+    await anvil(rpcUrl, 'anvil_setBalance', [owner.address, '0x8AC7230489E80000']); // 10 MON
+    if ((await ausdOf(owner.address)) < 150_000_000n) await fundAusd(rpcUrl, owner.address, 500_000_000n);
+    line(`   fork: 10 MON for gas (anvil_setBalance) and ${Number(await ausdOf(owner.address)) / 1e6} AUSD (written to AUSD's storage)`);
+  }
+  const faucet = ON_FORK ? undefined : faucetAccount();
+  if (ON_FORK) {
+    // Funded above; nothing below this block runs on the fork.
+  } else {
   if (!faucet) fail('FAUCET_PRIVATE_KEY is not set');
   const fw = createWalletClient({ account: faucet, chain, transport: http(rpcUrl) });
   // Enough for the owner's own transactions still to come (allowlist, removeOperator, withdraw): ~0.03 MON on testnet.
@@ -111,7 +132,8 @@ try {
     await publicClient.waitForTransactionReceipt({ hash: h });
     tx('500 AUSD from the reserve (transfer)', h);
   }
-  line(`   owner holds ${Number(await ausdOf(owner.address)) / 1e6} AUSD (Agora testnet) and ${formatEther(await publicClient.getBalance({ address: owner.address }))} MON`);
+  }
+  line(`   owner holds ${Number(await ausdOf(owner.address)) / 1e6} AUSD (Agora) and ${formatEther(await publicClient.getBalance({ address: owner.address }))} MON`);
   const w =
     (await one<{ id: string }>(`SELECT id FROM wallets WHERE lower(address) = lower($1) AND cluster = $2 LIMIT 1`, [owner.address, CHAIN_KEY])) ??
     (await one<{ id: string }>(
@@ -163,6 +185,7 @@ try {
   }
 
   step('4', 'The agent opens a $100 MON long at 2x through the desk (placePerpOrder)');
+  await fresh();
   const open = await placePerpOrder({ owner: owner.address, walletId: w.id, perpId: MON_PERP, side: 'open_long', usd: 100, leverage: 2, placedBy: 'Momentum Scout', reason: 'Prove' });
   tx(`execOrder via desk: ${open.status}`, open.txHash);
   if (open.status !== 'filled' || !open.position) fail(`the open did not fill: ${JSON.stringify(open)}`);
@@ -178,11 +201,33 @@ try {
   }
 
   step('6', 'The agent closes the long');
+  await fresh();
   const close = await placePerpOrder({ owner: owner.address, walletId: w.id, perpId: MON_PERP, side: 'close_long', placedBy: 'Momentum Scout', reason: 'Prove' });
   tx(`execOrder CloseLong via desk: ${close.status}`, close.txHash);
   if (close.status !== 'filled' || close.position) fail(`the close did not flatten: ${JSON.stringify(close)}`);
   st = await deskState(owner.address);
   line(`   flat. Perpl balance ${st.balance} AUSD`);
+
+  step('6b', "The exit guard closes a position on its own (the desk's standing exits, perpl-exits.ts)");
+  await fresh();
+  const again = await placePerpOrder({ owner: owner.address, walletId: w.id, perpId: MON_PERP, side: 'open_long', usd: 50, leverage: 2, placedBy: 'Momentum Scout', reason: 'Prove the exit guard' });
+  tx(`execOrder via desk: ${again.status}`, again.txHash);
+  if (!again.position) fail('the second open did not fill');
+  const dist = (again.position.liqDistance ?? 0) * 100;
+  // A liquidation buffer just wider than this position's distance: the guard must close it, and say why.
+  await setExitRules(owner.address, { ...DEFAULT_EXITS, liqBufferPct: Math.ceil(dist) + 1 });
+  line(`   position ${dist.toFixed(1)}% from liquidation; the owner's buffer set to ${Math.ceil(dist) + 1}%`);
+  await fresh();
+  const closedByGuard = await perplExitSweep();
+  const guardOrder = await one<{ tx_hash: string; reason: string; status: string }>(
+    `SELECT tx_hash, reason, status FROM perp_orders WHERE lower(owner) = lower($1) AND placed_by = 'Exit guard' ORDER BY created_at DESC LIMIT 1`,
+    [owner.address],
+  );
+  if (closedByGuard < 1 || !guardOrder) fail('the exit guard did not close the position');
+  tx(`exit guard close: ${guardOrder.status}`, guardOrder.tx_hash);
+  line(`   why, as Activity shows it: ${guardOrder.reason}`);
+  if ((await deskState(owner.address)).positions.length > 0) fail('a position is still open after the guard closed it');
+  await setExitRules(owner.address, DEFAULT_EXITS);
 
   step('7', "The owner removes xorr's operator — the one-tap stop");
   await send('desk.removeOperator(operator)', { to: made.desk, abi: DESK_ABI, functionName: 'removeOperator', args: [made.operator] });

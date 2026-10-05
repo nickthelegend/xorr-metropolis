@@ -43,10 +43,14 @@ export const PERPL: Record<'monad' | 'monad-testnet', PerplNetwork> = {
   },
 };
 
-/** Perpl on the chain this executor serves, or null where there is none (a fork: Perpl's prices need its keepers). */
-export function perplHere(key: string = CHAIN_KEY): PerplNetwork | null {
+/**
+ * Perpl on the chain this executor serves, or null where there is none. A fork of mainnet carries Perpl's contracts but
+ * not its keepers, so it trades only while the local keeper posts marks (`fork/perpl-keeper.ts`, `PERPL_FORK_KEEPER=1`).
+ */
+export function perplHere(key: string = CHAIN_KEY, env: NodeJS.ProcessEnv = process.env): PerplNetwork | null {
   if (key === 'monad-testnet') return PERPL['monad-testnet'];
   if (key === 'monad') return PERPL.monad;
+  if (key === 'monad-fork' && env.PERPL_FORK_KEEPER === '1') return { ...PERPL.monad, name: 'Perpl (fork)' };
   return null;
 }
 

@@ -10,7 +10,7 @@
  * delegation's approvals, history, verifier, anchor, policy, flatten, Networks — are this build's own and always shown.
  */
 
-import { CHAIN_KEY } from '@/chain';
+import { CHAIN_KEY, PERPL_DESK_HERE } from '@/chain';
 
 /** A Monad build (mainnet, testnet or the fork). */
 const ON_MONAD = CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-testnet' || CHAIN_KEY === 'monad-fork';
@@ -21,8 +21,8 @@ const ON_MONAD = CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-testnet' || CHAIN
  */
 export const TRADE_ROUTE = ON_MONAD ? '/markets' : '/xstocks';
 
-/** Where "Perps on Perpl" goes: the desk where Perpl runs on this chain, the live markets view on a fork. */
-export const PERPS_ROUTE = CHAIN_KEY === 'monad' || CHAIN_KEY === 'monad-testnet' ? '/perps' : '/perpl';
+/** Where "Perps on Perpl" goes: the desk where Perpl trades on this build, the live markets view elsewhere. */
+export const PERPS_ROUTE = PERPL_DESK_HERE ? '/perps' : '/perpl';
 
 /** Route prefixes with nothing behind them on this build. A prefix matches itself and anything under it. */
 export const HIDDEN_HERE: readonly string[] = [
