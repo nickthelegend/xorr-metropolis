@@ -182,6 +182,23 @@ await step('B12', 'send to an allowlisted address', async () => {
   }
 });
 
+await step('B7', 'a council round on live readings, executed; Kimi says it is not configured rather than standing in', async () => {
+  await page.goto(`${WEB}/council`, { waitUntil: 'domcontentloaded' });
+  await v(page.getByTestId('council-convene')).click({ timeout: T.ui });
+  await v(page.getByText(/^Approved \d–\d\.|^Not approved|^Vetoed/)).waitFor({ timeout: T.chain });
+  const body = await text();
+  const seats = ['Price Desk', 'Risk Keeper', 'Trend Reader', 'Perps Desk'].filter((n) => body.includes(n));
+  if (seats.length !== 4) throw new Error(`desks on screen: ${seats.join(', ')}`);
+  const kimi = (await fetch(`${API}/council/seats`).then((r) => r.json())).strategist;
+  if (kimi && !kimi.configured) {
+    await v(page.getByTestId('council-strategist-off')).waitFor({ timeout: T.ui });
+    if (/Strategist \(Kimi\)\n/.test(body) || /Fixture/.test(body)) throw new Error('a Strategist ballot is shown without a key');
+  }
+  const verdict = body.match(/Approved \d–\d\.|Not approved[^\n]*|Vetoed[^\n]*/)?.[0];
+  const outcome = body.match(/\n(Executed|Not executed|Failed|Refused)\n/)?.[1] ?? 'see screen';
+  return `${verdict} ${outcome}; four desks voted; Kimi: ${kimi?.configured ? 'sat' : `not configured (${kimi?.needs})`}`;
+});
+
 await step('B8', 'hire an agent; it trades on its own, with its own key', async () => {
   await page.goto(`${WEB}/agent/yield-keeper`, { waitUntil: 'domcontentloaded' });
   await v(page.getByTestId('agent-hire')).click({ timeout: T.ui });

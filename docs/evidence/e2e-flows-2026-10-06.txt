@@ -1,20 +1,22 @@
-# e2e/web/flows.mjs at 375 px — the flows the journey does not walk; fork of Monad mainnet at block 110874062; 2026-10-05T23:11:36Z
+# e2e/web/flows.mjs at 375 px — the flows the journey does not walk; fork of Monad mainnet at block 110874062; 2026-10-05T23:15:13Z
 
-PASS E2 a zero amount cannot be sent (0.8 s)
+PASS E2 a zero amount cannot be sent (0.7 s)
      button: "Buy $0 of WMON", disabled
-PASS E1 more than the wallet holds is refused before anything is sent (0.9 s)
+PASS E1 more than the wallet holds is refused before anything is sent (1.0 s)
      "You have $1,000.00." — button disabled (the day's cap itself is proved on chain by prove-monad.ts: DailyCapExceeded)
-PASS B6 close a holding from its position screen (2.2 s)
-     position closed; balance 1000.0496356562442 → 1000.0496356562442
+PASS B6 close a holding from its position screen (3.2 s)
+     position closed; balance 1000.1931828301623 → 1000.1931828301623
 PASS B15 a private note sealed with the passkey’s second key, reopened after a reload (3.1 s)
      sealed on save (server holds ciphertext), reopened by the passkey
-PASS B12 send to an allowlisted address (5.6 s)
-     5 USDC arrived at 0xA8902BFDE2ce5347467d3C97d62da968920F60A8 (read on chain)
-PASS B8 hire an agent; it trades on its own, with its own key (63.2 s)
-     Yield Keeper convened the council itself and its buy executed (0xa24af1715ceee9e1a1aa014a4c83df4a810b882776c7e66bb7007b7d222d3c8d)
-PASS B16 lock the signing window; the next signature asks the passkey and reopens it (10.3 s)
+PASS B12 send to an allowlisted address (11.2 s)
+     5 USDC arrived at 0xbC297aF6F0aCD3B8A2808D8808add18C44d12Df9 (read on chain)
+PASS B7 a council round on live readings, executed; Kimi says it is not configured rather than standing in (2.4 s)
+     Approved 4–0. Executed; four desks voted; Kimi: not configured (MOONSHOT_API_KEY)
+PASS B8 hire an agent; it trades on its own, with its own key (112.2 s)
+     Yield Keeper convened the council itself and its buy executed (0x1449265e7967ec0964278333d51cede6fed33314106805c71a852c0f4606bced)
+PASS B16 lock the signing window; the next signature asks the passkey and reopens it (9.3 s)
      on load: locked; a revoke asked the passkey and opened the window; Lock closed it; the next revoke asked again and reopened it
-PASS E3 the executor unreachable: an error state with a retry, which recovers (2.9 s)
+PASS E3 the executor unreachable: an error state with a retry, which recovers (2.4 s)
      while unreachable: "That did not load. · Can’t reach xorr. Your funds and your permission are on chain and unaffected. · Try again"; after Retry the history loaded
 
-8 items: 8 PASS, 0 FAIL
+9 items: 9 PASS, 0 FAIL

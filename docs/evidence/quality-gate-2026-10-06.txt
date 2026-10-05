@@ -1,0 +1,82 @@
+# Quality gate, 2026-10-05T23:17:43Z, commit 708c0fb
+
+== app typecheck
+ok
+== executor typecheck
+ok
+== lint
+✖ 23 problems (0 errors, 23 warnings)
+  0 errors and 20 warnings potentially fixable with the `--fix` option.
+== app unit
+ Test Files  287 passed | 1 skipped (288)
+      Tests  2855 passed | 4 skipped (2859)
+== executor unit
+ Test Files  171 passed | 1 skipped (172)
+      Tests  1545 passed | 4 skipped (1549)
+== forge
+Ran 7 test suites in 37.22ms (85.87ms CPU time): 66 tests passed, 0 failed, 1 skipped (67 total tests)
+== mm-plugin-perpl
+      Tests  16 passed (16)
+== cre workflow
+ 7 pass
+ 0 fail
+== indexer
+ok
+
+== secret scan (git grep over all 2588 tracked files)
+tracked .env / *.key / *.pem / id_rsa / *.p12 (besides .env.example): none
+vendor key formats (sk-, AKIA, ghp_, PEM private keys, Slack, Google, Stripe live, Privy secrets): none
+64-hex values next to key/secret names: only anvil's public default account #0 (forge-std's own tests; server/src/executor/kinds/event-driven.test.ts)
+
+== slither (contracts/src, dependencies, tests and scripts excluded) — every finding, triaged
+KuruVenue.buy(address,uint256,uint256,address) ignores return value by (pricePrecision,None,base,None,quote,quoteDecimals,None,None,None,None,None) = IKuruOrderBook(book)
+KuruVenue.buy(address,uint256,uint256,address) ignores return value by IERC20Venue(quote).approve(book,0)
+KuruVenue.buy(address,uint256,uint256,address) ignores return value by IERC20Venue(quote).approve(book,quoteIn)
+KuruVenue.buy(address,uint256,uint256,address) ignores return value by IKuruOrderBook(book).placeAndExecuteMarketBuy(quoteSize,minBaseOut,false,false)
+KuruVenue.sell(address,uint256,uint256,address) ignores return value by (None,sizePrecision,base,baseDecimals,quote,None,None,None,None,None,None) = IKuruOrderBook(book).
+KuruVenue.sell(address,uint256,uint256,address) ignores return value by IKuruOrderBook(book).placeAndExecuteMarketSell{value: uint256(size) * unit}(size,minQuoteOut,false
+KuruVenue.sell(address,uint256,uint256,address) performs a multiplication on the result of a division:
+Low level call in XorrDelegation._callVenue(address,address,address,address,uint256,address,uint256,bytes):
+Parameter ReceiverTemplate.setExpectedAuthor(address)._author is not in mixedCase
+Parameter ReceiverTemplate.setExpectedWorkflowId(bytes32)._id is not in mixedCase
+Parameter ReceiverTemplate.setExpectedWorkflowName(string)._name is not in mixedCase
+Parameter ReceiverTemplate.setForwarderAddress(address)._forwarder is not in mixedCase
+ReceiverTemplate._decodeMetadata(bytes) uses assembly
+ReceiverTemplate.setExpectedAuthor(address)._author lacks a zero-check on :
+Reentrancy in TestVenue.swap(uint256):
+Reentrancy in XorrDelegation._callVenue(address,address,address,address,uint256,address,uint256,bytes):
+Reentrancy in XorrDelegation._close(address,address,address,address,uint256,address,uint256,bytes):
+Reentrancy in XorrDelegation._spend(address,address,address,address,uint256,address,uint256,bytes):
+TestUSDC should inherit from IERC20
+TestVenue.constructor(address).token_ lacks a zero-check on :
+Variable XorrDelegation.SETTLEMENT_TOKEN is not in mixedCase
+XorrAuditAnchor._anchors is never initialized. It is used in:
+XorrDelegation._bubble(bool,bytes) uses assembly
+XorrDelegation._callVenue(address,address,address,address,uint256,address,uint256,bytes) ignores return value by IERC20(token).approve(spender,0)
+XorrDelegation._callVenue(address,address,address,address,uint256,address,uint256,bytes) ignores return value by IERC20(token).approve(spender,amount)
+XorrDelegation._checkAgent(address) uses timestamp for comparisons
+XorrDelegation._close(address,address,address,address,uint256,address,uint256,bytes) uses arbitrary from in transferFrom: require(bool,string)(IERC20(token).transferFrom(
+XorrDelegation._remaining(address,address) uses timestamp for comparisons
+XorrDelegation._setActiveOwner(address) uses assembly
+XorrDelegation._spend(address,address,address,address,uint256,address,uint256,bytes) uses arbitrary from in transferFrom: require(bool,string)(IERC20(token).transferFrom(
+XorrDelegation.activeOwner() uses assembly
+XorrDelegation.grant(address,uint256,uint64,address[]) uses timestamp for comparisons
+XorrDelegation.grantAgent(address,uint256,uint64) uses timestamp for comparisons
+
+Triage:
+- arbitrary-from in transferFrom (XorrDelegation._spend/_close): by design — the owner's registered delegate or agent pulls
+  the owner's own token, inside the owner's daily cap, to a venue the owner allowlisted, with the minimum out measured on
+  the owner's balance. Access is checked first (_checkAgent).
+- reentrancy (_callVenue, _spend, _close): effects precede the external call (the day's tally is written before the pull
+  and the venue call); a venue is not the delegate, and a re-entrant spend meets the updated cap. What remains is the
+  event emitted after the call (reentrancy-events): informational.
+- uninitialized-state XorrAuditAnchor._anchors: false positive — written through a storage pointer (`series.push`).
+- divide-before-multiply KuruVenue.sell: intended — rounds the sale down to whole lots of the book's size precision.
+- unused-return (approve, Kuru's market order results, getMarketParams fields): approve on USDC/WMON returns true or
+  reverts; KuruVenue measures what it delivered by balance difference, not by Kuru's return value; the unused tuple fields
+  are not needed.
+- missing-zero-check (TestVenue, ReceiverTemplate.setExpectedAuthor): TestVenue is a test fixture contract; zero is the
+  documented "disabled" value in Chainlink's ReceiverTemplate.
+- timestamp, assembly, low-level call, naming, solc version, missing inheritance: informational or deliberate (day
+  boundaries and expiry are timestamps; EIP-1153 transient storage and revert bubbling need assembly).
+No high-severity finding remains unexplained; no code change was needed.
