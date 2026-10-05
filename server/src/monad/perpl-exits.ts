@@ -24,7 +24,8 @@
 import type { Address } from 'viem';
 import { query, one } from '../db/index.js';
 import { log } from '../http/request-id.js';
-import { perplHere, type DeskPosition, type PerpMarket } from './perpl-chain.js';
+import { DESK_ABI, EXCHANGE_ABI, perplHere, type DeskPosition, type PerpMarket } from './perpl-chain.js';
+import { publicClient } from '../evm/client.js';
 import { PerplRefusal, deskState, perplMarkets, placePerpOrder } from './perpl-desk.js';
 
 export type ExitRules = {
@@ -142,6 +143,23 @@ export async function checkExits(owner: Address, markets?: PerpMarket[]): Promis
   return { rules, operatorActive: state.operatorActive, positions };
 }
 
+/** Whether a desk can hold anything to close: xorr is its operator, it has a Perpl account, and some position bank is set. */
+export async function mayHavePositions(desk: Address, operator: Address): Promise<boolean> {
+  const net = perplHere();
+  if (!net) return false;
+  try {
+    const active = await publicClient.readContract({ address: desk, abi: DESK_ABI, functionName: 'isOperator', args: [operator] });
+    if (!active) return false;
+    const acct = await publicClient.readContract({ address: net.exchange, abi: EXCHANGE_ABI, functionName: 'getAccountByAddr', args: [desk] });
+    if (acct.accountId === 0n) return false;
+    const b = acct.positions;
+    return b.bank1 !== 0n || b.bank2 !== 0n || b.bank3 !== 0n || b.bank4 !== 0n;
+  } catch {
+    // A desk that cannot be read (a contract gone with an old fork) has nothing to close here.
+    return false;
+  }
+}
+
 /** A close that failed (no gas, Perpl refused) is tried again after this, not every tick. */
 const RETRY_MS = 5 * 60_000;
 const lastTry = new Map<string, number>();
@@ -149,8 +167,8 @@ const lastTry = new Map<string, number>();
 /** One pass over every desk on this chain: close what a rule says to close. Returns the closes that filled. */
 export async function perplExitSweep(now: Date = new Date()): Promise<number> {
   if (!perplHere()) return 0;
-  const desks = await query<ExitRow & { owner: string; wallet_id: string }>(
-    `SELECT DISTINCT ON (lower(d.owner)) d.owner, w.id AS wallet_id,
+  const desks = await query<ExitRow & { owner: string; wallet_id: string; desk: string; operator: string }>(
+    `SELECT DISTINCT ON (lower(d.owner)) d.owner, w.id AS wallet_id, d.desk, d.operator,
             d.take_profit_pct, d.stop_loss_pct, d.liq_buffer_pct, d.max_funding_apr_pct
        FROM perpl_desks d JOIN wallets w ON lower(w.address) = lower(d.owner)
       WHERE d.chain = current_setting('xorr.chain_key') AND NOT coalesce(w.agents_stopped, false)
@@ -161,6 +179,9 @@ export async function perplExitSweep(now: Date = new Date()): Promise<number> {
   let closed = 0;
   for (const d of desks) {
     const owner = d.owner as Address;
+    // Two reads before the full desk state: a desk xorr no longer operates, or one with no position open anywhere, has
+    // nothing for the guard to do — and most desks, most ticks, are one or the other.
+    if (!(await mayHavePositions(d.desk as Address, d.operator as Address))) continue;
     let check: Awaited<ReturnType<typeof checkExits>>;
     try {
       check = await checkExits(owner, markets);
