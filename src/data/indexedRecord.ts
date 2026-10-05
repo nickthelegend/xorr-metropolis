@@ -39,7 +39,10 @@ export function indexedLines(r: IndexedRecord, today: string): string[] {
   const d = r.days.find((x) => x.day === today);
   if (d && !o.revoked) lines.push(`Today: ${usd(d.spent)} of the ${usd(d.capAtDay)} cap.`);
   const used = r.venues.filter((v) => v.spends > 0 || v.closes > 0);
-  if (used.length) lines.push(`Where fills went, every wallet: ${used.map((v) => `${v.name} ${v.spends + v.closes} (${usd(v.spentVolume)} in)`).join(' · ')}.`);
+  if (used.length) {
+    const each = used.map((v) => `${v.spends + v.closes} on ${v.name} (${usd(v.spentVolume)} bought)`).join(', ');
+    lines.push(`Across every wallet here, fills went ${each}.`);
+  }
   if (r.desks.length) {
     const live = r.desks.filter((x) => x.operatorActive).length;
     lines.push(`Perpl desk${r.desks.length === 1 ? '' : 's'}: ${live ? `${live} tradable` : 'stopped'}${r.desks.length - live && live ? `, ${r.desks.length - live} stopped` : ''}.`);

@@ -21,7 +21,7 @@ describe('the indexed record, in words', () => {
     expect(indexedLines(base, '2026-10-06')).toEqual([
       '$70.00 spent over 2 orders, 1 closed.',
       'Today: $70.00 of the $100.00 cap.',
-      'Where fills went, every wallet: Kuru 9 ($190.00 in).',
+      'Across every wallet here, fills went 9 on Kuru ($190.00 bought).',
       'Perpl desk: 1 tradable.',
     ]);
   });
@@ -30,7 +30,7 @@ describe('the indexed record, in words', () => {
     const r = { ...base, owner: { ...base.owner!, revoked: true }, desks: [{ id: '0xd', operatorActive: false, operatorChanges: 1 }] };
     expect(indexedLines(r, '2026-10-06')).toEqual([
       '$70.00 spent over 2 orders, 1 closed · permission stopped on chain.',
-      'Where fills went, every wallet: Kuru 9 ($190.00 in).',
+      'Across every wallet here, fills went 9 on Kuru ($190.00 bought).',
       'Perpl desk: stopped.',
     ]);
   });
