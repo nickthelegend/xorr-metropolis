@@ -362,9 +362,13 @@ strategyRoutes.get('/runs', async (c) => {
     finished_at: Date | null;
     venue: string | null;
     side: string | null;
+    compared_venue: string | null;
+    compared_units: string | null;
+    measured_units: string | null;
   }>(
     `SELECT r.id, r.strategy_id, s.kind, s.label, s.symbol, r.status, r.usd, r.units, r.price,
-            r.signature, r.error, r.started_at, r.finished_at, r.venue, r.side
+            r.signature, r.error, r.started_at, r.finished_at, r.venue, r.side,
+            r.compared_venue, r.compared_units, r.measured_units
        FROM strategy_runs r
        JOIN strategies s ON s.id = r.strategy_id
       WHERE s.wallet_id = $1 AND s.chain = ${THIS_CHAIN}
@@ -396,6 +400,11 @@ strategyRoutes.get('/runs', async (c) => {
       // Where a fill settled and which way it went (PLAN.md 3.1) — facts about the fill, recorded with it.
       venue: r.venue,
       side: r.side,
+      // Where both venues were measured: what the other would have delivered, beside the chosen one's measure.
+      compared:
+        r.compared_venue && r.compared_units !== null && r.measured_units !== null
+          ? { venue: r.compared_venue, units: Number(r.compared_units), chosenUnits: Number(r.measured_units) }
+          : null,
     })),
   );
 });

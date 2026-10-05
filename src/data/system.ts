@@ -336,6 +336,8 @@ export type StrategyRunRow = {
   /** Which way the run traded and where it filled, as `/runs` sends them; null for a run that never reached a venue. */
   side?: 'buy' | 'sell' | null;
   venue?: string | null;
+  /** Where Kuru's book and Uniswap were both measured: what the venue not chosen would have delivered (same units). */
+  compared?: { venue: string; units: number; chosenUnits: number } | null;
 };
 
 /**

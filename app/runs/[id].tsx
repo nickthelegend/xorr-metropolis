@@ -29,6 +29,7 @@ import { useAsync } from '@/data/useAsync';
 import { system, type StrategyRunRow } from '@/data/system';
 import { kindLabel, labelFigure } from '@/strategies/ladder';
 import { FillReceipt } from '@/ui/FillReceipt';
+import { routingLine } from '@/ui/fillVenue';
 import { api } from '@/data/api';
 import { ApiError, errorText } from '@/data/apiError';
 import { useMera } from '@/auth/mera/session';
@@ -54,6 +55,7 @@ export default function RunDetail() {
    */
   const { data, loading, error, reload } = useAsync(() => system.runs(200), []);
   const run = (data ?? []).find((r) => r.id === id);
+  const routing = run ? routingLine({ venue: run.venue, compared: run.compared, unit: run.side === 'sell' ? 'USDC' : run.symbol === 'MON' ? 'WMON' : run.symbol }) : null;
 
   return (
     <Screen gutter="none">
@@ -119,6 +121,12 @@ export default function RunDetail() {
             */}
             {run.signature ? (
               <FillReceipt signature={run.signature} venue={run.venue} animate={false} />
+            ) : null}
+            {/* Where Kuru's book and Uniswap were both measured for this fill: what routing it was worth (settle.ts). */}
+            {routing ? (
+              <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s8 }} testID="run-routing">
+                {routing}
+              </Text>
             ) : null}
 
             {/* A note only the owner's passkey opens (Mera: a second key from the same passkey, `auth/mera/notes.ts`). */}

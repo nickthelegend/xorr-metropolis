@@ -149,13 +149,19 @@ async function main(): Promise<void> {
   const usdcBefore = await balanceOf(USDC, owner.address);
   const first = await order(w, 50);
   if (first.status !== 'filled') fail(`the $50 MON buy did not fill: ${JSON.stringify(first)}`);
-  tx('spend() → Uniswap v3 USDC→WMON', first.signature);
+  tx('spend() → USDC→WMON', first.signature);
   const held = await balanceOf(WMON, owner.address);
   line(`   filled ${first.units.toFixed(4)} WMON at $${first.price.toFixed(6)} (USDC ${formatUnits(usdcBefore, 6)} → ${formatUnits(await balanceOf(USDC, owner.address), 6)})`);
   line(`   OWNER holds ${formatUnits(held, 18)} WMON; the contract holds ${formatUnits(await balanceOf(WMON, DELEGATION_ADDRESS), 18)}`);
   if (held === 0n) fail('WMON did not reach the owner');
-  const run = await one<{ venue: string; status: string }>(`SELECT venue, status FROM strategy_runs WHERE signature = $1`, [first.signature]);
+  const run = await one<{ venue: string; status: string; compared_venue: string | null; compared_units: string | null; measured_units: string | null }>(
+    `SELECT venue, status, compared_venue, compared_units, measured_units FROM strategy_runs WHERE signature = $1`,
+    [first.signature],
+  );
   line(`   strategy_runs: ${run?.status} via ${run?.venue}`);
+  if (run?.compared_venue) {
+    line(`   both venues measured: ${run.venue} ${Number(run.measured_units).toFixed(4)} WMON, ${run.compared_venue} would have delivered ${Number(run.compared_units).toFixed(4)}`);
+  }
 
   step('4', 'A second buy of $60 (only $50 of the $100 cap is left)');
   const second = await order(w, 60);

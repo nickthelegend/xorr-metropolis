@@ -102,3 +102,23 @@ export function slotLabel(slot: number | null | undefined): string | undefined {
   if (typeof slot !== 'number' || !Number.isFinite(slot) || !Number.isInteger(slot) || slot <= 0) return undefined;
   return slot.toLocaleString('en-US');
 }
+
+/**
+ * What routing was worth on one fill, where both venues were measured (Kuru's book and Uniswap, `settle.ts`): the chosen
+ * venue's measure beside what the other would have delivered, and the difference as a share. Null where only one venue
+ * was measured.
+ */
+export function routingLine(run: {
+  venue?: string | null;
+  compared?: { venue: string; units: number; chosenUnits: number } | null;
+  unit: string;
+}): string | null {
+  const c = run.compared;
+  if (!c || !(c.units > 0) || !(c.chosenUnits > 0)) return null;
+  const chosen = venueNaming(run.venue)?.label ?? run.venue ?? 'The venue';
+  const other = venueNaming(c.venue)?.label ?? c.venue;
+  const n = (v: number) => v.toLocaleString('en-US', { maximumFractionDigits: v >= 100 ? 2 : 6 });
+  const edge = ((c.chosenUnits - c.units) / c.units) * 100;
+  const pct = `${Math.abs(edge).toLocaleString('en-US', { maximumFractionDigits: 2 })}%`;
+  return `${chosen} measured ${n(c.chosenUnits)} ${run.unit}; ${other} would have delivered ${n(c.units)} — ${edge >= 0 ? `${pct} more by routing here` : `${pct} less, within the floor`}.`;
+}

@@ -721,7 +721,7 @@ async function runStrategyInner(
       }
     }
     const closeAmount = intent.amountInRaw ?? BigInt(Math.floor(intent.amountIn * 10 ** soldToken.decimals));
-    const { payToken, swap, venue, floor } = await chooseSettlement({
+    const { payToken, swap, venue, floor, compared } = await chooseSettlement({
       intent,
       owner,
       preferred,
@@ -841,7 +841,8 @@ async function runStrategyInner(
       await client.query(
         `UPDATE strategy_runs
             SET status='filled', signature=$2, units=$3, price=$4, usd=$5,
-                quoted_units=$6, venue=$7, side=$8, quoted_usd=$9, asset_class=$10, finished_at=now()
+                quoted_units=$6, venue=$7, side=$8, quoted_usd=$9, asset_class=$10,
+                compared_venue=$11, compared_units=$12, measured_units=$13, finished_at=now()
           WHERE id=$1`,
         /*
          * `usd` was never written on a fill, so the one column that records what a run COST was
@@ -865,6 +866,10 @@ async function runStrategyInner(
           intent.direct ? 'supply' : isClose ? 'sell' : 'buy',
           proceeds === undefined ? null : intent.usd,
           isStock(tradedSymbol) ? 'equity' : 'crypto',
+          // Both venues measured (Kuru and Uniswap): what the other would have delivered, beside the chosen one's measure.
+          compared?.venue ?? null,
+          compared?.units ?? null,
+          compared?.chosenUnits ?? null,
         ],
       );
       /*

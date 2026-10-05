@@ -105,3 +105,20 @@ describe('slotLabel — a slot, or nothing', () => {
     }
   });
 });
+
+describe('what routing was worth', () => {
+  it('says the chosen venue beside the other, and the edge', async () => {
+    const { routingLine } = await import('./fillVenue');
+    expect(routingLine({ venue: 'kuru', unit: 'WMON', compared: { venue: 'uniswap-v3', units: 2104.1, chosenUnits: 2109.62 } })).toBe(
+      'Kuru measured 2,109.62 WMON; Uniswap v3 would have delivered 2,104.1 — 0.26% more by routing here.',
+    );
+    expect(routingLine({ venue: 'uniswap-v3', unit: 'USDC', compared: { venue: 'kuru', units: 49.81, chosenUnits: 49.91 } })).toBe(
+      'Uniswap v3 measured 49.91 USDC; Kuru would have delivered 49.81 — 0.2% more by routing here.',
+    );
+  });
+
+  it('says nothing where only one venue was measured', async () => {
+    const { routingLine } = await import('./fillVenue');
+    expect(routingLine({ venue: 'kuru', unit: 'WMON', compared: null })).toBeNull();
+  });
+});

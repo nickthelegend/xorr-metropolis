@@ -50,6 +50,11 @@ export type Settlement = {
   floor: OutputFloor;
   /** Readable route, for the activity log: "Uniswap v3 USDG→NVDA 0.05%". */
   route?: string;
+  /**
+   * Where both venues were measured for this leg (Kuru's book and Uniswap): what the one not chosen would have delivered,
+   * beside what the chosen one measured, in the output token's units — so a fill can say what routing it was worth.
+   */
+  compared?: { venue: SettlementVenue; units: number; chosenUnits: number };
 };
 
 /** The 1inch module, loaded only where it may be asked — it is not a dependency of settling a trade. */
@@ -180,6 +185,7 @@ export async function chooseSettlement(params: {
    * candidate, and the trade goes where it always went.
    */
   const side = kuruSide(inSymbol, outSymbol);
+  let kuruMeasured: Settlement['compared'];
   if (side) {
     // Exactly what the delegation approves the venue for and the adapter pulls: `send.amount`.
     const probe = kuruSwap(side, send.amount, owner, 0n);
@@ -194,6 +200,7 @@ export async function chooseSettlement(params: {
     }).catch(() => undefined);
     if (delivered !== undefined && delivered > 0n) {
       const floor = lessPct(delivered, tolerancePct);
+      const units = (raw: bigint) => Number(raw) / 10 ** outToken.decimals;
       if (floor > 0n && (!uniswap || floor > uniswap.minOut)) {
         return {
           payToken,
@@ -201,8 +208,10 @@ export async function chooseSettlement(params: {
           venue: 'kuru',
           floor: { tokenOut: outToken.address, minOut: floor },
           route: `Kuru MON/USDC order book, market ${side}`,
+          ...(uniswap ? { compared: { venue: 'uniswap-v3' as const, units: units(uniswap.quotedOut), chosenUnits: units(delivered) } } : {}),
         };
       }
+      if (uniswap) kuruMeasured = { venue: 'kuru', units: units(delivered), chosenUnits: units(uniswap.quotedOut) };
     }
   }
 
@@ -216,5 +225,6 @@ export async function chooseSettlement(params: {
     venue: 'uniswap-v3',
     floor: { tokenOut: outToken.address, minOut: uniswap.minOut },
     route: describe(uniswap.route),
+    ...(kuruMeasured ? { compared: kuruMeasured } : {}),
   };
 }
