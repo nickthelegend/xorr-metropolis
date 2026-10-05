@@ -1,10 +1,10 @@
 /**
  * Kimi's seat decides real rounds, so what it may say is pinned: a vote it may cast, a confidence, and a reason whose
- * every number some desk reported. Without a key it is a labelled fixture that never votes.
+ * every number some desk reported. Without a key it does not sit.
  */
 import { describe, expect, it, vi } from 'vitest';
 import type { Ballot } from './personas.js';
-import { kimiMode, numbersIn, parseStrategist, strategistBallot, strategistMessages } from './strategist.js';
+import { kimiConfigured, numbersIn, parseStrategist, strategistBallot, strategistMessages } from './strategist.js';
 
 const ballots: Ballot[] = [
   { persona: 'session-desk', vote: 'yes', confidence: 0.8, reason: 'Prices agree: Chainlink $0.02393 (1 min old), fill $0.02409, 66.9 bps apart (limit 150).', cites: ['price'] },
@@ -46,16 +46,9 @@ describe('the answer', () => {
 });
 
 describe('the seat', () => {
-  it('is a fixture without a key: labelled, through the validator, never a vote', async () => {
-    expect(kimiMode({})).toBe('fixture');
-    const b = await strategistBallot(ctx, { env: {} });
-    expect(b).toEqual({
-      persona: 'strategist',
-      vote: 'abstain',
-      confidence: 0,
-      reason: 'Fixture, not Kimi: this executor has no MOONSHOT_API_KEY, so the Strategist does not vote. The desks stand at 2 yes and 1 no.',
-      cites: ['fixture'],
-    });
+  it('does not sit without a key: no ballot at all, nothing stood in', async () => {
+    expect(kimiConfigured({})).toBe(false);
+    expect(await strategistBallot(ctx, { env: {} })).toBeNull();
   });
 
   it('asks Kimi with the key and casts its vote', async () => {
@@ -69,13 +62,13 @@ describe('the seat', () => {
   });
 
   it('abstains, saying why, when Kimi invents a number or does not answer', async () => {
-    expect((await strategistBallot(ctx, { env: LIVE, fetchImpl: kimi('{"vote":"yes","confidence":0.9,"reason":"Up 40% soon."}') })).reason).toBe(
+    expect((await strategistBallot(ctx, { env: LIVE, fetchImpl: kimi('{"vote":"yes","confidence":0.9,"reason":"Up 40% soon."}') }))?.reason).toBe(
       "Kimi's answer was refused (its reason used 40, which no desk reported), so the Strategist abstains.",
     );
-    expect((await strategistBallot(ctx, { env: LIVE, fetchImpl: kimi('', 429) })).reason).toBe('Kimi did not answer (HTTP 429), so the Strategist abstains.');
+    expect((await strategistBallot(ctx, { env: LIVE, fetchImpl: kimi('', 429) }))?.reason).toBe('Kimi did not answer (HTTP 429), so the Strategist abstains.');
     const throwing = vi.fn(async () => {
       throw new Error('ECONNRESET');
     });
-    expect((await strategistBallot(ctx, { env: LIVE, fetchImpl: throwing })).vote).toBe('abstain');
+    expect((await strategistBallot(ctx, { env: LIVE, fetchImpl: throwing }))?.vote).toBe('abstain');
   });
 });

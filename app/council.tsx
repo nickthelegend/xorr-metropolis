@@ -159,6 +159,7 @@ function RoundCard({ round, roster }: { round: CouncilRound; roster: Roster }) {
 export default function Council() {
   const goBack = useGoBack();
   const { data, loading, error, reload } = useAsync(() => council.rounds(), []);
+  const strategist = useAsync(() => council.strategist(), []);
   // Names and wallets for the rounds an agent proposed. A roster that cannot be read leaves the stored tag, not a guess.
   const roster = useAsync(() => repos.bot.listAgents(), []);
   const [symbol, setSymbol] = useState<string>(SYMBOLS[0]!);
@@ -186,6 +187,12 @@ export default function Council() {
         <Text variant="secondary" color={colors.ink55} style={{ marginTop: space.s6 }}>
           Every trade is voted on first.
         </Text>
+        {strategist.data && !strategist.data.configured ? (
+          // Kimi sits only with a key; without one the four desks vote and the screen says why there is no fifth seat.
+          <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }} testID="council-strategist-off">
+            {`The Strategist seat (Kimi) is not configured on this executor — it needs ${strategist.data.needs}. Four desks vote.`}
+          </Text>
+        ) : null}
         {CHAIN_KEY === 'monad-testnet' ? (
           // No spot venue on Monad testnet: an approved round trades the owner's Perpl desk (`council-executor.ts`).
           <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>

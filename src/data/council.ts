@@ -30,6 +30,9 @@ export type CouncilSeat = { id: CouncilSeatId; name: string; role: string };
 
 export const council = {
   seats: () => api.get<{ seats: CouncilSeat[] }>('/council/seats').then((r) => r.seats),
+  /** Whether Kimi sits as the Strategist on this executor, and the key it needs when not. Null off Monad. */
+  strategist: () =>
+    api.get<{ strategist: { configured: boolean; needs: string | null } | null }>('/council/seats').then((r) => r.strategist),
   rounds: () => api.get<{ rounds: CouncilRound[] }>('/council/rounds').then((r) => r.rounds),
   convene: (p: { side: 'buy' | 'sell'; symbol: string; usd: number }) =>
     api.post<{ round: CouncilRound }>('/council/convene', p).then((r) => r.round),

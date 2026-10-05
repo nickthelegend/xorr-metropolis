@@ -6,6 +6,7 @@
  *   GET  /council/rounds/:id       one round with the inputs its votes rest on
  *   POST /council/convene          {side, symbol, usd, dryRun?}: put a trade to the council now; approved rounds execute
  */
+import { kimiConfigured } from './strategist.js';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Address } from 'viem';
@@ -18,7 +19,14 @@ import { convene, roundById, roundsFor } from './convene.js';
 export const councilRoutes = new Hono();
 
 // The seats as they sit on this chain, and what the council can be asked about here (Monad: MON, ETH, BTC).
-councilRoutes.get('/council/seats', (c) => c.json({ seats: IS_MONAD ? MONAD_SEATS : SEATS, symbols: IS_MONAD ? MONAD_COUNCIL_SYMBOLS : null }));
+councilRoutes.get('/council/seats', (c) =>
+  c.json({
+    seats: IS_MONAD ? MONAD_SEATS : SEATS,
+    symbols: IS_MONAD ? MONAD_COUNCIL_SYMBOLS : null,
+    // The Strategist sits only with a Moonshot key; without one the screen says so, naming the key.
+    strategist: IS_MONAD ? { configured: kimiConfigured(), needs: kimiConfigured() ? null : 'MOONSHOT_API_KEY' } : null,
+  }),
+);
 
 councilRoutes.get('/council/rounds', async (c) => {
   const w = await requireWallet(c);

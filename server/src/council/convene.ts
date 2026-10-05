@@ -103,8 +103,12 @@ export async function convene(p: {
   // Monad reads its own inputs (Chainlink on Monad, the fill's venue, Kuru, Perpl); the seats and the tally are shared.
   const inputs = IS_MONAD ? await readMonadCouncilInputs(p.owner, p.proposal, agentId) : await readCouncilInputs(p.owner, p.proposal, agentId);
   const ballots = castBallots(inputs);
-  // On Monad, the fifth seat: Kimi weighs the four desks and decides a split (`strategist.ts`). It never vetoes.
-  if (IS_MONAD) ballots.push(await strategistBallot({ proposal: inputs.proposal, inputs, ballots: [...ballots] }));
+  // On Monad, the fifth seat: Kimi weighs the four desks and decides a split (`strategist.ts`). It never vetoes, and without
+  // a Moonshot key it does not sit at all.
+  if (IS_MONAD) {
+    const kimi = await strategistBallot({ proposal: inputs.proposal, inputs, ballots: [...ballots] });
+    if (kimi) ballots.push(kimi);
+  }
   const t = tally(ballots);
   const row = await one<RoundRow>(
     `INSERT INTO council_rounds (wallet_id, owner, proposal, inputs, decision, outcome, convened_by)

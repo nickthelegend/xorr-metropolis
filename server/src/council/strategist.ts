@@ -12,9 +12,9 @@
  *   - reach the screen unparsed. Its answer is JSON — vote, confidence, reason — validated field by field.
  *
  * Moonshot's API is OpenAI-compatible: POST {MOONSHOT_BASE_URL}/chat/completions with `MOONSHOT_API_KEY`; the model is
- * `KIMI_MODEL` (default `kimi-k2.6`; k2.5 and older are retired). Without a key — or with `KIMI_MODE=fixture` — the seat
- * runs in **fixture mode**: a labelled stand-in answer goes through the same parser and validator, and the seat abstains,
- * so no fixture ever decides a trade.
+ * `KIMI_MODEL` (default `kimi-k2.6`; k2.5 and older are retired). Without a key the seat is **not configured**: it does
+ * not sit, casts nothing, and `/council/seats` says so with the key it needs. There is no stand-in answer (6 Oct: no
+ * production mocks).
  */
 import type { Ballot, Vote } from './personas.js';
 
@@ -22,9 +22,9 @@ export const KIMI_BASE_URL = process.env.MOONSHOT_BASE_URL ?? 'https://api.moons
 export const KIMI_MODEL = process.env.KIMI_MODEL ?? 'kimi-k2.6';
 const TIMEOUT_MS = Number(process.env.KIMI_TIMEOUT_MS ?? 25_000);
 
-export type KimiMode = 'live' | 'fixture';
-export function kimiMode(env: NodeJS.ProcessEnv = process.env): KimiMode {
-  return env.MOONSHOT_API_KEY && env.KIMI_MODE !== 'fixture' ? 'live' : 'fixture';
+/** Whether the Strategist sits: only with a Moonshot key. */
+export function kimiConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(env.MOONSHOT_API_KEY);
 }
 
 export type StrategistContext = {
@@ -94,57 +94,39 @@ export function parseStrategist(raw: string, shown: string): Parsed {
   return { ok: true, vote: v.vote, confidence, reason };
 }
 
-/** The desks' tally so far: yes, and no or veto. */
-function deskTally(ballots: readonly Ballot[]) {
-  return { yes: ballots.filter((b) => b.vote === 'yes').length, no: ballots.filter((b) => b.vote === 'no' || b.vote === 'veto').length };
-}
-
-/** The stand-in answer in fixture mode: what the desks said, in the model's JSON, through the same validator. */
-export function fixtureAnswer(ctx: StrategistContext): string {
-  const { yes, no } = deskTally(ctx.ballots);
-  return JSON.stringify({
-    vote: 'abstain',
-    confidence: 0,
-    reason: `Fixture, not Kimi: this executor has no MOONSHOT_API_KEY, so the Strategist does not vote. The desks stand at ${yes} yes and ${no} no.`,
-  });
-}
-
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
-/** The Strategist's ballot for this round. Never throws: a failure is an abstention that says what failed. */
-export async function strategistBallot(ctx: StrategistContext, opts: { env?: NodeJS.ProcessEnv; fetchImpl?: Fetch } = {}): Promise<Ballot> {
+/**
+ * The Strategist's ballot for this round, or null when the seat is not configured (no key): it does not sit. Never throws:
+ * a failure to answer is an abstention that says what failed.
+ */
+export async function strategistBallot(ctx: StrategistContext, opts: { env?: NodeJS.ProcessEnv; fetchImpl?: Fetch } = {}): Promise<Ballot | null> {
   const env = opts.env ?? process.env;
+  if (!kimiConfigured(env)) return null;
   const messages = strategistMessages(ctx);
-  const { yes, no } = deskTally(ctx.ballots);
+  const yes = ctx.ballots.filter((b) => b.vote === 'yes').length;
+  const no = ctx.ballots.filter((b) => b.vote === 'no' || b.vote === 'veto').length;
   // What the reason may quote from: the round as Kimi saw it, and the desks' tally (a count it may state).
   const shown = `${messages[1]!.content} ${yes} ${no} ${ctx.ballots.length}`;
-  const mode = kimiMode(env);
   const model = env.KIMI_MODEL ?? KIMI_MODEL;
   const seat = (vote: Ballot['vote'], confidence: number, reason: string, cites: string[]): Ballot => ({ persona: 'strategist', vote, confidence, reason, cites });
 
   let raw: string;
-  if (mode === 'fixture') {
-    raw = fixtureAnswer(ctx);
-  } else {
-    try {
-      const res = await (opts.fetchImpl ?? fetch)(`${env.MOONSHOT_BASE_URL ?? KIMI_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', authorization: `Bearer ${env.MOONSHOT_API_KEY}` },
-        body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 400, response_format: { type: 'json_object' } }),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
-      if (!res.ok) return seat('abstain', 0, `Kimi did not answer (HTTP ${res.status}), so the Strategist abstains.`, [`kimi:${model}`]);
-      const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-      raw = body.choices?.[0]?.message?.content ?? '';
-    } catch (e) {
-      const why = e instanceof Error && e.name === 'TimeoutError' ? 'it timed out' : 'the request failed';
-      return seat('abstain', 0, `Kimi did not answer (${why}), so the Strategist abstains.`, [`kimi:${model}`]);
-    }
+  try {
+    const res = await (opts.fetchImpl ?? fetch)(`${env.MOONSHOT_BASE_URL ?? KIMI_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${env.MOONSHOT_API_KEY}` },
+      body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 400, response_format: { type: 'json_object' } }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) return seat('abstain', 0, `Kimi did not answer (HTTP ${res.status}), so the Strategist abstains.`, [`kimi:${model}`]);
+    const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    raw = body.choices?.[0]?.message?.content ?? '';
+  } catch (e) {
+    const why = e instanceof Error && e.name === 'TimeoutError' ? 'it timed out' : 'the request failed';
+    return seat('abstain', 0, `Kimi did not answer (${why}), so the Strategist abstains.`, [`kimi:${model}`]);
   }
   const p = parseStrategist(raw, shown);
-  if (mode === 'fixture') {
-    return seat('abstain', 0, p.ok ? p.reason : 'Fixture, not Kimi: the Strategist does not vote without MOONSHOT_API_KEY.', ['fixture']);
-  }
   if (!p.ok) return seat('abstain', 0, `Kimi's answer was refused (${p.why}), so the Strategist abstains.`, [`kimi:${model}`]);
   return seat(p.vote, p.confidence, p.reason, ['ballots', `kimi:${model}`]);
 }

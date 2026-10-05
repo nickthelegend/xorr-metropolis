@@ -16,8 +16,8 @@ describe.runIf(Boolean(process.env.MOONSHOT_API_KEY))('Kimi in the Strategist se
         { persona: 'macro-desk', vote: 'no', confidence: 0.7, reason: 'Longs crowded on MON and ETH: MON longs pay 0.0056%/h.', cites: ['perps'] },
       ],
     });
-    expect(b.persona).toBe('strategist');
-    expect(b.cites).toContain(`kimi:${process.env.KIMI_MODEL ?? 'kimi-k2.6'}`);
+    expect(b?.persona).toBe('strategist');
+    expect(b?.cites).toContain(`kimi:${process.env.KIMI_MODEL ?? 'kimi-k2.6'}`);
     console.log(b);
   }, 60_000);
 });
