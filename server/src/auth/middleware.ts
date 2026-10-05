@@ -35,6 +35,7 @@ const PUBLIC_PATHS = new Set([
   /** Monad: MON priced three ways (Uniswap v3, Kuru, Chainlink), and Perpl's public markets. Market facts. */
   '/monad/crosscheck',
   '/monad/perpl',
+  '/monad/perpl/risk',
   // How a signed-out person becomes signed in with a passkey (`auth/passkey-session.ts`).
   '/auth/passkey/challenge',
   '/auth/passkey/session',

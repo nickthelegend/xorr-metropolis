@@ -110,7 +110,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * where five attempts with exponential backoff means twenty-five seconds spent on decoration, in a
  * host lane that a price is queued behind. One attempt, then take the gradient.
  */
-export type GetOptions = { attempts?: number };
+export type GetOptions = {
+  attempts?: number;
+  /**
+   * The host's own spacing, where it is known to take more than the default allows. Only a host's own reader should set
+   * it: the lane is per host, so the last caller's spacing is what the next request waits for.
+   */
+  spacingMs?: number;
+};
 
 async function rawGet<T>(
   url: string,
@@ -135,7 +142,7 @@ async function rawGet<T>(
    * not politely return 503. So the whole attempt loop is wrapped, and any failure counts.
    */
   try {
-    return await attempt<T>(url, timeoutMs, headers, lane, opts.attempts ?? maxAttempts(), body);
+    return await attempt<T>(url, timeoutMs, headers, lane, opts.attempts ?? maxAttempts(), body, opts.spacingMs);
   } catch (e) {
     lane.failures += 1;
     if (lane.failures >= BREAKER_THRESHOLD && lane.openUntil <= Date.now()) {
@@ -153,11 +160,12 @@ async function attempt<T>(
   lane: Lane,
   attempts: number,
   body?: string,
+  spacing = spacingMs(),
 ): Promise<T> {
   let lastStatus = 0;
   let lastError: Error | undefined;
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    const wait = spacingMs() - (Date.now() - lane.lastRequestAt);
+    const wait = spacing - (Date.now() - lane.lastRequestAt);
     if (wait > 0) await sleep(wait);
     lane.lastRequestAt = Date.now();
 

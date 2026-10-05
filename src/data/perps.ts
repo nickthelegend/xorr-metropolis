@@ -92,7 +92,7 @@ export type TypedCreate = {
   message: { owner: Address; operator: Address; nonce: string; deadline: string };
 };
 
-/** A Perpl mainnet market as `/monad/perpl` reads it (Perpl's public context, live). */
+/** A Perpl market as `/monad/perpl` reads it (Perpl's public context, live). */
 export type PerplLiveMarket = {
   id: number;
   name: string;
@@ -109,9 +109,33 @@ export type PerplLiveMarket = {
   at: string | null;
 };
 
+/** One market's risk over a window, as `/monad/perpl/risk` reads it from Perpl's public API (`server/src/monad/perpl-risk.ts`). */
+export type PerplMarketRisk = {
+  id: number;
+  name: string;
+  mark: number | null;
+  /** When Perpl last updated the mark. */
+  at: string | null;
+  oiUsd: number | null;
+  spreadBps: number | null;
+  /** Percent per hour; positive, longs pay shorts. */
+  fundingNowPctPerHour: number | null;
+  funding: {
+    points: { at: string; pctPerHour: number }[];
+    /** What a long paid over the window, % of notional (negative: a long was paid). */
+    longsPaidPct: number | null;
+    aprPct: number | null;
+  };
+  price: { open: number; close: number; high: number; low: number; changePct: number; trades: number } | null;
+};
+
+export type PerplRisk = { network: string; hours: number; at: string; markets: PerplMarketRisk[]; geoBlock: string[] };
+
 export const perps = {
-  /** Perpl on Monad mainnet, read live and public: every open market, and where Perpl does not offer trading. */
-  live: () => api.get<{ markets: PerplLiveMarket[]; geoBlock: string[] }>('/monad/perpl'),
+  /** Perpl on this build's network (testnet for the testnet build), read live and public: every open market, and where Perpl does not offer trading. */
+  live: () => api.get<{ network: string; markets: PerplLiveMarket[]; geoBlock: string[] }>('/monad/perpl'),
+  /** Funding, price and crowding per market over the last `hours` (1–168), public. */
+  risk: (hours: number) => api.get<PerplRisk>(`/monad/perpl/risk?hours=${hours}`),
   markets: () => api.get<{ network: string; markets: PerpMarket[] }>('/perps/markets'),
   desk: () => api.get<Desk>('/perps/desk'),
   createData: () => api.post<TypedCreate>('/perps/desk/create-data', {}),

@@ -5,10 +5,12 @@
  *   GET /monad/crosscheck — MON priced by Uniswap v3, Kuru and Chainlink on Monad mainnet, and the widest gap.
  *   GET /monad/perpl      — Perpl's markets: mark, book, open interest, raw funding, and where trading is not offered.
  *   GET /monad/feed/:sym  — one Chainlink feed on Monad mainnet (MON, ETH, BTC, USDC, AUSD): price, age, stale.
+ *   GET /monad/perpl/risk — per Perpl market: funding over a window (paid by longs, APR), price move, OI, spread.
  */
 import { Hono } from 'hono';
 import { crosscheckMon } from './crosscheck.js';
 import { perplContext } from './perpl.js';
+import { perplRisk } from './perpl-risk.js';
 import { CHAINLINK_MONAD, readFeed, type ChainlinkSymbol } from './chainlink.js';
 
 export const monadRoutes = new Hono();
@@ -33,5 +35,16 @@ monadRoutes.get('/monad/feed/:symbol', async (c) => {
     return c.json(await readFeed(symbol as ChainlinkSymbol));
   } catch (e) {
     return c.json({ error: 'feed_unavailable', detail: e instanceof Error ? e.message.split('\n')[0] : String(e) }, 502);
+  }
+});
+
+/** Perpl risk, on the Perpl this build trades on (`perpl-risk.ts`). `?hours=` 1–168, default 24. */
+monadRoutes.get('/monad/perpl/risk', async (c) => {
+  const hours = Number(c.req.query('hours') ?? 24);
+  if (!Number.isFinite(hours) || hours <= 0) return c.json({ error: 'bad_hours', detail: 'hours is a number from 1 to 168.' }, 400);
+  try {
+    return c.json(await perplRisk(hours));
+  } catch (e) {
+    return c.json({ error: 'perpl_unavailable', detail: e instanceof Error ? e.message.split('\n')[0] : String(e) }, 502);
   }
 });

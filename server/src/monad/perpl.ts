@@ -15,8 +15,17 @@
  * can say where trading is not offered rather than letting an order fail.
  */
 import { getJson } from '../http/get.js';
+import { CHAIN_KEY } from '../evm/chains.js';
+import { PERPL, perplHere, type PerplNetwork } from './perpl-chain.js';
 
-export const PERPL_API = process.env.PERPL_API ?? 'https://app.perpl.xyz/api';
+/**
+ * The Perpl this build trades on: testnet for the testnet build (where the desks are), mainnet for the mainnet build and
+ * its fork (a fork has no Perpl of its own). `PERPL_API` overrides the address, not the name.
+ */
+export function perplNetwork(key: string = CHAIN_KEY): PerplNetwork {
+  const net = perplHere(key) ?? PERPL.monad;
+  return process.env.PERPL_API ? { ...net, api: process.env.PERPL_API } : net;
+}
 
 type RawMarket = {
   id: number;
@@ -70,13 +79,16 @@ export function parseMarket(m: RawMarket): PerplMarket {
   };
 }
 
-export type PerplContext = { markets: PerplMarket[]; geoBlock: string[] };
+export type PerplContext = { network: string; markets: PerplMarket[]; geoBlock: string[] };
 
-export function parseContext(raw: RawContext): PerplContext {
-  return { markets: (raw.markets ?? []).map(parseMarket), geoBlock: raw.geo_block ?? [] };
+export function parseContext(raw: RawContext, network = PERPL.monad.name): PerplContext {
+  return { network, markets: (raw.markets ?? []).map(parseMarket), geoBlock: raw.geo_block ?? [] };
 }
 
-/** Perpl's markets as they stand, through the shared cached GET. */
-export async function perplContext(): Promise<PerplContext> {
-  return parseContext(await getJson<RawContext>(`${PERPL_API}/v1/pub/context`));
+/** Perpl answers in about 0.1 s and states no limit; 200 ms apart is 5 a second, with 429s backed off as everywhere. */
+export const PERPL_GET = { spacingMs: 200 };
+
+/** Perpl's markets as they stand on this build's Perpl, through the shared cached GET. */
+export async function perplContext(net: PerplNetwork = perplNetwork()): Promise<PerplContext> {
+  return parseContext(await getJson<RawContext>(`${net.api}/v1/pub/context`, 30_000, 15_000, {}, PERPL_GET), net.name);
 }
