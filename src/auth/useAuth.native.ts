@@ -12,6 +12,7 @@ import {
   useLoginWithOAuth,
 } from '@privy-io/expo';
 import { alreadyHasWallet } from './alreadyHasWallet';
+import { signOutPasskey, useMera } from './mera/session';
 import type { SocialProvider } from './socialLogins';
 
 export type AuthState = {
@@ -49,17 +50,38 @@ export function useAuth(): AuthState & {
     return undefined;
   }, [address, create]);
 
+  /*
+   * A Mera passkey account, where this build has a passkey domain (`mera/platform.native.ts`): the account is the passkey,
+   * as on the web (`useAuth.web.ts`), and signing out ends both.
+   */
+  const mera = useMera();
+  const logoutAll = useCallback(async () => {
+    signOutPasskey();
+    if (user) await logout();
+  }, [user, logout]);
+
   return useMemo(
-    () => ({
-      ready: isReady,
-      authenticated: !!user,
-      userId: user?.id,
-      address,
-      email: email?.address,
-      logout,
-      createWallet,
-    }),
-    [isReady, user, address, email?.address, logout, createWallet],
+    () =>
+      mera.signedIn
+        ? {
+            ready: true,
+            authenticated: true,
+            userId: `mera:${mera.address!.toLowerCase()}`,
+            address: mera.address,
+            email: undefined,
+            logout: logoutAll,
+            createWallet: async () => mera.address,
+          }
+        : {
+            ready: isReady,
+            authenticated: !!user,
+            userId: user?.id,
+            address,
+            email: email?.address,
+            logout: logoutAll,
+            createWallet,
+          },
+    [mera.signedIn, mera.address, isReady, user, address, email?.address, logoutAll, createWallet],
   );
 }
 

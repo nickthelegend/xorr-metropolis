@@ -12,16 +12,18 @@
  * Mera's sessions have no expiry of their own (`end()` is all there is), so the window and its countdown are ours — the
  * "clean session-expiry UX" Mera's judges score.
  *
- * Web only for now: the phone app needs react-native-passkey, a passkey domain (AASA / assetlinks) and a development
- * build, which `passkeySupported()` says, rather than offering a button that cannot work.
+ * On the web and on the phone (2026-10-06): `platform.ts` / `platform.native.ts` give the relying party, the WebAuthn
+ * client (the browser's, or Mera's React Native client) and the storage. A phone build needs a passkey domain
+ * (`EXPO_PUBLIC_MERA_RP_ID`, with AASA / assetlinks served there) and a development build; without them
+ * `passkeySupported()` says no, rather than offering a button that cannot work.
  */
 import { useSyncExternalStore } from 'react';
-import { Platform } from 'react-native';
 import type { Address, LocalAccount } from 'viem';
 import { createPasskeyWithPrfOutput, createSecp256k1SigningSession, getPasskeyPrfOutput, type Secp256k1SigningSession } from '@category-labs/mera';
 import { toViemAccount } from '@category-labs/mera/viem';
 import { api } from '@/data/api';
 import { privateKeyFromPrf } from './derive';
+import { meraPlatform } from './platform';
 
 /** How long signing stays unlocked after the passkey is used. */
 export const SIGNING_WINDOW_MS = 15 * 60_000;
@@ -47,12 +49,12 @@ export type MeraSnapshot = {
 };
 
 export function passkeySupported(): boolean {
-  return Platform.OS === 'web' && typeof window !== 'undefined' && typeof window.PublicKeyCredential === 'function';
+  return meraPlatform.supported();
 }
 
 function read(): Stored | null {
   try {
-    const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(STORAGE_KEY);
+    const raw = meraPlatform.read(STORAGE_KEY);
     const s = raw ? (JSON.parse(raw) as Stored) : null;
     return s && s.tokenExpiresAt > Date.now() ? s : null;
   } catch {
@@ -62,8 +64,7 @@ function read(): Stored | null {
 
 function write(s: Stored | null): void {
   try {
-    if (s) localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-    else localStorage.removeItem(STORAGE_KEY);
+    meraPlatform.write(STORAGE_KEY, s ? JSON.stringify(s) : null);
   } catch {
     // Storage refused (a private window): the session lasts as long as the tab, which is still a session.
   }
@@ -130,7 +131,8 @@ function openWindow(prfOutput: Uint8Array): LocalAccount {
   return account;
 }
 
-const rp = () => ({ id: window.location.hostname, name: 'xorr' });
+const rp = () => ({ id: meraPlatform.rpId(), name: 'xorr' });
+const client = () => meraPlatform.webAuthnClient;
 
 /** Prove to the executor that this device holds `account`, and keep the session it answers with. */
 async function signInToExecutor(account: LocalAccount, credential?: { credentialId: string; transports?: readonly string[] }) {
@@ -155,14 +157,14 @@ async function signInToExecutor(account: LocalAccount, credential?: { credential
 
 /** A new passkey, a new account: one prompt (two on authenticators that only evaluate PRF on assertion). */
 export async function createPasskeyAccount(name: string): Promise<Address> {
-  const created = await createPasskeyWithPrfOutput({ rp: rp(), user: { name, displayName: name } });
+  const created = await createPasskeyWithPrfOutput({ rp: rp(), user: { name, displayName: name }, webAuthnClient: client() });
   const account = openWindow(created.prfOutput);
   return signInToExecutor(account, created);
 }
 
 /** An existing passkey, on this device or any other: the same account, from the same PRF output. One prompt. */
 export async function signInWithPasskey(): Promise<Address> {
-  const got = await getPasskeyPrfOutput({ rpId: rp().id });
+  const got = await getPasskeyPrfOutput({ rpId: rp().id, webAuthnClient: client() });
   const account = openWindow(got.prfOutput);
   return signInToExecutor(account, { credentialId: got.credentialId });
 }
@@ -178,6 +180,7 @@ export async function signingAccount(): Promise<LocalAccount> {
   const got = await getPasskeyPrfOutput({
     rpId: rp().id,
     credential: stored.credentialId ? { credentialId: stored.credentialId, transports: stored.transports } : undefined,
+    webAuthnClient: client(),
   });
   const account = openWindow(got.prfOutput);
   if (account.address !== stored.address) {
@@ -188,11 +191,12 @@ export async function signingAccount(): Promise<LocalAccount> {
 }
 
 /** The relying party and the signed-in passkey, for another PRF evaluation of the same passkey under another salt. */
-export function passkeyTarget(): { rpId: string; credential?: { credentialId: string; transports?: string[] } } {
+export function passkeyTarget(): { rpId: string; credential?: { credentialId: string; transports?: string[] }; webAuthnClient?: ReturnType<typeof client> } {
   if (!stored) throw new Error('Not signed in with a passkey.');
   return {
     rpId: rp().id,
     credential: stored.credentialId ? { credentialId: stored.credentialId, transports: stored.transports } : undefined,
+    webAuthnClient: client(),
   };
 }
 

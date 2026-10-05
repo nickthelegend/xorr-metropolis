@@ -25,6 +25,8 @@ import { SETTLEMENT_APPROVAL_DAYS, type GrantOptions } from '@/wallet/grantPlan'
 import { chainAccess } from '@/wallet/chainAccess';
 import { assertGrantDestination, confirmStopped, contractToStop } from '@/wallet/delegationChain';
 import { assertGasFor, estimateUserFee, sendAsUser, type UserSigner, signTypedDataAsUser } from '@/wallet/userSigning';
+import { meraSnapshot, signingAccount } from './mera/session';
+import { meraProvider } from './mera/provider';
 
 const DELEGATION_ABI = [
   {
@@ -74,6 +76,11 @@ export function useGrantDelegation() {
   const [error, setError] = useState<string>();
 
   const signer = useCallback(async (): Promise<UserSigner | undefined> => {
+    // A passkey account signs for itself, as on the web: a Mera session, at most one passkey prompt per window.
+    if (meraSnapshot().signedIn) {
+      const account = await signingAccount();
+      return { provider: meraProvider(account, activeChain.id), from: account.address, chain: activeChain, chainAccess, signOnly: true };
+    }
     const wallet = wallets?.[0];
     if (!wallet) return undefined;
     return {
