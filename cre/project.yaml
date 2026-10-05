@@ -1,0 +1,7 @@
+# CRE project settings: where the workflow reads (Monad mainnet) and writes (Monad testnet).
+staging-settings:
+  rpcs:
+    - chain-name: monad-testnet
+      url: https://testnet-rpc.monad.xyz
+    - chain-name: monad-mainnet
+      url: https://rpc.monad.xyz

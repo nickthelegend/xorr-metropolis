@@ -25,6 +25,8 @@ import { quote } from '../venues/uniswap.js';
 import { canonicalSymbol, ensureRegistry } from '../venues/tokens.js';
 import { CHAINLINK_MONAD, feedFor, readFeed } from '../monad/chainlink.js';
 import { readBook } from '../monad/kuru.js';
+import { creMonUsdReceiver, readCrePrice } from '../monad/cre-price.js';
+import { publicClient } from '../evm/client.js';
 import { monadMainnet } from '../monad/mainnet.js';
 import { PERPL, marketFromContext, perplHere, type PerpMarket } from '../monad/perpl-chain.js';
 import { deskState } from '../monad/perpl-desk.js';
@@ -53,6 +55,8 @@ export const FEED_MAX_AGE_SEC = 3600;
 export type PriceInput = Read<{
   source: string;
   chainlink: { price: number; ageSec: number; feed: string; updatedAt: string; maxAgeSec: number };
+  /** On Monad testnet with a CRE receiver: the workflow's halt, in words; null when it lets trading go on. */
+  halt?: string | null;
   fill: { price: number; venue: string };
   kuru: { mid: number; spreadBps: number | null } | null;
   gapBps: number;
@@ -127,18 +131,41 @@ async function fillPrice(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], proposa
   return { price: q.outAmount / units, venue: `Uniswap v3 ${token}→USDC on ${CHAIN_KEY}, ${units.toPrecision(4)} ${token} quoted` };
 }
 
+/**
+ * What MON is checked against: on Monad testnet, the CRE workflow's report when a receiver is configured and has reported
+ * (`monad/cre-price.ts`); otherwise, and for every other symbol, Chainlink's feed on Monad mainnet.
+ */
+async function anchorOf(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], feedSymbol: NonNullable<ReturnType<typeof feedFor>>, client: PublicClient) {
+  const receiver = CHAIN_KEY === 'monad-testnet' && symbol === 'MON' ? creMonUsdReceiver() : null;
+  const cre = receiver ? await readCrePrice(publicClient, receiver) : null;
+  if (cre) {
+    const ageSec = Math.max(0, Math.floor(Date.now() / 1000) - cre.observedAt);
+    return {
+      price: cre.price,
+      ageSec,
+      feed: cre.receiver,
+      updatedAt: new Date(cre.observedAt * 1000).toISOString(),
+      label: `Chainlink CRE MON/USD ${cre.receiver} on Monad testnet (median of ${cre.sources}: Perpl, Kuru, Chainlink mainnet)`,
+      halt: cre.halt ? `the CRE workflow's latest MON/USD report says halt (a market ${cre.anchorGapBps} bps from Chainlink, ${cre.sources} sources)` : null,
+    };
+  }
+  const feed = await readFeed(feedSymbol, { client, maxAgeSec: FEED_MAX_AGE_SEC });
+  return { price: feed.price, ageSec: feed.ageSec, feed: feed.feed, updatedAt: feed.updatedAt, label: `Chainlink ${feedSymbol}/USD ${feed.feed} on Monad mainnet`, halt: null };
+}
+
 async function priceOf(symbol: (typeof MONAD_COUNCIL_SYMBOLS)[number], proposal: Proposal, client: PublicClient) {
   const feedSymbol = feedFor(symbol);
   if (!feedSymbol) throw new Error(`no Chainlink feed for ${symbol} on Monad`);
-  const feed = await readFeed(feedSymbol, { client, maxAgeSec: FEED_MAX_AGE_SEC });
+  const feed = await anchorOf(symbol, feedSymbol, client);
   const [fill, kuru] = await Promise.all([
     fillPrice(symbol, proposal, feed.price),
     symbol === 'MON' ? readBook('MON/USDC', client).then((b) => (b.mid !== null ? { mid: b.mid, spreadBps: b.spreadBps } : null), () => null) : Promise.resolve(null),
   ]);
   const gapBps = (Math.abs(fill.price - feed.price) / feed.price) * 10_000;
   return {
-    source: `Chainlink ${feedSymbol}/USD ${feed.feed} on Monad mainnet; the fill from ${fill.venue}${kuru ? '; Kuru MON/USDC book' : ''}`,
+    source: `${feed.label}; the fill from ${fill.venue}${kuru ? '; Kuru MON/USDC book' : ''}`,
     chainlink: { price: feed.price, ageSec: feed.ageSec, feed: feed.feed, updatedAt: feed.updatedAt, maxAgeSec: FEED_MAX_AGE_SEC },
+    halt: feed.halt,
     fill,
     kuru,
     gapBps,
@@ -176,6 +203,7 @@ export async function manualPriceGate(
     n >= 1
       ? n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
       : n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumSignificantDigits: 4, maximumSignificantDigits: 4 });
+  if (p.halt) return { ok: false, detail: `Not placed: ${p.halt}.` };
   if (p.chainlink.ageSec > p.chainlink.maxAgeSec) {
     return {
       ok: false,

@@ -173,6 +173,7 @@ export function priceDesk(i: MonadCouncilInputs): Ballot {
     return { ...base, vote: 'veto', confidence: 1, reason: `The price check could not run: ${i.price.error}. Nothing is traded blind.`, cites: ['price'] };
   }
   const { chainlink, fill, kuru, gapBps, maxGapBps } = i.price;
+  if (i.price.halt) return { ...base, vote: 'veto', confidence: 1, reason: `Halted: ${i.price.halt}.`, cites: ['price'] };
   const feed = `Chainlink ${px(chainlink.price)} (${Math.round(chainlink.ageSec / 60)} min old)`;
   if (chainlink.ageSec > chainlink.maxAgeSec) {
     return { ...base, vote: 'veto', confidence: 1, reason: `Stale: ${feed}, past its ${chainlink.maxAgeSec / 60} min heartbeat.`, cites: ['price'] };

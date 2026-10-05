@@ -27,6 +27,7 @@
     ".expo",
     ".scaffold",
     "contracts",
+    "cre",
     "dist",
     "landing",
     "node_modules",

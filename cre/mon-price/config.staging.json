@@ -1,0 +1,13 @@
+{
+  "schedule": "0 */5 * * * *",
+  "perplApi": "https://app.perpl.xyz/api",
+  "perplMarketId": 10,
+  "readChain": "monad-mainnet",
+  "kuruBook": "0x065C9d28E428A0db40191a54d33d5b7c71a9C394",
+  "chainlinkMonUsd": "0xBcD78f76005B7515837af6b50c7C52BCf73822fb",
+  "writeChain": "monad-testnet",
+  "receiver": "0x0000000000000000000000000000000000000000",
+  "gasLimit": "300000",
+  "maxAnchorGapBps": 150,
+  "maxFeedAgeSec": 3600
+}
