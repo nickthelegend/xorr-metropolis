@@ -22,7 +22,9 @@ WEB=http://localhost:8092 API=http://localhost:8790 npm run e2e:fork
 then reads the chain back (`docs/evidence/e2e-fork-journey-2026-10-06.txt`):
 
 1. **Create a passkey account** (Mera) — about 1.5 s; nothing that signs is stored.
-2. **Fund** from the fork faucet, **sign the trading permission** — Mera's signing session signs, no wallet popup.
+2. **Fund** from the fork faucet, **sign the trading permission** — Mera's signing session signs, no wallet popup. 3.1 s
+   from the app on screen to the confirmed permission. Then **the stateless test**: storage cleared, the passkey brings
+   back the same account.
 3. **Buy $20 of MON**; the run says where it filled and what the other venue would have delivered.
 4. **History** shows the wallet's on-chain record, **indexed by Envio**.
 5. **Perps**: an AUSD balance, a Perpl desk, a MON long and its close.
@@ -98,8 +100,10 @@ retention plan.
 
 **Asks:** Mera as the entire account layer; time-to-first-transaction; session design; the stateless test.
 
-- One passkey ceremony, no email; the permission signed ~1.5 s after the account exists, with no prompt (Mera signing
-  session); a 15-minute signing window with a countdown and a lock; storage cleared → the same account from the passkey.
+- One passkey ceremony, no email. **Time to first transaction: 3.1 s** from the app on screen to a confirmed permission
+  (account, test funds, the grant signed by Mera's signing session with no prompt). A 15-minute signing window with a
+  countdown and a lock. **The stateless test**, in the journey: storage cleared mid-run, "Sign in with a passkey", the same
+  account back from the passkey alone (`docs/evidence/e2e-fork-journey-2026-10-06.txt`).
 - **Live step left:** the same on Monad testnet (test MON for gas).
 
 ### Mera — One Passkey, Many Keys (All) — *met*

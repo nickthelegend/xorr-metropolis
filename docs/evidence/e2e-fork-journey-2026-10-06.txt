@@ -1,19 +1,22 @@
-# e2e/web/fork-journey.mjs — Chromium, a WebAuthn virtual authenticator with PRF, the web app against the fork executor; 2026-10-05T21:50Z
+# e2e/web/fork-journey.mjs — Chromium, a WebAuthn virtual authenticator with PRF, the web app against the fork executor; 2026-10-05T22:30:52Z
 # Fork of Monad mainnet at block 110857492 (chain 143), brought up by infra/monad-fork/local-stack.sh: Perpl keeper, executor, Envio indexer, web.
 
-  account 0x2BB6c32bB0d97ea200F8e70415fB3Ecb2031cdf4 (derived from the passkey; nothing that signs is stored)
-✓ create a passkey account (2.5 s)
-✓ fund from the fork faucet (2.6 s)
-✓ sign the trading permission (Mera signing session, no popup) (1.8 s)
-  Uniswap v3 measured 640.77 WMON; Kuru would have delivered 640 — 0.12% more by routing here.
-✓ buy $20 of MON, and see where it filled (36.7 s)
-  ON CHAIN · INDEXED BY ENVIO | $20.00 spent over 1 order. | Today: $20.00 of the $1,600.00 cap. | Where fills went, every wallet: Uniswap v3 2 ($40.00 in). | HyperIndex, read to block 110,859,367 (63 events since block 110,857,492).
-✓ history: the on-chain record, indexed by Envio (2.5 s)
+  account 0xab9f3E272Be04E1f5A9Fc41998051bA17932638B (derived from the passkey; nothing that signs is stored)
+✓ create a passkey account (14.0 s)
+✓ fund from the fork faucet (1.4 s)
+✓ sign the trading permission (Mera signing session, no popup) (1.5 s)
+  time to first transaction: 3.1 s from opening the app to a confirmed permission
+  0xab9f3E272Be04E1f5A9Fc41998051bA17932638B: the same account, from the passkey alone
+✓ the stateless test: storage cleared, the passkey rebuilds the same account (0.6 s)
+  Uniswap v3 measured 640.72 WMON; Kuru would have delivered 640 — 0.11% more by routing here.
+✓ buy $20 of MON, and see where it filled (2.3 s)
+  ON CHAIN · INDEXED BY ENVIO | $20.00 spent over 1 order. | Today: $20.00 of the $1,600.00 cap. | Across every wallet here, fills went 11 on Uniswap v3 ($205.00 bought). | HyperIndex, read to block 110,861,749 (107 events since block 110,857,492).
+✓ history: the on-chain record, indexed by Envio (1.2 s)
   AUSD in the wallet: 350.00; desk open on Perpl
-✓ perps: test MON and AUSD, then open a Perpl desk (7.1 s)
+✓ perps: test MON and AUSD, then open a Perpl desk (7.2 s)
   position: open
-✓ long MON on Perpl, then close it (2.7 s)
+✓ long MON on Perpl, then close it (2.2 s)
   Trading stopped · The permission is revoked on-chain. No agent, strategy or stop-loss can place an order. Your funds never left your wallet. · Nothing was running when you stopped it.
   desk operator active: false; delegation: {"delegatePubkey":"0xfaf84A0357A88F9792e150CC32db3b841F6c6B1d","delegateName":null,"delegateIsCurrent":true,"ownerPubkey
-✓ hold to stop: permission revoked, desk operator removed (3.5 s)
+✓ hold to stop: permission revoked, desk operator removed (3.9 s)
 console errors: 0

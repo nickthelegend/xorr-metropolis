@@ -63,8 +63,11 @@ async function step(name, fn) {
 // The web stack keeps earlier screens mounted but hidden: every match is of what is on screen now.
 const tap = (name) => page.getByText(name, { exact: true }).filter({ visible: true }).first().click({ timeout: T.ui });
 
+let landed = Date.now();
 await step('create a passkey account', async () => {
   await page.goto(`${WEB}/wallet`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
+  await page.getByTestId('passkey-create').waitFor({ timeout: 180_000 });
+  landed = Date.now(); // the app on screen: the clock a person would start
   await page.getByTestId('passkey-create').click({ timeout: 180_000 });
   await page.getByText('Continue — add funds', { exact: true }).waitFor({ timeout: T.chain });
   const s = await page.evaluate(() => JSON.parse(localStorage.getItem('xorr.mera.v1') ?? 'null'));
@@ -84,6 +87,22 @@ await step('sign the trading permission (Mera signing session, no popup)', async
   await tap('Continue — set the limits');
   await tap('Sign this permission');
   await page.waitForURL((u) => !u.pathname.includes('delegate'), { timeout: T.chain });
+});
+
+say(`  time to first transaction: ${((Date.now() - landed) / 1000).toFixed(1)} s from opening the app to a confirmed permission`);
+
+await step('the stateless test: storage cleared, the passkey rebuilds the same account', async () => {
+  const before = await page.evaluate(() => JSON.parse(localStorage.getItem('xorr.mera.v1') ?? '{}').address);
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.goto(`${WEB}/wallet`, { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('passkey-sign-in').filter({ visible: true }).click({ timeout: T.ui });
+  await page.waitForFunction(() => Boolean(JSON.parse(localStorage.getItem('xorr.mera.v1') ?? '{}').address), null, { timeout: T.chain });
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('xorr.mera.v1') ?? '{}').address);
+  if (after !== before) throw new Error(`a different account came back: ${after} (was ${before})`);
+  say(`  ${after}: the same account, from the passkey alone`);
 });
 
 await step('buy $20 of MON, and see where it filled', async () => {
