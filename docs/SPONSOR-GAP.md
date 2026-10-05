@@ -46,12 +46,19 @@ mainnet's, which is right); Perpl testnet's minimum account is 100 AUSD (our des
 
 ## The order to close them
 
-**Mine, now (no owner input needed):**
-1. ~~**Perpl risk tool**~~ — done 10-05: `/perpl` is the risk tool (funding history, alerts, liquidation distance).
-2. **Kuru submission fields** — target users, evidence of demand, retention and continuation plan (`docs/KURU.md`).
-3. **Envio** — a self-hosted HyperIndex V3 indexer on 10143 behind History.
-4. ~~**Perpl bot hardening**~~ — done 10-05: exits on every desk, every tick (`server/src/monad/perpl-exits.ts`); live once MON exists.
-5. **A test-funds path that uses Agora's faucet again**, and the demo refreshed on testnet once gas exists.
+**Mine, now (no owner input needed) — where each stands after 10-05:**
+1. ~~**Perpl risk tool**~~ — done: `/perpl` is the risk tool (funding history, alerts, liquidation distance), `5815019`.
+2. ~~**Kuru submission fields**~~ — done: `docs/KURU.md`, with a mainnet measurement of Kuru against Uniswap, `22ccda9`.
+3. **Envio** — **blocked**: HyperSync on 10143 answers 401 without an API token, and indexing 68M blocks over RPC is not
+   practical. Needs a free token from app.envio.dev (owner), then it is S–M.
+4. ~~**Perpl bot hardening**~~ — done: exits on every desk, every tick (`server/src/monad/perpl-exits.ts`), `27f513a`; live
+   once MON exists.
+5. **Test funds through Agora's faucet** — already the code's first choice (`/perps/fund-test` calls
+   `requestFunds(owner)` when Agora serves); blocked only on MON: the call costs ~0.012 MON and the faucet key holds 0.0053.
+   The demo refresh waits on the same MON.
+6. ~~**Chainlink CRE**~~ — built (`cre/`, `602e11f`); waits on `cre login` to simulate and ~0.12 MON to deploy the receiver.
+7. ~~**MetaMask plugin**~~ — built (`mm-plugin-perpl/`, `b6857fa`); read commands ran in `mm` 7.0.0; wallet commands wait
+   on `mm login` and a funded wallet.
 
 **The owner's, by deadline:**
 - **Oct 6 23:59 UTC:** register; create the team and project on hackathon.monad.xyz.
@@ -59,6 +66,10 @@ mainnet's, which is right); Perpl testnet's minimum account is 100 AUSD (our des
   `0x0b21…453f` (Perpl operator). Unblocks Perpl orders, the council's Perpl path, Mera's first tx on a real network.
 - **Kuru v2 test tokens** from the Kuru integration contact (USDC `0xA402…fEF1` and MON-side assets), or a few dollars on
   mainnet — for fills on a real network.
-- **`cre login`** (one browser sign-in) — then the CRE workflow can be simulated with `--broadcast`.
-- Keys, if wanted: Nansen, Moonshot/OpenRouter (Kimi), Alchemy. An Envio Cloud account for hosted indexing.
+- **`cre login`** (one browser sign-in) — then `cre workflow simulate ./mon-price` runs (`cre/README.md`); `--broadcast`
+  also needs the receiver deployed (~0.12 test MON).
+- **`mm login`** (MetaMask Agent Wallet sign-in) and a wallet with test MON + AUSD — then `mm perpl deposit/open/close` run
+  for real (`mm-plugin-perpl/README.md`).
+- **An Envio API token** (free, app.envio.dev) — unblocks the HyperIndex indexer.
+- Keys, if wanted: Nansen, Moonshot/OpenRouter (Kimi), Alchemy.
 - Hosting the executor (Railway or similar) — the web goes on Vercel; the executor needs an always-on host.
