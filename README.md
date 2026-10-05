@@ -82,6 +82,16 @@ A CRE workflow reads Perpl's MON mark (HTTP, consensus), Kuru's book and Chainli
 **Perpl for the MetaMask Agent Wallet** ([`mm-plugin-perpl/`](mm-plugin-perpl/README.md)): `mm perpl markets · risk ·
 account · deposit · open · close`, every transaction simulated first and sent through MetaMask's policy-gated executor.
 
+**On-chain record, indexed by Envio** ([`indexer/`](indexer/README.md)): HyperIndex v3 over the delegation, the audit
+anchor and Perpl's desk factory, with per-owner, per-day, per-venue and per-desk entities derived as events arrive, synced
+over RPC into the executor's Postgres; History leads with it.
+
+**Kimi in the council** (`server/src/council/strategist.ts`): a fifth seat that weighs the four desks and decides split
+rounds — no veto, and no number a desk did not report. A labelled fixture without `MOONSHOT_API_KEY`.
+
+**Mera on the phone** (`src/auth/mera/platform.native.ts`): the same passkey account in the native app through Mera's
+React Native client, once a passkey domain serves [`docs/passkey-domain/`](docs/passkey-domain/README.md).
+
 **Why route through Kuru, measured** ([`docs/KURU.md`](docs/KURU.md)): what a MON sale delivers on Kuru's book against
 Uniswap's best pool on mainnet, at $10 to $20,000 — Kuru ahead at small sizes, the winner flipping within a minute at
 $1k–$5k, which is why every order measures both.
@@ -115,6 +125,22 @@ in [`docs/METROPOLIS.md`](docs/METROPOLIS.md).
 | Hosted Monad fork, executor, web | pending (`PLAN.md` P0.6) |
 
 ## Run it
+
+**The whole product locally, one command** (6 Oct): a fork of Monad mainnet at the head, our contracts and a grant on it,
+a keeper that lets Perpl's real Exchange trade on the fork, the executor, the Envio indexer and the web app — then the
+browser journey and a crawl of every screen:
+
+```bash
+sh infra/monad-fork/local-stack.sh refork        # up | down | refork; stops only what it started
+npm run e2e:fork                                 # passkey → fund → permission → buy → History (Envio) → Perpl long/close → stop
+npm run e2e:crawl                                # all 116 screens, signed in: console errors and error states
+```
+
+Evidence from the last runs: `docs/evidence/e2e-fork-journey-2026-10-06.txt` (8 steps, 0 console errors) and
+`docs/evidence/crawl-fork-2026-10-06.txt` (90 screens render, 26 hidden on Monad, 0 errors). Per bounty, for judges:
+[`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+
+Piece by piece:
 
 ```bash
 npm ci && (cd server && npm ci)
