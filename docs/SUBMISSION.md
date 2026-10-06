@@ -25,7 +25,7 @@ go through Perpl's own DelegatedAccount: the agent can trade there but never wit
 | Tagline | A council of AI agents trades for you on Monad, inside a permission you can revoke |
 | Track | 01 — Onchain Finance & Trading |
 | Repository | https://github.com/nickthelegend/xorr-metropolis (public, MIT) |
-| Demo video (≤ 3 min) | [`docs/demo/xorr-monad-demo.mp4`](demo/xorr-monad-demo.mp4) (24 Sep); a re-cut on testnet follows the go ([script below](#3-minute-demo-script)) |
+| Demo video (≤ 3 min) | [`docs/demo/xorr-monad-fork-demo.mp4`](demo/xorr-monad-fork-demo.mp4) (1:39, 6 Oct, the current product on a fork of Monad mainnet); [`docs/demo/xorr-monad-demo.mp4`](demo/xorr-monad-demo.mp4) (2:59, 24 Sep, with Perpl on Monad testnet); the final cut on testnet follows the go ([script below](#3-minute-demo-script)) |
 | Live app | after the go (DEPLOY-LATER §6); locally: `sh infra/monad-fork/local-stack.sh refork` |
 | Contracts (Monad testnet, 10143) | `XorrDelegation` [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) (Sourcify-verified) · `XorrAuditAnchor` [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
 | Transactions (Monad testnet) | the table under [Evidence on Monad testnet](#evidence-on-monad-testnet) |
@@ -58,7 +58,7 @@ Fork transactions are real signed transactions on a local chain, so they have no
 
 ```bash
 sh infra/monad-fork/local-stack.sh refork       # fork Monad at the head; contracts, grant, Perpl keeper, executor, Envio indexer, web
-npm run e2e:fork && npm run e2e:flows && npm run e2e:crawl
+npm run e2e:fork && npm run e2e:flows && npm run e2e:email && npm run e2e:crawl
 sh infra/monad-fork/local-stack.sh down
 ```
 
@@ -71,8 +71,10 @@ response ≥ 400. Results on 6 Oct:
 - **The flows** ([`e2e-flows-2026-10-06.txt`](evidence/e2e-flows-2026-10-06.txt)), 9 of 9 pass: zero and over-balance
   amounts refused, close a holding, a private note, a send to an allowlisted address, a council round, a hired agent
   trading on its own, the signing lock, the executor down and back.
-- **The crawl** ([`crawl-fork-2026-10-06.txt`](evidence/crawl-fork-2026-10-06.txt)): all 116 screens at 375 px; 91
-  render, 25 hidden on Monad by design, 0 failures.
+- **Email sign-in** ([`e2e-email-2026-10-06.txt`](evidence/e2e-email-2026-10-06.txt)): Privy, with a test account's
+  real one-time code typed into the form; the executor accepts the session.
+- **The crawl** ([`crawl-fork-2026-10-06.txt`](evidence/crawl-fork-2026-10-06.txt)): all 116 screens at 375 px; 90
+  render, 26 hidden on Monad by design, 0 failures; every control a screen reader reaches has a name, every image an alt.
 - **Proofs without a browser:** `server/src/prove-monad.ts` (grant → fill → cap refusal mined → close → revoke mined) and
   `server/src/prove-perpl-desk.ts` (desk → open → cap refusal → close → exit guard → operator removed → withdrawal).
 - **Quality gate** ([`quality-gate-2026-10-06.txt`](evidence/quality-gate-2026-10-06.txt)): app 2,855 tests, executor
@@ -238,8 +240,9 @@ left. The portal shows each bounty's own form only to registered teams, so these
 ## 3-minute demo script
 
 Recorded from the hosted testnet app after the go, with the Kuru beat from the fork. The shot list and recording notes
-are in [`DEPLOY-LATER.md`](DEPLOY-LATER.md) §10. The 24 Sep cut, [`demo/xorr-monad-demo.mp4`](demo/xorr-monad-demo.mp4),
-follows an earlier version of this order.
+are in [`DEPLOY-LATER.md`](DEPLOY-LATER.md) §10. The 6 Oct fork cut,
+[`demo/xorr-monad-fork-demo.mp4`](demo/xorr-monad-fork-demo.mp4), is the same order without the terminal and explorer
+beats (0:00–1:39, captions in the frame, recorded by `npm run demo:record`).
 
 | Time | On screen | Words |
 |---|---|---|

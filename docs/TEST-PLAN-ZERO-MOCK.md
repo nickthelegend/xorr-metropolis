@@ -4,6 +4,11 @@ Every component and flow, what "correct" means for it, and its status from a rea
 matched exactly; **FAIL** = did not (and was then fixed — see §7); **UNTESTED** = cannot be run without a real dependency
 this machine does not have (named). Never PASS on assumption.
 
+**Totals (end of 6 Oct): 37 PASS · 0 FAIL · 6 UNTESTED** — 25 flows (24 PASS), the 116 screens and the 169 endpoints (one
+row each, PASS), 6 contract rows (5 PASS), 10 integrations (6 PASS). Eight failures were found on the way and fixed at the
+root, and one apparent failure was a timing artifact (§7). The six UNTESTED rows each name the one dependency they wait on: the testnet go (F25), `cre login` (C5, X8),
+`MOONSHOT_API_KEY` (X7), `mm login` and a funded agent wallet (X9), the passkey domain and a development build (X10).
+
 **Where it ran.** The local stack (`sh infra/monad-fork/local-stack.sh up`): an anvil fork of Monad mainnet with Perpl's,
 Kuru's, Uniswap's, Chainlink's and Agora's real contracts; our contracts deployed on it; the executor with its real
 Postgres; the Envio indexer; the web app. Every on-chain step is a real signed transaction on that chain. Monad testnet
@@ -12,7 +17,7 @@ itself is on hold until the owner says go.
 **How it ran.** Chromium driven by Playwright with a WebAuthn virtual authenticator that has PRF — the only browser on this
 machine that can hold a PRF passkey (Claude in Chrome had no connected browser; the app pane has no PRF provider). Every
 browser step fails on any console error and on any API response ≥ 400. Specs: `e2e/web/fork-journey.mjs`,
-`e2e/web/flows.mjs`, `e2e/web/crawl.mjs` (all at 375 px except the journey at 390); proofs: `server/src/prove-monad.ts`,
+`e2e/web/flows.mjs`, `e2e/web/email-signin.mjs`, `e2e/web/crawl.mjs` (all at 375 px except the journey at 390); proofs: `server/src/prove-monad.ts`,
 `server/src/prove-perpl-desk.ts`. Evidence: `docs/evidence/*-2026-10-06.txt`.
 
 ## 1. Flows
@@ -42,14 +47,15 @@ browser step fails on any console error and on any API response ≥ 400. Specs: 
 | F21 | Perpl exit guard | a live position closed by rule, the reason in Activity | PASS | `prove-perpl-desk.ts` 6b |
 | F22 | Perpl per-order cap | "$300 is over your $250 per-order limit" before signing | PASS | `prove-perpl-desk.ts` 5 |
 | F23 | Perpl operator removed | executor refuses; a raw operator order reverts on chain (`OnlyOwnerOrOperator`); withdrawal reaches the owner | PASS | `prove-perpl-desk.ts` 7–8 |
-| F24 | Email sign-in (Privy) | an emailed code signs in to the embedded wallet | UNTESTED (not re-run on 6 Oct; last passed 24 Sep) | — |
+| F24 | Email sign-in (Privy) | the test account's own one-time code (Privy's test-credentials API) typed into the form → a Privy session and embedded wallet the executor accepts | PASS | `e2e:email` |
 | F25 | Any flow on Monad testnet | the same flows with testnet MON | UNTESTED (awaiting the owner's testnet go and MON) | — |
 
 ## 2. Screens (116 routes)
 
 **Correct means:** signed in with funds, a permission and a fill, the route renders its content with no console error, no
-API response ≥ 400, no error state, no copy naming an older xorr chain, and no sideways scroll at 375 px; a route this build
-hides on Monad shows its own "not here" page. **PASS — 91 render, 25 hidden as designed, 0 failures**
+API response ≥ 400, no error state, no copy naming an older xorr chain, no sideways scroll at 375 px, every control a
+screen reader reaches named, every image with an alt (empty for decoration), and a page language; a route this build hides
+on Monad shows its own "not here" page. **PASS — 90 render, 26 hidden as designed, 0 failures, 0 accessibility faults**
 (`docs/evidence/crawl-fork-2026-10-06.txt`).
 
 ## 3. Executor endpoints (169)
@@ -105,3 +111,5 @@ errors in the runs recorded above.**
 | Kimi's fixture in the council | product mock | removed; "not configured" (`6d19112`) |
 | `local-stack up` re-forked silently | empty `REFORKED_AT` read as a change | passes the saved mark; rebuilds when contracts are missing (`708c0fb`) |
 | `local-stack down` left servers running | only the top pid was stopped | whole process tree (`2b27918`) |
+| 9 screens with images lacking alt (accessibility pass) | the token logos and the welcome coin carried no alt; `alt=""` alone did not reach the page, because expo-image on the web hands only `accessibilityLabel` to the image it draws | `accessibilityLabel=""` on both (decoration: the name is always written beside the logo); the crawl now fails on any unnamed control or missing alt |
+| `/backtest` counted as rendering in the first crawl | the redirect to "not here" had not finished within the settle time | none needed: it is hidden on Monad by design, and the re-run records it so |

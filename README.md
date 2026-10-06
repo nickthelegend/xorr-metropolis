@@ -10,7 +10,10 @@ Nobody can watch a market all night. xorr lets a council of AI agents do it for 
 vote shown beside the transaction it produced, and none of it able to touch more than you allowed, because the chain
 enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 400 ms.
 
-**Demo (2:59, recorded from the running app):** [`docs/demo/xorr-monad-demo.mp4`](docs/demo/xorr-monad-demo.mp4).
+**Demo (1:39, 6 Oct):** [`docs/demo/xorr-monad-fork-demo.mp4`](docs/demo/xorr-monad-fork-demo.mp4) — the current
+product recorded live on a fork of Monad mainnet by `npm run demo:record`: passkey account, permission, stateless sign-in,
+a buy routed between Kuru and Uniswap, a council round, a Perpl desk long and close, the risk screen, History indexed by
+Envio, and the stop. The 24 Sep cut with Perpl on Monad testnet: [`docs/demo/xorr-monad-demo.mp4`](docs/demo/xorr-monad-demo.mp4) (2:59).
 **For judges:** per bounty, with the portal's fields and a 3-minute script — [`docs/SUBMISSION.md`](docs/SUBMISSION.md);
 every component's status from a real run — [`docs/TEST-PLAN-ZERO-MOCK.md`](docs/TEST-PLAN-ZERO-MOCK.md).
 
@@ -205,14 +208,15 @@ browser journey and a crawl of every screen:
 sh infra/monad-fork/local-stack.sh refork        # up | down | refork; stops only what it started
 npm run e2e:fork                                 # passkey → fund → permission → buy → History (Envio) → Perpl long/close → stop
 npm run e2e:flows                                # the rest: limits, close, private note, send, council, a hired agent, signing lock, executor down
-npm run e2e:crawl                                # all 116 screens at 375 px, signed in: console, network, error states, overflow
+npm run e2e:email                                # email sign-in (Privy) with a test account's real one-time code
+npm run e2e:crawl                                # all 116 screens at 375 px, signed in: console, network, error states, overflow, accessibility
 sh infra/monad-fork/local-stack.sh down          # stops only what it started
 ```
 
 Each step fails on any console error or API response ≥ 400. Evidence from the 6 Oct runs, in `docs/evidence/`:
-the journey (9 steps, 0 console errors, 3.1–5.6 s to the first transaction), the flows (9 of 9 pass), the crawl (91
-screens render, 25 hidden on Monad by design, 0 failures), and the quality gate (every suite, typecheck, lint, slither
-triaged, secret scan). Per bounty, for judges: [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+the journey (9 steps, 0 console errors, 3.1–5.6 s to the first transaction), the flows (9 of 9 pass), email sign-in
+(Privy, a real one-time code), the crawl (90 screens render, 26 hidden on Monad by design, 0 failures, no unnamed control
+or image without alt), and the quality gate (every suite, typecheck, lint, slither triaged, secret scan). Per bounty, for judges: [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 
 Piece by piece:
 

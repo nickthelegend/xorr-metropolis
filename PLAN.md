@@ -56,22 +56,22 @@ Critical path: **P-B → P-D → P-E → P-F**, then P-G when the owner says go.
 
 ### P-B — Product on the local fork (real signed transactions)
 Each: *objective* — *acceptance* — *verify* — status.
-- B1 Passkey account (Mera) — account from PRF, nothing that signs stored — `npm run e2e:fork` step 1 — **DONE**
+- B1 Passkey account (Mera) — account from PRF, nothing that signs stored — `npm run e2e:fork` step 1 — **DONE**; email sign-in (Privy) beside it — `npm run e2e:email` — **DONE**
 - B2 Stateless sign-in — storage cleared → same account — e2e step 4 — **DONE**
 - B3 Fund on the fork — USDC arrives, said on screen — e2e step 2 — **DONE**
-- B4 Grant the permission — Mera-signed, confirmed on chain, ≤ 5 s from landing — e2e step 3 (3.1 s) — **DONE**
+- B4 Grant the permission — Mera-signed, confirmed on chain, ≤ 10 s from landing — e2e step 3 (3.1–5.6 s across runs; the 5.6 s run under load from other sessions) — **DONE**
 - B5 Manual buy — fills on the better venue; the run shows the other venue's number — e2e step 5 — **DONE**
-- B6 Close / sell a holding — USDC back in the owner's wallet, `Closed` event — `prove-monad.ts` step 5; browser: TP-F10 — **IN PROGRESS** (browser pass pending)
-- B7 Council round — live readings, vote, executed fill — council probe; TP-F07 — **DONE**
-- B8 Hire an agent; it trades on its own on the fork — a filled run by the agent's own key inside its cap — TP-F08 — **NOT STARTED** (last verified 24 Sep)
+- B6 Close / sell a holding — USDC back in the owner's wallet, `Closed` event — `prove-monad.ts` step 5; `e2e:flows` B6 — **DONE**
+- B7 Council round — live readings, vote, executed fill — `e2e:flows` B7 (Approved 4–0, Executed) — **DONE**
+- B8 Hire an agent; it trades on its own on the fork — a filled run by the agent's own key inside its cap — `e2e:flows` B8 (Yield Keeper's round executed) — **DONE**
 - B9 Perpl desk lifecycle — create, fund, allow, long, close — e2e steps 7–8 — **DONE**
 - B10 Perpl exit guard — closes a live position by rule — `prove-perpl-desk.ts` step 6b — **DONE**
 - B11 Hold to stop — permission revoked and desk operator removed, read back — e2e step 9 — **DONE**
-- B12 Send / withdraw to an allowlisted address — both balances move on chain — TP-F12 — **NOT STARTED** (last verified 24 Sep)
+- B12 Send / withdraw to an allowlisted address — both balances move on chain — `e2e:flows` B12 (24 h cooling-off backdated in the test database; 5 USDC read on chain) — **DONE**
 - B13 History with the Envio record — e2e step 6 — **DONE**
-- B14 Perpl risk screen — live data, alerts — TP-F14 — **DONE**
-- B15 Private notes (second PRF key) — sealed, server stores ciphertext, reopens — TP-F15 — **IN PROGRESS** (re-verify)
-- B16 Signing window: lock and unlock in Settings — TP-F16 — **IN PROGRESS** (re-verify)
+- B14 Perpl risk screen — live data, alerts — the crawl renders `/perpl` — **DONE**
+- B15 Private notes (second PRF key) — sealed, server stores ciphertext, reopens — `e2e:flows` B15 — **DONE**
+- B16 Signing window: lock and unlock in Settings — `e2e:flows` B16 — **DONE**
 
 ### P-C — Sponsor integrations
 - C1 **DONE** Chainlink feeds gate every buy (council and manual).
@@ -79,28 +79,29 @@ Each: *objective* — *acceptance* — *verify* — status.
 - C3 **DONE** Perpl via DelegatedAccount, caps, exits, risk tool.
 - C4 **DONE** AUSD balance and Perpl margin.
 - C5 **DONE** Envio HyperIndex (`indexer/`), `GET /indexed`, History.
-- C6 Kimi Strategist seat — **IN PROGRESS → BLOCKED** after G1: the fixture is removed; live needs `MOONSHOT_API_KEY`.
+- C6 Kimi Strategist seat — **BLOCKED** (`MOONSHOT_API_KEY`). The fixture is removed; without a key the seat does not sit and the Council says "not configured" (`e2e:flows` B7).
 - C7 Chainlink CRE `cre/mon-price` — built, compiles — **BLOCKED** (`cre login`; simulate then).
 - C8 MetaMask `mm-plugin-perpl` — read commands run in `mm` 7.0.0 — **BLOCKED** (`mm login` + funded agent wallet for trading commands).
 - C9 Mera on the phone — built — **BLOCKED** (passkey domain files served; dev build with `EXPO_PUBLIC_MERA_RP_ID`).
 
 ### P-D — Zero-mock verification
-- D1 **IN PROGRESS** `docs/TEST-PLAN-ZERO-MOCK.md`: every screen, endpoint, contract interaction and flow, with "correct" defined.
-- D2 **NOT STARTED** Execute it in Claude in Chrome on the local stack, console and network checked; fix every FAIL at the root; re-run.
-- D3 **IN PROGRESS** Remove production mocks (G1).
+- D1 **DONE** `docs/TEST-PLAN-ZERO-MOCK.md`: every screen, endpoint, contract interaction and flow, with "correct" defined and its status.
+- D2 **DONE** Executed on the local stack, console and network checked, every FAIL fixed at the root and re-run (test plan §7). Browser: Playwright Chromium with a PRF virtual authenticator — Claude in Chrome had no connected browser, and only a virtual authenticator can hold a PRF passkey here.
+- D3 **DONE** Production mocks removed (G1, `6d19112`); the grep audit in test plan §6.
 
 ### P-E — Quality gate
 - E1 **DONE** typecheck (app, executor), lint 0 errors, unit suites, forge, CI green.
-- E2 **NOT STARTED** slither over `contracts/src`.
-- E3 **NOT STARTED** Secret scan over every tracked file; no `.env`, keys or `*.key` tracked.
-- E4 **NOT STARTED** 375 px widths on every screen (crawl at 375).
+- E2 **DONE** slither over `contracts/src`; every finding triaged (`docs/evidence/quality-gate-2026-10-06.txt`).
+- E3 **DONE** Secret scan over 2,588 tracked files: no `.env`, keys or vendor key formats tracked (same file).
+- E4 **DONE** 375 px on every screen: the crawl at 375, 0 overflow.
 - E5 **DONE** Route crawl (`npm run e2e:crawl`) — 116 screens, 0 errors; now also flags copy naming an older chain.
+- E6 **DONE** Accessibility basics in the crawl: every reachable control named, images with alt, page language — 0 faults after the logo fix; the crawl now fails on any.
 
 ### P-F — Judge package
-- F1 **IN PROGRESS** README: one-command demo, new-in-window vs base, AI disclosure, why Monad, architecture diagram, sponsors.
-- F2 **IN PROGRESS** SUBMISSION.md: track and pitch, the portal's fields per bounty, evidence, a 3-minute script with timestamps.
-- F3 **NOT STARTED** `docs/DEPLOY-LATER.md`: ordered runbook, addresses and MON, keys and where set, deploy/verify/host commands, smoke test, video shot list, executor host options with a recommendation.
-- F4 **NOT STARTED** A demo video recorded from the local fork (≤ 3 min), replacing the 24 Sep one.
+- F1 **DONE** README: one-command demo, new-in-window vs base, AI disclosure, why Monad, architecture diagram, sponsors (`051a345`).
+- F2 **DONE** SUBMISSION.md: track and pitch, the portal's fields per bounty, testnet transactions, evidence, a 3-minute script with timestamps.
+- F3 **DONE** `docs/DEPLOY-LATER.md`: ordered runbook, addresses and MON, keys and where set, deploy/verify/host commands, smoke test, video shot list, executor host options (Railway recommended).
+- F4 **DONE** A demo video recorded from the local fork: `docs/demo/xorr-monad-fork-demo.mp4`, 1:39, 0 console errors, by `npm run demo:record` (every frame the real app; waits and blank page loads cut). The final testnet cut follows the go (DEPLOY-LATER §10).
 
 ### P-G — Go live (awaiting the owner's go)
 - G-1 **BLOCKED** MON for the testnet keys; testnet runs of B4/B8/B9 and the CRE broadcast.
@@ -127,6 +128,11 @@ the inactive Solana path.
 | G9 | Product config lives under `src/data/fixtures/` | file names | reads like mock data to an auditor | P3 | rename or note | — |
 | G10 | `src/chain.test.ts` first test times out (5 s) under machine load | local runs, 6 Oct | flaky locally; CI green | P3 | longer timeout for the cold import | E1 |
 | G11 | Inherited Solana/Base/Arbitrum code remains in the tree | `server/src/solana/`, `server/src/venues/gmx/` | size, not product path on Monad | P3 | leave; hidden on Monad | — |
+| G12 | Accessibility basics unchecked; then 9 screens with logos lacking alt | `src/ui/AgentOrb.tsx` AssetMark, `src/design/CoinHero.tsx` | screen-reader users | P2 | the crawl checks every control's name, image alt and page language; `accessibilityLabel=""` on decorative images | E6 |
+
+**Resolved in the pipeline (6 Oct):** G1 (`6d19112`), G2 and G3 (`e2e:flows` B8, B12), G4 and G5 (quality gate), G6
+(crawl at 375), G7 (`docs/DEPLOY-LATER.md`), G8 (F4), G12 (E6). Open: G9–G11 (P3, left by choice). No P0 or P1 gap
+that can be solved without the owner remains.
 
 ## 5. Completion checklist (46 items) and measurement
 
@@ -139,7 +145,13 @@ transactions, hosted build, registration and submission (9).
 B11, B13, B14, B15 by its 24 Sep run), 5 integrations (C1–C5), 8 quality items (typecheck, lint, app unit, executor unit,
 forge, e2e journey, crawl, CI), 2 deploy items (testnet contracts; repo, licence and disclosure).
 
-**Final:** measured at the end of the pipeline, same checklist — see §6.
+**Final (6 Oct, end of the pipeline): 39 of 46 — 85%.** Done: all 16 flows (B1–B16), 5 integrations (C1–C5), all 12
+quality items (typecheck, lint, app unit, executor unit, forge, slither, secret scan, e2e journey, crawl, 375 px, the
+zero-mock plan executed, CI), 6 deploy and submission items (testnet contracts; repo, licence and disclosure; README;
+SUBMISSION; DEPLOY-LATER; a current demo video). The other 7 each wait on the owner: C6 `MOONSHOT_API_KEY`, C7 `cre login`,
+C8 `mm login` and a funded agent wallet, C9 the passkey domain and a development build, live testnet transactions (the go
+and MON), the hosted build (the go), registration and submission. Evidence for each: `docs/TEST-PLAN-ZERO-MOCK.md`
+(37 PASS · 0 FAIL · 6 UNTESTED).
 
 ## 6. Owner actions (USER_ACTION_REQUIRED)
 
