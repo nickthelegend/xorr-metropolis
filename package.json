@@ -20,7 +20,9 @@
     "deploy:executor": "node scripts/deploy-executor.mjs",
     "e2e:fork": "node e2e/web/fork-journey.mjs",
     "e2e:crawl": "node e2e/web/crawl.mjs",
-    "e2e:flows": "node e2e/web/flows.mjs"
+    "e2e:flows": "node e2e/web/flows.mjs",
+    "e2e:email": "node e2e/web/email-signin.mjs",
+    "demo:record": "node e2e/web/record-demo.mjs"
   },
   "dependencies": {
     "@category-labs/mera": "^0.2.0",

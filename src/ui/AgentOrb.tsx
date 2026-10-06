@@ -502,6 +502,9 @@ export function AssetMark({
       {showLogo ? (
         <Image
           source={{ uri }}
+          // Decoration: the instrument's name is always written beside its mark, so a screen reader skips the logo
+          // (alt=""). `accessibilityLabel`, not `alt`: on the web expo-image hands only that to the image it draws.
+          accessibilityLabel=""
           onLoad={() => setDrawnUri(uri ?? undefined)}
           onError={() => setFailedUri(uri ?? undefined)}
           // `contain` rather than `cover`: these are logos with their own padding and a mark

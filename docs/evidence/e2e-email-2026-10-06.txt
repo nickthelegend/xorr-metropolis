@@ -1,0 +1,5 @@
+# Email sign-in (Privy) on the local fork stack, 2026-10-06 — `npm run e2e:email` (e2e/web/email-signin.mjs)
+# Chromium at 375 px; the one-time code is the Privy test account's own, read from Privy's test_credentials API and
+# typed into the app's form. The wallet screen offers "Continue" only after the executor has accepted the session.
+✓ email sign-in: t…@privy.io → a Privy session and its embedded wallet; the executor accepted it
+console errors and API responses ≥ 400: 0

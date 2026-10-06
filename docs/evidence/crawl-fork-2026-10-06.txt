@@ -1,7 +1,9 @@
-# e2e/web/crawl.mjs at 375 px — every route under app/, signed in (funds, a permission, a fill); fork of Monad mainnet at block 110874062; 2026-10-05T23:11:36Z
-# Per screen: console errors, API responses >= 400, error states, copy naming an older chain, horizontal overflow. 'hidden' = a route this build hides on Monad.
-
-sample ids {"id":"f6123378-ea8f-406b-93e8-22576919cb00","symbol":"MON","seq":"348","agent":"momentum-scout","strategy":"7601a885-27a3-4fd7-966c-b57629873c79","position":"ed06b75b-c04f-4a0e-8ec1-bc20c3861d98","library":"b200_sess_8"}
+# The crawl, 2026-10-06 (re-run after the accessibility checks were added) — `npm run e2e:crawl` (e2e/web/crawl.mjs)
+# Chromium at 375 x 812, a passkey account funded, granted and given one fill; every route under app/ opened cold.
+# Per screen: console errors, API responses >= 400, error states, copy naming an older chain, sideways scroll,
+# and accessibility basics (unnamed controls, images without alt, page language). 'hidden' = a route this build
+# hides on Monad by design (src/nav/buildRoutes.ts HIDDEN_HERE), shown as its own 'not here' page.
+sample ids {"id":"05d17d8d-26ed-430b-8e38-a68613cb258c","symbol":"MON","seq":"383","agent":"momentum-scout","strategy":"54279ed7-f6ea-40c3-99bc-b7a5eed89704","position":"aeabbe8d-f1b7-4bf2-a9b4-dc6d43405a0b","library":"b200_sess_8"}
 ok            /
 ok            /activity
 ok            /agent/momentum-scout
@@ -15,11 +17,11 @@ hidden        /allocation
 ok            /allowlist
 ok            /approvals
 ok            /asset/MON
-ok            /audit/348
+ok            /audit/383
 ok            /audit/anchor
 ok            /audit/chain
-ok            /auto-close/ed06b75b-c04f-4a0e-8ec1-bc20c3861d98
-ok            /backtest
+ok            /auto-close/aeabbe8d-f1b7-4bf2-a9b4-dc6d43405a0b
+hidden        /backtest
 hidden        /balance
 hidden        /basename
 ok            /bot
@@ -42,7 +44,7 @@ ok            /delegation
 ok            /deposit
 ok            /disposals
 hidden        /earnings
-ok            /explain/348
+ok            /explain/383
 ok            /explore
 ok            /export
 ok            /flatten
@@ -78,7 +80,7 @@ ok            /perps
 ok            /pnl
 ok            /policy
 ok            /portfolio
-ok            /position/ed06b75b-c04f-4a0e-8ec1-bc20c3861d98
+ok            /position/aeabbe8d-f1b7-4bf2-a9b4-dc6d43405a0b
 ok            /profile
 ok            /proposal
 ok            /proposals
@@ -88,7 +90,7 @@ ok            /risk
 ok            /roster-compare
 ok            /route/MON
 ok            /runs
-ok            /runs/f6123378-ea8f-406b-93e8-22576919cb00
+ok            /runs/05d17d8d-26ed-430b-8e38-a68613cb258c
 ok            /safety
 ok            /schedule
 ok            /search
@@ -101,7 +103,7 @@ hidden        /sponsors
 hidden        /stocks
 ok            /strategies
 ok            /strategy-library/b200_sess_8
-ok            /strategy/7601a885-27a3-4fd7-966c-b57629873c79
+ok            /strategy/54279ed7-f6ea-40c3-99bc-b7a5eed89704
 ok            /strategy/dca
 ok            /strategy/grid
 hidden        /strategy/yield
@@ -119,4 +121,5 @@ hidden        /xstock/MON
 hidden        /xstocks
 hidden        /yield
 
-116 screens: 91 ok, 25 hidden here, 0 error states, 0 console errors, 0 naming an old chain, 0 too wide at 375px, 0 failed to load
+116 screens: 90 ok, 26 hidden here, 0 error states, 0 console errors, 0 naming an old chain, 0 too wide at 375px, 0 failed to load
+accessibility: 0 screens with unnamed controls (0 controls), 0 with images lacking alt, 0 without a page language

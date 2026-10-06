@@ -117,6 +117,13 @@ describe('what routing was worth', () => {
     );
   });
 
+  it('calls two venues level when the difference rounds to nothing, instead of "0% more"', async () => {
+    const { routingLine } = await import('./fillVenue');
+    expect(routingLine({ venue: 'uniswap-v3', unit: 'WMON', compared: { venue: 'kuru', units: 636.17, chosenUnits: 636.19 } })).toBe(
+      'Uniswap v3 measured 636.19 WMON; Kuru would have delivered 636.17 — level to within 0.01%.',
+    );
+  });
+
   it('says nothing where only one venue was measured', async () => {
     const { routingLine } = await import('./fillVenue');
     expect(routingLine({ venue: 'kuru', unit: 'WMON', compared: null })).toBeNull();

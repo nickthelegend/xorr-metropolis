@@ -120,5 +120,7 @@ export function routingLine(run: {
   const n = (v: number) => v.toLocaleString('en-US', { maximumFractionDigits: v >= 100 ? 2 : 6 });
   const edge = ((c.chosenUnits - c.units) / c.units) * 100;
   const pct = `${Math.abs(edge).toLocaleString('en-US', { maximumFractionDigits: 2 })}%`;
-  return `${chosen} measured ${n(c.chosenUnits)} ${run.unit}; ${other} would have delivered ${n(c.units)} — ${edge >= 0 ? `${pct} more by routing here` : `${pct} less, within the floor`}.`;
+  // Below a hundredth of a percent the share rounds to "0%", which reads as nothing measured: say the two were level.
+  const worth = Math.abs(edge) < 0.005 ? 'level to within 0.01%' : edge >= 0 ? `${pct} more by routing here` : `${pct} less, within the floor`;
+  return `${chosen} measured ${n(c.chosenUnits)} ${run.unit}; ${other} would have delivered ${n(c.units)} — ${worth}.`;
 }

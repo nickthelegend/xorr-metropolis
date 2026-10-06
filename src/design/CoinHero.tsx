@@ -20,7 +20,7 @@ const COIN = require('../../assets/landing/coin-x.webp');
 export function CoinHero({ style }: { style?: StyleProp<ViewStyle> }) {
   return (
     <View style={[styles.frame, style]} accessible={false}>
-      <Image source={COIN} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={COIN_FOCUS} />
+      <Image source={COIN} accessibilityLabel="" style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={COIN_FOCUS} />
       <HeroFades />
     </View>
   );
