@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-
-// The helpers under test never call the executor; the client and what it imports are left out.
-vi.mock('./api', () => ({ api: {} }));
 import { cheaperBy, groupDigits, tinyUsd } from './speed';
 import { voteToFillSec } from './council';
+
+// The helpers under test never call the executor; the client and what it imports are left out (vi.mock is hoisted).
+vi.mock('./api', () => ({ api: {} }));
 
 describe('the speed receipt in words', () => {
   it('groups a block number and refuses anything that is not one', () => {
