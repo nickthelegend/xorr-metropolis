@@ -57,11 +57,11 @@ const expectations = [
   ['monad-item-commits', /voted in [\d.]+ m?s, final in/],
   ['monad-item-sync', /supported — every fill uses it/],
   ['monad-item-txpool', /Monad mainnet · answers/],
-  ['monad-item-p256', /mainnet · valid ✓ · tampered refused ✓/],
+  ['monad-item-p256', /mainnet · valid · tampered: refused/],
   ['monad-item-staking', /Epoch · [\d,]+.*Proposing now · validator #\d+/],
   ['monad-item-gas', /0x1001 on Monad mainnet · answers/],
-  ['monad-item-x402', /POST \/x402\/council · \$0\.01 USDC.*settles exact here ✓/],
-  ['monad-item-contracts', /WMON .*mainnet ✓ · fork ✓/],
+  ['monad-item-x402', /POST \/x402\/council · \$0\.01 USDC.*settles exact payments here/],
+  ['monad-item-contracts', /WMON .*on mainnet and the fork/],
 ];
 for (const [id, re] of expectations) {
   const t = await text(id);
@@ -73,12 +73,12 @@ for (const [id, re] of expectations) {
 await v(page.getByTestId('monad-passkey-check')).click();
 await v(page.getByTestId('monad-passkey-result')).waitFor({ timeout: T.ui }).catch(() => fail('the passkey check returned nothing'));
 const pk = await text('monad-passkey-result');
-if (!/0x0100 on Monad mainnet · signature valid ✓/.test(pk) || !/0x0100 on the fork · signature valid ✓/.test(pk) || !/other message · refused ✓/.test(pk)) await fail(`the passkey was not verified: ${pk}`);
+if (!/0x0100 on Monad mainnet · signature valid/.test(pk) || !/0x0100 on the fork · signature valid/.test(pk) || !/other message · refused, as it should be/.test(pk)) await fail(`the passkey was not verified: ${pk}`);
 console.log(`✓ passkey: ${pk.slice(0, 200)}`);
 // A second check signs once, with the key remembered.
 await v(page.getByTestId('monad-passkey-check')).click();
 await page.waitForTimeout(3_000);
-if (!/signature valid ✓/.test(await text('monad-passkey-result'))) await fail('the second check failed');
+if (!/signature valid/.test(await text('monad-passkey-result'))) await fail('the second check failed');
 console.log('✓ a second check signs once, with the key remembered');
 
 // The sponsors' rows, read live.

@@ -57,7 +57,7 @@ function Chip({ b }: { b: CommitBlock }) {
       {/* The state on one line and its time on the next: at five across, "final 550 ms" did not fit one. */}
       <View>
         <Text variant="footnoteSm" color={b.state === 'Proposed' ? colors.ink55 : b.state === 'Voted' ? colors.accentHi : colors.up} numberOfLines={1}>
-          {b.state === 'Verified' ? '✓ verified' : b.state === 'Finalized' ? 'final' : b.state.toLowerCase()}
+          {b.state === 'Verified' ? 'verified' : b.state === 'Finalized' ? 'final' : b.state.toLowerCase()}
         </Text>
         <Text variant="footnoteSm" color={colors.ink55} numberOfLines={1}>
           {msWords(b.state === 'Verified' ? b.ms?.Verified : b.state === 'Finalized' ? final : b.state === 'Voted' ? b.ms?.Voted : null) ?? ' '}

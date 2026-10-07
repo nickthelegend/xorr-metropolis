@@ -116,9 +116,9 @@ function PasskeyButton() {
       {r ? (
         <View testID="monad-passkey-result" style={{ gap: space.s4 }}>
           <Reading label="Your passkey’s key" value={shortAddress(r.publicKey, 10, 6)} />
-          <Reading label="0x0100 on Monad mainnet" value={yes(r.mainnet.valid, 'signature valid ✓', 'refused')} bad={r.mainnet.valid === false} />
-          <Reading label="0x0100 on the fork" value={yes(r.executor.valid, 'signature valid ✓', 'refused')} bad={r.executor.valid === false} />
-          <Reading label="Same signature, other message" value={r.mainnet.tamperedValid === false ? 'refused ✓' : yes(r.mainnet.tamperedValid, 'accepted ✗', 'refused ✓')} bad={r.mainnet.tamperedValid === true} />
+          <Reading label="0x0100 on Monad mainnet" value={yes(r.mainnet.valid, 'signature valid', 'refused')} bad={r.mainnet.valid === false} />
+          <Reading label="0x0100 on the fork" value={yes(r.executor.valid, 'signature valid', 'refused')} bad={r.executor.valid === false} />
+          <Reading label="Same signature, other message" value={r.mainnet.tamperedValid === false ? 'refused, as it should be' : yes(r.mainnet.tamperedValid, 'accepted — wrong', 'refused, as it should be')} bad={r.mainnet.tamperedValid === true} />
         </View>
       ) : null}
       {err ? <Text variant="footnote" color={colors.down}>{err}</Text> : null}
@@ -147,8 +147,8 @@ function NativeList({ d }: { d: MonadNative }) {
       </Item>
 
       <Item n="4 · P256VERIFY at 0x0100" title="Your passkey, checked by Monad itself" where={['mainnet', 'fork']} testID="monad-item-p256">
-        <Reading label="A fresh P-256 signature, mainnet" value={d.p256.mainnet.ok ? `${yes(d.p256.mainnet.accepts, 'valid ✓', 'refused')} · tampered ${d.p256.mainnet.refusesTampered ? 'refused ✓' : 'accepted ✗'}` : 'could not read'} bad={!d.p256.mainnet.ok} />
-        <Reading label="The same on the fork" value={d.p256.executor.ok ? `${yes(d.p256.executor.accepts, 'valid ✓', 'refused')} · tampered ${d.p256.executor.refusesTampered ? 'refused ✓' : 'accepted ✗'}` : 'could not read'} bad={!d.p256.executor.ok} />
+        <Reading label="A fresh P-256 signature, mainnet" value={d.p256.mainnet.ok ? `${yes(d.p256.mainnet.accepts, 'valid', 'refused')} · tampered: ${d.p256.mainnet.refusesTampered ? 'refused' : 'accepted — wrong'}` : 'could not read'} bad={!d.p256.mainnet.ok} />
+        <Reading label="The same on the fork" value={d.p256.executor.ok ? `${yes(d.p256.executor.accepts, 'valid', 'refused')} · tampered: ${d.p256.executor.refusesTampered ? 'refused' : 'accepted — wrong'}` : 'could not read'} bad={!d.p256.executor.ok} />
         <Note>Your account comes from your passkey (Mera). This asks the chain to check the passkey’s own signature: an eth_call to the precompile, 6,900 gas — no verifier contract of anyone’s in the path.</Note>
         <PasskeyButton />
       </Item>
@@ -186,7 +186,7 @@ function NativeList({ d }: { d: MonadNative }) {
             <Reading label="Settles on" value={d.x402.network === 'eip155:10143' ? 'Monad testnet (eip155:10143)' : d.x402.network} />
             <Reading
               label="Monad’s facilitator, now"
-              value={d.x402.supported.ok ? (d.x402.supported.kinds.includes(`exact on ${d.x402.network}`) ? 'settles exact here ✓' : 'does not list this network') : 'could not read'}
+              value={d.x402.supported.ok ? (d.x402.supported.kinds.includes(`exact on ${d.x402.network}`) ? 'settles exact payments here' : 'does not list this network') : 'could not read'}
               bad={!d.x402.supported.ok}
             />
           </>
@@ -202,7 +202,7 @@ function NativeList({ d }: { d: MonadNative }) {
                 {`${c.name} ${shortAddress(c.address)}`}
               </Text>
               <Text variant="footnoteSm" color={c.mainnet && c.executor ? colors.up : colors.down}>
-                {`mainnet ${c.mainnet ? '✓' : '✗'} · fork ${c.executor ? '✓' : '✗'}`}
+                {c.mainnet && c.executor ? 'on mainnet and the fork' : `mainnet: ${c.mainnet ? 'yes' : 'no'} · fork: ${c.executor ? 'yes' : 'no'}`}
               </Text>
             </View>
             <Text variant="footnoteSm" color={colors.ink40}>
@@ -231,10 +231,10 @@ function SponsorsList({ s }: { s: SponsorsLive }) {
       <Item title="Kuru, Uniswap and Chainlink: MON priced three ways" where={['mainnet']} testID="monad-sponsor-prices">
         {p.ok ? (
           <>
-            <Reading label="Kuru order book (mid)" value={p.kuru ? `${usd(p.kuru.mid)}${p.kuru.spreadBps !== null ? ` · spread ${p.kuru.spreadBps.toFixed(1)} bps` : ''}` : 'could not read'} bad={!p.kuru} />
+            <Reading label="Kuru order book (mid)" value={p.kuru ? `${usd(p.kuru.mid)}${p.kuru.spreadBps !== null ? ` · spread ${p.kuru.spreadBps.toLocaleString('en-US', { maximumFractionDigits: 1 })} bps` : ''}` : 'could not read'} bad={!p.kuru} />
             <Reading label={`Uniswap v3 (${p.uniswap?.pool ?? 'pool'})`} value={p.uniswap ? usd(p.uniswap.price) : 'could not read'} bad={!p.uniswap} />
             <Reading label="Chainlink MON/USD" value={p.chainlink ? `${usd(p.chainlink.price)} · ${Math.round(p.chainlink.ageSec)} s old` : 'could not read'} bad={!p.chainlink} />
-            {p.maxGapBps !== null ? <Reading label="Widest gap" value={`${p.maxGapBps.toFixed(1)} bps`} /> : null}
+            {p.maxGapBps !== null ? <Reading label="Widest gap" value={`${p.maxGapBps.toLocaleString('en-US', { maximumFractionDigits: 1 })} bps`} /> : null}
           </>
         ) : (
           <Reading label="Prices" value={`could not read: ${p.error}`} bad />
@@ -246,7 +246,7 @@ function SponsorsList({ s }: { s: SponsorsLive }) {
           <>
             <Reading label={s.perpl.network} value={`${s.perpl.open} markets open`} />
             {s.perpl.markets.slice(0, 3).map((m) => (
-              <Reading key={m.name} label={m.name} value={`${m.mark !== null ? usd(m.mark) : '—'} · funding ${m.fundingPctPerHour !== null ? `${m.fundingPctPerHour.toFixed(4)}%/h` : '—'}`} />
+              <Reading key={m.name} label={m.name} value={`${m.mark !== null ? usd(m.mark) : '—'} · funding ${m.fundingPctPerHour !== null ? `${m.fundingPctPerHour.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}%/h` : '—'}`} />
             ))}
           </>
         ) : (
