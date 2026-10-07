@@ -7,6 +7,24 @@ Scratch screen: **`app/_dev/ui.tsx`** — every primitive in every state, using 
 prototype's own OHLC series and copy, for a side-by-side against
 `mobile-ui/reference/Orbit Trading App.dc.html`.
 
+## 2026-10-06 — alive, black only
+
+The owner watched the recorded demo and called the UI stale: grey cards on black, nothing that said which control
+mattered, nothing that moved. The system changed in these places, and the tests in `design-system.test.ts` now say so:
+
+- **An accent.** One violet family (`accent`, `accentHi`, `accentDeep`, `accentSoft`, `accentLine`, `accentGlow`) for the
+  primary action, the live state, a section's eyebrow and the light the surfaces catch. Never an outcome: green and red
+  still mean profit and loss, and a test checks the accent is neither.
+- **Light, not grey.** Every screen has the `Aurora` at its top; cards fall from a lifted top to a deeper bottom
+  (`gradient.card`) and catch the light on their top edge (`border.card`); the card that is the point of a screen takes
+  `tone="accent"`; a hero figure can sit in a `Glow`. Still no elevation.
+- **Black only.** The order ticket and Auto Close sheet are a raised black now (`colors.sheet`), Messages has no light
+  room, and text on a white fill has its own token (`onInk`).
+- **Motion that answers the thumb.** `Press` gives under the finger (scale and dim, 90ms in, 180ms out); `Screen`
+  arrives; `LiveDot` breathes while something is live; `RoutingBars` draw in. Everything still collapses to an instant
+  change under reduced motion, and no figure ever animates through values it did not have.
+- **The primary action is lit** — the accent's gradient with its glow; the stop is red with its own; a filled order green.
+
 ## The three rules that outrank convenience
 
 1. **Green and red mean profit and loss.** Selection is white-on-dark. Reaching for `up`

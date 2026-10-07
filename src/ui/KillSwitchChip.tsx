@@ -23,6 +23,7 @@
 import React from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { killSwitchChip, type ChainStandingKind } from '@/state/killSwitch';
+import { LiveDot } from './LiveDot';
 import { Text } from './Text';
 import { colors, radius, space } from './tokens';
 
@@ -62,7 +63,7 @@ export function KillSwitchChip({ standing, failed = false, detail = false, style
           paddingVertical: space.s6,
         }}
       >
-        <View style={{ width: DOT, height: DOT, borderRadius: DOT / 2, backgroundColor: tone }} />
+        <LiveDot color={tone} size={DOT} pulse={chip.armed} />
         {/* The whole chip is one thing to a screen reader, and it hears the sentence rather than the word alone. */}
         <Text variant="tag" color={colors.ink} accessibilityLabel={chip.detail}>
           {chip.label.toUpperCase()}

@@ -78,6 +78,11 @@ import { chainAccess } from '@/wallet/chainAccess';
 import { standingOnChain } from '@/wallet/delegationChain';
 import { killSwitchChip } from '@/state/killSwitch';
 import { KillSwitchChip } from '@/ui/KillSwitchChip';
+import { Glow } from '@/ui/Aurora';
+import { Avatar, QuickAction, QuickActions } from '@/ui/QuickAction';
+import { LinearGradient } from 'expo-linear-gradient';
+import { PERPS_ROUTE, TRADE_ROUTE, shownHere } from '@/nav/buildRoutes';
+import { gradient } from '@/ui/tokens';
 import { TradingTicker } from '@/ui/TradingTicker';
 import { usePoll } from '@/data/usePoll';
 import { strategyLibrary } from '@/data/strategyLibrary';
@@ -513,20 +518,7 @@ export default function Home() {
           accessibilityLabel={`Your profile, ${title}`}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.s12 }}
         >
-          <View
-            style={{
-              width: AVATAR,
-              height: AVATAR,
-              borderRadius: AVATAR / 2,
-              backgroundColor: colors.ink,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text variant="rowPrimary" color={colors.sheet.ink}>
-              {initial}
-            </Text>
-          </View>
+          <Avatar initial={initial} size={AVATAR} />
           <View style={{ flex: 1 }}>
             <Text variant="rowPrimary" numberOfLines={1}>
               {title}
@@ -541,6 +533,8 @@ export default function Home() {
 
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
         <Rise index={1} style={{ marginTop: space.s26, paddingHorizontal: space.gutter }}>
+          {/* The balance sits in its own light: the figure this screen is about (2026-10-06). */}
+          <Glow strength={0.3} style={{ top: -50, bottom: -50, left: -70, right: 30 }} />
           {/*
             Two targets since the figure became the switch that hides every amount (FEATURES.md #47): the name and its
             chevron still open the portfolio, and the figure hides and shows.
@@ -609,6 +603,25 @@ export default function Home() {
         </Rise>
 
         {/*
+          The next step where the eye already is (2026-10-06): add funds, trade, perps, the council — each only where this
+          build has it.
+        */}
+        {signedOut ? null : (
+          <Rise index={2} style={{ marginTop: space.s22, paddingHorizontal: space.gutter }}>
+            <QuickActions>
+              <QuickAction primary icon="plus" label="Add funds" testID="home-action-fund" onPress={() => router.push('/deposit')} />
+              <QuickAction icon="swapH" label="Trade" testID="home-action-trade" onPress={() => router.push(TRADE_ROUTE)} />
+              {shownHere(PERPS_ROUTE) ? (
+                <QuickAction icon="activity" label="Perps" testID="home-action-perps" onPress={() => router.push(PERPS_ROUTE)} />
+              ) : null}
+              {shownHere('/council') ? (
+                <QuickAction icon="sparkle" label="Council" testID="home-action-council" onPress={() => router.push('/council')} />
+              ) : null}
+            </QuickActions>
+          </Rise>
+        )}
+
+        {/*
           Said on Home, before anything asks for a permission (PLAN.md 4.3). Where nothing settles — Base Sepolia, where
           1inch has no deployment — a strategy is watched and never filled, and a person who grants a permission and waits
           for a fill should not have to find that out three taps away.
@@ -670,9 +683,19 @@ export default function Home() {
             paddingBottom: space.s26,
             borderTopLeftRadius: radius.sheet,
             borderTopRightRadius: radius.sheet,
-            backgroundColor: colors.surfaceAlt,
+            backgroundColor: colors.surface,
+            // The sheet catches the light along its top edge, like every card (2026-10-06).
+            borderTopWidth: 1,
+            borderTopColor: colors.highlight,
           }}
         >
+          <LinearGradient
+            colors={gradient.cardAccent}
+            start={{ x: 0.3, y: 0 }}
+            end={{ x: 0.5, y: 0.35 }}
+            pointerEvents="none"
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet }}
+          />
           <View
             style={{
               alignSelf: 'center',
@@ -713,7 +736,7 @@ export default function Home() {
                     style={{
                       paddingBottom: space.s10,
                       borderBottomWidth: TAB_RULE,
-                      borderBottomColor: selected ? colors.ink : colors.surfaceAlt,
+                      borderBottomColor: selected ? colors.accent : 'transparent',
                     }}
                   >
                     <Text variant="cardTitle" color={selected ? colors.ink : colors.ink40}>

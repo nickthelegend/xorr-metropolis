@@ -10,6 +10,7 @@
  * account was made with, the executor for the wallet the app is using, with its Basename when it has
  * one. The address is shortened on screen and copied whole.
  */
+import { Avatar } from '@/ui/QuickAction';
 import React, { useState } from 'react';
 import { shownHere } from '@/nav/buildRoutes';
 import { ScrollView, View } from 'react-native';
@@ -105,22 +106,7 @@ export default function Profile() {
             <ErrorState error={wallet.error} onRetry={wallet.reload} />
           ) : (
             <>
-              <View
-                style={{
-                  width: AVATAR,
-                  height: AVATAR,
-                  borderRadius: AVATAR / 2,
-                  backgroundColor: colors.ink,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {display ? (
-                  <Text variant="screenTitle" color={colors.sheet.ink}>
-                    {initial}
-                  </Text>
-                ) : null}
-              </View>
+              <Avatar initial={display ? initial : ''} size={AVATAR} />
 
               {display ? (
                 <Text variant="screenTitle" align="center" numberOfLines={1} style={{ marginTop: space.s16 }}>

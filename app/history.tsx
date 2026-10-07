@@ -33,6 +33,7 @@ import {
   radius,
   size,
   space,
+  LiveDot,
 } from '@/ui';
 import { money, quantity, when } from '@/format';
 import { useAsync } from '@/data/useAsync';
@@ -141,10 +142,13 @@ function IndexedRecordCard() {
   if (!rec.data) return null;
   const today = new Date(now).toISOString().slice(0, 10);
   return (
-    <SheetCard bordered borderRadius={radius.panel} padding={space.s14} style={{ marginBottom: space.s12 }} testID="history-indexed">
-      <Text variant="footnote" color={colors.ink55}>
-        ON CHAIN · INDEXED BY ENVIO
-      </Text>
+    <SheetCard bordered borderRadius={radius.panel} padding={space.s16} style={{ marginBottom: space.s12 }} testID="history-indexed" tone="accent">
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s8 }}>
+        <LiveDot color={colors.accentHi} pulse={rec.data.synced !== null && rec.data.synced !== undefined} />
+        <Text variant="footnote" color={colors.eyebrow}>
+          ON CHAIN · INDEXED BY ENVIO
+        </Text>
+      </View>
       {indexedLines(rec.data, today).map((line) => (
         <Text key={line} variant="secondarySm" color={colors.ink70} style={{ marginTop: space.s6 }}>
           {line}

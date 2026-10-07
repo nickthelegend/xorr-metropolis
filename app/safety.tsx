@@ -35,6 +35,7 @@ import {
   radius,
   size,
   space,
+  LiveDot,
 } from '@/ui';
 import { shortAddress } from '@/format';
 import {
@@ -457,20 +458,16 @@ export default function Safety() {
           paddingVertical: space.s6,
         }}
       >
-        <View
-          style={{
-            width: DOT,
-            height: DOT,
-            borderRadius: radius.full,
-            backgroundColor:
-              asking || unreadable
+        <LiveDot
+          size={DOT}
+          pulse={!signedOut && !asking && !unreadable && !unusable && !expired && !killed && granted}
+          color={asking || unreadable
                 ? colors.ink30
                 : unusable || expired
                   ? colors.down
                   : killed || !granted
                     ? colors.ink30
-                    : colors.up,
-          }}
+                    : colors.up}
         />
         {/* "Unknown" outranks everything: saying "Not granted" because a read failed is the one claim this must never make. */}
         <Text
@@ -534,7 +531,7 @@ export default function Safety() {
         >
           {/* Today's cap used and the time left, while the permission can trade: a stopped or ended one has neither. */}
           {live ? (
-            <SheetCard borderRadius={radius.panel} padding={space.s16}>
+            <SheetCard borderRadius={radius.panel} padding={space.s18} tone="accent">
               <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                 <Ring
                   fraction={spent}

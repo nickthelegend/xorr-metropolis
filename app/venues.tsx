@@ -98,13 +98,22 @@ export default function Venues() {
             <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s10 }}>
               {venues.length === 1 ? 'ONE VENUE' : `${venues.length} VENUES`}
             </Text>
-            {venues.map((v) => (
-              <SheetCard key={v} bordered borderRadius={radius.panel} padding={space.s14}>
-                <Text variant="footnoteSm" color={colors.ink65}>
-                  {v}
-                </Text>
-              </SheetCard>
-            ))}
+            {venues.map((v) => {
+              // Which venue this is, where the executor says (screen review, 2026-10-07); the address stays in full.
+              const name = params.data?.venueNames?.[v.toLowerCase()];
+              return (
+                <SheetCard key={v} bordered borderRadius={radius.panel} padding={space.s14}>
+                  {name ? (
+                    <Text variant="rowPrimary" style={{ marginBottom: space.s4 }}>
+                      {name}
+                    </Text>
+                  ) : null}
+                  <Text variant="footnoteSm" color={colors.ink65} selectable>
+                    {v}
+                  </Text>
+                </SheetCard>
+              );
+            })}
 
             <Button
               label="What it may pull"

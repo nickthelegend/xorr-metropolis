@@ -161,7 +161,7 @@ export default function Yield() {
                       >
                         <Text
                           variant="control"
-                          color={portion === f ? colors.sheet.ink : colors.ink50}
+                          color={portion === f ? colors.onInk : colors.ink50}
                         >
                           {f === 1 ? 'All' : `${f * 100}%`}
                         </Text>

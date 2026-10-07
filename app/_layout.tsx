@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppPrivyProvider } from '@/auth/PrivyProvider';
 import { PhoneFrame, colors } from '@/ui';
+import { installWebFocusRing } from '@/ui/webFocus';
 import { useRegisterDevice } from '@/notifications/useRegisterDevice';
 import { useNotificationRoute } from '@/notifications/useNotificationRoute';
 import { useHydrateWallet } from '@/wallet/useHydrateWallet';
@@ -135,6 +136,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded) void SplashScreen.hideAsync().catch(() => undefined);
+    // After the first styles are in, so React Native Web's own sheet exists to take the rule (webFocus.ts).
+    if (fontsLoaded) installWebFocusRing();
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;

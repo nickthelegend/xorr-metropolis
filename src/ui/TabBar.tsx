@@ -40,7 +40,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { arrival, duration, timing, useReducedMotion } from './motion';
 import { Press } from './Press';
 import { Text } from './Text';
-import { colors, space } from './tokens';
+import { border, colors, glow, space } from './tokens';
 
 /** The places on the bar. One: Swap and Messages are actions, and are never selected. */
 export type TabKey = 'home';
@@ -159,13 +159,14 @@ export function TabBar({ active, onHome, onSwap, onMessages, unread = 0, hidden 
           height: BAR_H,
           paddingHorizontal: space.s6,
           borderRadius: BAR_H / 2,
-          backgroundColor: colors.surfaceAlt,
-          borderWidth: 1,
-          borderColor: colors.ghostBorder,
+          // A lit capsule floating off the black (2026-10-06), its top edge catching the light like every card's.
+          backgroundColor: colors.capsule,
+          ...border.card,
+          boxShadow: glow.card,
         }}
       >
         <Item label="Home" place selected={home} onPress={onHome} reduced={reduced}>
-          <HomeGlyph color={home ? colors.ink : colors.ink55} />
+          <HomeGlyph color={home ? colors.accentHi : colors.ink55} />
         </Item>
         <Item label="Trade" onPress={onSwap}>
           <SwapGlyph color={colors.ink55} />
@@ -236,7 +237,11 @@ function Item({
               top: 0,
               bottom: 0,
               borderRadius: ITEM_H / 2,
-              backgroundColor: colors.control,
+              // Where you are, in the accent: the one place on the bar with light of its own.
+              backgroundColor: colors.accentSoft,
+              borderWidth: 1,
+              borderColor: colors.accentLine,
+              boxShadow: glow.soft,
             },
             grows,
           ]}

@@ -30,6 +30,9 @@ import { system, type StrategyRunRow } from '@/data/system';
 import { kindLabel, labelFigure } from '@/strategies/ladder';
 import { FillReceipt } from '@/ui/FillReceipt';
 import { routingLine } from '@/ui/fillVenue';
+import { RoutingBars } from '@/ui/RoutingBars';
+import { Glow } from '@/ui/Aurora';
+import { Icon } from '@/design/Icon';
 import { api } from '@/data/api';
 import { ApiError, errorText } from '@/data/apiError';
 import { useMera } from '@/auth/mera/session';
@@ -55,7 +58,7 @@ export default function RunDetail() {
    */
   const { data, loading, error, reload } = useAsync(() => system.runs(200), []);
   const run = (data ?? []).find((r) => r.id === id);
-  const routing = run ? routingLine({ venue: run.venue, compared: run.compared, unit: run.side === 'sell' ? 'USDC' : run.symbol === 'MON' ? 'WMON' : run.symbol }) : null;
+  const routing = run ? routingLine({ venue: run.venue, compared: run.compared, unit: routingUnit(run) }) : null;
 
   return (
     <Screen gutter="none">
@@ -77,14 +80,21 @@ export default function RunDetail() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: space.s30, gap: space.s10 }}
           >
-            <SheetCard bordered borderRadius={radius.panel} padding={space.s18}>
-              <Text variant="footnote" color={colors.ink55} figure={labelFigure(run.kind)}>
-                {run.label.toUpperCase()}
-              </Text>
-              <Text variant="screenTitle" color={toneFor(run.status)} style={{ marginTop: space.s6 }}>
-                {run.status.charAt(0).toUpperCase() + run.status.slice(1)}
-              </Text>
-              <Text variant="secondarySm" color={colors.ink55} style={{ marginTop: space.s8 }}>
+            {/* The outcome, in its own light: green for a fill, red for a failure, the accent while it is pending (2026-10-06). */}
+            <SheetCard bordered borderRadius={radius.panel} padding={space.s18} tone="accent">
+              <Glow color={toneFor(run.status)} strength={0.22} style={{ top: -30, left: -40, right: 120, bottom: -30 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s14 }}>
+                <StatusOrb status={run.status} />
+                <View style={{ flex: 1 }}>
+                  <Text variant="footnote" color={colors.eyebrow} figure={labelFigure(run.kind)}>
+                    {run.label.toUpperCase()}
+                  </Text>
+                  <Text variant="screenTitle" color={toneFor(run.status)} style={{ marginTop: space.s4 }}>
+                    {run.status.charAt(0).toUpperCase() + run.status.slice(1)}
+                  </Text>
+                </View>
+              </View>
+              <Text variant="secondarySm" color={colors.ink55} style={{ marginTop: space.s12 }}>
                 {/* The kind as the library names it — "Recurring buy", not `dca`. */}
                 {run.symbol} · {kindLabel(run.kind)} · {when(new Date(run.at).getTime())}
               </Text>
@@ -106,9 +116,31 @@ export default function RunDetail() {
               </SheetCard>
             ) : null}
 
-            {run.usd !== null ? <Field label="Size" value={money(run.usd)} figure="own" /> : null}
-            {run.units !== null ? <Field label="Units" value={quantity(run.units)} figure="units" /> : null}
-            {run.price !== null ? <Field label="Price" value={price(run.price)} figure="market" /> : null}
+            {/* The three figures side by side in one card, rather than three cards of one line each. */}
+            {run.usd !== null || run.units !== null || run.price !== null ? (
+              <SheetCard bordered borderRadius={radius.panel} padding={space.s14}>
+                <View style={{ flexDirection: 'row' }}>
+                  {run.usd !== null ? <Field label="Size" value={money(run.usd)} figure="own" /> : null}
+                  {run.units !== null ? <Field label="Units" value={quantity(run.units)} figure="units" divided={run.usd !== null} /> : null}
+                  {run.price !== null ? <Field label="Price" value={price(run.price)} figure="market" divided={run.usd !== null || run.units !== null} /> : null}
+                </View>
+              </SheetCard>
+            ) : null}
+
+            {/* What routing was worth, drawn: the venue that filled against the one measured beside it (settle.ts). */}
+            {run.compared && run.compared.units > 0 && run.compared.chosenUnits > 0 ? (
+              <SheetCard bordered borderRadius={radius.panel} padding={space.s18}>
+                <Text variant="eyebrow" style={{ marginBottom: space.s14 }}>
+                  Routing
+                </Text>
+                <RoutingBars venue={run.venue} compared={run.compared} unit={routingUnit(run)} />
+                {routing ? (
+                  <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s14 }} testID="run-routing">
+                    {routing}
+                  </Text>
+                ) : null}
+              </SheetCard>
+            ) : null}
 
             {/*
               The receipt, with the venue it filled at — which this screen recorded all along and did not show. A
@@ -122,12 +154,6 @@ export default function RunDetail() {
             {run.signature ? (
               <FillReceipt signature={run.signature} venue={run.venue} animate={false} />
             ) : null}
-            {/* Where Kuru's book and Uniswap were both measured for this fill: what routing it was worth (settle.ts). */}
-            {routing ? (
-              <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s8 }} testID="run-routing">
-                {routing}
-              </Text>
-            ) : null}
 
             {/* A note only the owner's passkey opens (Mera: a second key from the same passkey, `auth/mera/notes.ts`). */}
             <PrivateNote runId={run.id} />
@@ -139,16 +165,47 @@ export default function RunDetail() {
 }
 
 /** One figure of the run, which says what it is: the size and units are the person's, the price is the market's. */
-function Field({ label, value, figure }: { label: string; value: string; figure: FigureKind }) {
+function Field({ label, value, figure, divided = false }: { label: string; value: string; figure: FigureKind; divided?: boolean }) {
   return (
-    <SheetCard bordered borderRadius={radius.panel} padding={space.s14}>
+    <View style={[{ flex: 1, paddingHorizontal: space.s4 }, divided ? { borderLeftWidth: 1, borderLeftColor: colors.hairlineStrong, paddingLeft: space.s12 } : null]}>
       <Text variant="footnote" color={colors.ink55}>
         {label}
       </Text>
-      <Text variant="rowPrimary" style={{ marginTop: space.s4 }} figure={figure}>
+      <Text variant="rowPrimary" style={{ marginTop: space.s4 }} figure={figure} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
-    </SheetCard>
+    </View>
+  );
+}
+
+/** The unit a run's measures are in: what the buy received, or USDC for a sale. */
+function routingUnit(run: StrategyRunRow): string {
+  return run.side === 'sell' ? 'USDC' : run.symbol === 'MON' ? 'WMON' : run.symbol;
+}
+
+/** A disc that says the outcome at a glance: a check on a fill, a cross on a failure, a ring while it waits. */
+function StatusOrb({ status }: { status: StrategyRunRow['status'] }) {
+  const tone = toneFor(status);
+  const filled = status === 'filled';
+  const failed = status === 'failed';
+  return (
+    <View
+      style={{
+        width: 46,
+        height: 46,
+        borderRadius: 23,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: filled ? colors.upBg : failed ? colors.downBg : colors.accentSoft,
+        borderWidth: 1,
+        borderColor: filled ? 'rgba(43,216,122,0.45)' : failed ? 'rgba(255,69,58,0.45)' : colors.accentLine,
+        boxShadow: `0px 0px 22px ${filled ? 'rgba(43,216,122,0.35)' : failed ? 'rgba(255,69,58,0.35)' : colors.accentGlow}`,
+      }}
+    >
+      <View>
+        <Icon name={filled ? 'check' : failed ? 'close' : 'activity'} size={22} color={tone} strokeWidth={2.4} />
+      </View>
+    </View>
   );
 }
 

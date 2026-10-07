@@ -163,7 +163,7 @@ function Segment({
             selected
               ? light
                 ? colors.sheet.bg
-                : colors.sheet.ink
+                : colors.onInk
               : light
                 ? colors.sheet.muted
                 : colors.ink50

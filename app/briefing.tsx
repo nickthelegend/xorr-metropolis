@@ -70,7 +70,13 @@ export default function Briefing() {
 
       <Fill style={{ marginTop: space.s18 }}>
         {loading && !data ? (
-          <LoadingRows count={3} height={110} />
+          <>
+            {/* The briefing reads the news and each agent's day before it answers — about ten seconds — so say so. */}
+            <Text variant="footnote" color={colors.eyebrow} style={{ marginBottom: space.s10 }}>
+              Reading what moved and what each agent did…
+            </Text>
+            <LoadingRows count={3} height={110} />
+          </>
         ) : error ? (
           <ErrorState error={error} onRetry={reload} />
         ) : (data ?? []).length === 0 ? (

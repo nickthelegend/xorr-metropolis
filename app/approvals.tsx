@@ -171,8 +171,12 @@ function ApprovalRow({
         uint256 with an ellipsis in the middle cannot be compared to anything.
       */}
       {token.none || token.unread ? null : (
-        <Text variant="footnoteSm" color={colors.ink55} style={{ marginTop: space.s6 }}>
-          {token.allowance}
+        <Text variant="footnoteSm" color={colors.ink55} style={{ marginTop: space.s6 }} selectable>
+          {/*
+            An unlimited allowance is the largest number a uint256 holds: 78 digits that told nobody anything and pushed the
+            card's button off the screen (screen review, 2026-10-07). It is named instead — the same fact an explorer shows.
+          */}
+          {token.unlimited ? '2²⁵⁶ − 1 — the most a token can allow' : token.allowance}
         </Text>
       )}
       {canTakeBack ? (

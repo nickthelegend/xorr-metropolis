@@ -52,8 +52,18 @@ export const useChatTheme = create<ChatTheme>()(
  * `useColorScheme` re-renders on its own when the phone's appearance changes — including the automatic switch at dusk —
  * so a drawer left open follows it, and `RoomFade` makes that a dissolve rather than a flash.
  */
+/**
+ * Black, always (2026-10-06). The owner's direction is one theme — black — everywhere, Messages included, so the room no
+ * longer follows the phone or a choice made here. `roomToShow` and the light palette stay for the day a second theme is
+ * wanted; nothing reaches them now.
+ */
 export function useChatRoom(): { room: ChatThemeName; following: boolean } {
+  return { room: 'black', following: false };
+}
+
+/** What the room would be if a choice and the phone's scheme still decided it. Kept with its tests; unused. */
+export function useChosenRoom(): ChatThemeName {
   const chosen = useChatTheme((s) => s.chosen);
   const scheme = useColorScheme();
-  return { room: roomToShow(chosen, scheme), following: chosen === null };
+  return roomToShow(chosen, scheme);
 }

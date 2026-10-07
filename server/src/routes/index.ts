@@ -36,7 +36,7 @@ import { backingDetail } from '../venues/backing-detail.js';
 import { dividendYield } from '../venues/dividend-yield.js';
 import { checkEligibility } from '../solana/eligibility.js';
 import { XSTOCKS, xStockKey } from '../venues/xstocks.js';
-import { ADDRESSES, APPROVABLE_TOKENS, CHAIN_KEY, IS_BASE_MAINNET_STATE, IS_ROBINHOOD, SETTLEMENT_VENUES, explorerTx } from '../evm/chains.js';
+import { ADDRESSES, APPROVABLE_TOKENS, CHAIN_KEY, IS_BASE_MAINNET_STATE, IS_ROBINHOOD, SETTLEMENT_VENUES, SETTLEMENT_VENUE_NAMES, explorerTx } from '../evm/chains.js';
 import { allowanceView, chainAllowance, routerAllowance, routerSpender } from '../evm/allowances.js';
 import { delegateAccount } from '../evm/client.js';
 import { basenameOf } from '../evm/basename.js';
@@ -737,6 +737,7 @@ routes.get('/delegation/params', async (c) => {
     contract: DELEGATION_ADDRESS,
     delegate: delegatePublicKey,
     venues: SETTLEMENT_VENUES,
+    venueNames: SETTLEMENT_VENUE_NAMES,
     token: ADDRESSES.usdcBase,
     /*
      * EVERY token the delegation may need to pull, not just the one it spends.

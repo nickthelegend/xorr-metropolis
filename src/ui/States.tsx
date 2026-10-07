@@ -34,6 +34,7 @@ import { emptyList, type EmptyListKey } from './emptyActions';
 import { Press } from './Press';
 import { SignInPrompt } from './SignIn';
 import { Text } from './Text';
+import { Icon, type IconName } from '@/design/Icon';
 import { duration, timing, useReducedMotion } from './motion';
 import { chart, colors, divider, radius, size, space } from './tokens';
 
@@ -179,6 +180,7 @@ export function ErrorState({
       style={{ paddingVertical: space.s30, gap: space.s14, alignItems: 'center' }}
       accessibilityLiveRegion="polite"
     >
+      <StateMark icon="close" tone={colors.warn} />
       <Text variant="rowPrimary">That did not load.</Text>
       <Text variant="secondary" align="center">
         {failure.message}
@@ -241,6 +243,32 @@ export function ErrorState({
  * The action is optional because some lists genuinely have no next step: an audit trail with
  * nothing in it is waiting on the bot, not on the user.
  */
+/**
+ * The mark above an empty or failed state (2026-10-07). A sentence alone in the middle of a black screen read as a screen
+ * that had not finished drawing; a lit ring with a glyph says "this is the state, on purpose" before a word is read.
+ */
+function StateMark({ icon, tone }: { icon: IconName; tone: string }) {
+  return (
+    <View
+      style={{
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.accentSoft,
+        borderWidth: 1,
+        borderColor: colors.accentLine,
+        boxShadow: `0px 0px 32px ${colors.accentGlow}`,
+      }}
+    >
+      <View>
+        <Icon name={icon} size={22} color={tone} strokeWidth={2} />
+      </View>
+    </View>
+  );
+}
+
 export function EmptyState({
   text,
   actionLabel,
@@ -255,9 +283,10 @@ export function EmptyState({
   return (
     <View
       testID={testID}
-      style={{ paddingVertical: space.s30, alignItems: 'center', gap: space.s12 }}
+      style={{ paddingVertical: space.s30, paddingHorizontal: space.s20, alignItems: 'center', gap: space.s14 }}
     >
-      <Text variant="body" color={colors.ink55} align="center">
+      <StateMark icon="sparkle" tone={colors.accentHi} />
+      <Text variant="body" color={colors.ink65} align="center" style={{ maxWidth: 300 }}>
         {text}
       </Text>
       {actionLabel && onAction ? (
@@ -266,8 +295,18 @@ export function EmptyState({
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
           hitHeight={size.hit}
+          style={{
+            paddingHorizontal: space.s16,
+            paddingVertical: space.s8,
+            borderRadius: radius.full,
+            backgroundColor: colors.accentSoft,
+            borderWidth: 1,
+            borderColor: colors.accentLine,
+          }}
         >
-          <Text variant="control">{actionLabel} ›</Text>
+          <Text variant="control" color={colors.accentHi}>
+            {actionLabel} ›
+          </Text>
         </Press>
       ) : null}
     </View>

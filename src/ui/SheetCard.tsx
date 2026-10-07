@@ -6,13 +6,18 @@
  *
  * §3: shadows are almost none, and a card gets none of them. **No `elevation`.** On
  * Android an elevation paints a grey halo that the true-black background turns into a
- * visible box, and it lifts the card off a surface that is meant to be flush. The 1px
- * `rgba(255,255,255,.06)` border is the whole separation.
+ * visible box, and it lifts the card off a surface that is meant to be flush.
+ *
+ * Lit from above (2026-10-06). A flat #0C0C0D card on true black with a 6% outline had no light in it, and a screen of
+ * them read as stale. A card now falls from a lifted top to a deeper bottom (`gradient.card`) and its outline is brighter
+ * along the top edge (`border.card`) — still no elevation. `tone="accent"` is for the one card that is the point of its
+ * screen: the accent washes in from the top and the rim takes the accent.
  */
 import React from 'react';
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Text';
-import { border, colors, radius, space } from './tokens';
+import { border, colors, gradient, radius, space } from './tokens';
 
 export interface SheetCardProps {
   children?: React.ReactNode;
@@ -26,6 +31,8 @@ export interface SheetCardProps {
   light?: boolean;
   /** Absorbs the leftover height, per the §4 layout law. */
   fill?: boolean;
+  /** `accent`: the one card that is the point of its screen — the accent washes in and takes the rim. */
+  tone?: 'default' | 'accent';
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
@@ -37,9 +44,13 @@ export function SheetCard({
   bordered = true,
   light = false,
   fill = false,
+  tone = 'default',
   style,
   testID,
 }: SheetCardProps) {
+  // A fill the screen chose (a P&L tint, an inset surface) is drawn as it asked; so is a card nested in another.
+  const ownFill = StyleSheet.flatten(style)?.backgroundColor !== undefined;
+  const lit = bordered && !ownFill;
   return (
     <View
       testID={testID}
@@ -50,10 +61,28 @@ export function SheetCard({
           padding,
         },
         fill ? { flex: 1, minHeight: 0 } : null,
-        bordered && !light ? border.card : null,
+        bordered ? (tone === 'accent' ? border.accent : border.card) : null,
         style,
       ]}
     >
+      {lit ? (
+        <LinearGradient
+          colors={light ? gradient.sheet : gradient.card}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { borderRadius: borderRadius - 1 }]}
+        />
+      ) : null}
+      {lit && tone === 'accent' ? (
+        <LinearGradient
+          colors={gradient.cardAccent}
+          start={{ x: 0.2, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { borderRadius: borderRadius - 1 }]}
+        />
+      ) : null}
       {children}
     </View>
   );
@@ -91,7 +120,7 @@ export function BottomSheet({
           borderTopLeftRadius: borderRadius,
           borderTopRightRadius: borderRadius,
         },
-        light ? null : border.card,
+        border.card,
         style,
       ]}
     >

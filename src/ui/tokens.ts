@@ -78,14 +78,53 @@ const scan = {
   scanBg: '#FFFFFF',
 } as const;
 
-/** Light sheet. Auto Close and the order ticket only. */
+/**
+ * The sheet: the order ticket and Auto Close (2026-10-06: black theme only).
+ *
+ * These two screens used to be a white sheet. The owner's direction is black everywhere, so the sheet is now a raised
+ * black — one step up from `bg`, with the white ink of every other screen. The names stay, so the screens that draw
+ * on the sheet did not change; only what the sheet is.
+ */
 const sheet = {
-  bg: '#FFFFFF',
-  ink: '#0B0B0B',
-  muted: '#8A8A90',
-  dim: '#9A9A9F',
-  fill: '#F2F2F5',
-  tick: '#E4E4E9',
+  bg: '#0B0B10',
+  ink: '#FFFFFF',
+  muted: 'rgba(255,255,255,0.52)',
+  dim: 'rgba(255,255,255,0.42)',
+  fill: '#17171E',
+  tick: 'rgba(255,255,255,0.08)',
+} as const;
+
+/**
+ * The accent — xorr's own colour (2026-10-06).
+ *
+ * The app was white, grey and P&L green/red on black, and read as stale: nothing on a screen said which control mattered,
+ * and nothing had depth. One accent family fixes both without touching the product rule — a violet, because it is the one
+ * hue that can be neither profit nor loss nor a warning. It marks the primary action, the live state, a section's eyebrow
+ * and the light the surfaces catch; it never marks an outcome.
+ */
+const accent = {
+  accent: '#8E7BFF',
+  /** Text and lines on black that must read as the accent at small sizes. */
+  accentHi: '#B9ACFF',
+  accentDeep: '#5A3FF0',
+  /** A chip or a selected card's fill. */
+  accentSoft: 'rgba(142,123,255,0.14)',
+  /** A selected card's outline; the primary button's rim. */
+  accentLine: 'rgba(142,123,255,0.42)',
+  /** The light behind a primary action or a hero figure. */
+  accentGlow: 'rgba(118,92,255,0.5)',
+  /** The ambient light at the top of every screen: violet into blue. */
+  aurora1: '#6A47FF',
+  aurora2: '#2D6BFF',
+  aurora3: '#B44DFF',
+  /** A section's eyebrow: the accent, quiet enough to sit above any heading. */
+  eyebrow: 'rgba(185,172,255,0.72)',
+  /** The top edge of a raised surface, where it catches the light. */
+  highlight: 'rgba(255,255,255,0.10)',
+  /** A surface the content scrolls under: the tab bar, a sticky header. */
+  glass: 'rgba(12,12,17,0.78)',
+  /** The tab bar's capsule: a step above `surfaceAlt`, faintly violet, so it floats off the black. */
+  capsule: '#111117',
 } as const;
 
 /**
@@ -95,6 +134,11 @@ const sheet = {
  */
 const ink = {
   ink: '#FFFFFF',
+  /**
+   * Text on a white fill — a selected pill, a segment's thumb, an avatar's initial. It was borrowed from the light sheet's
+   * ink, which stopped being dark when the sheet went black (2026-10-06); it has its own name so it never moves again.
+   */
+  onInk: '#0B0B0B',
   ink70: 'rgba(255,255,255,0.7)',
   ink65: 'rgba(255,255,255,0.65)',
   ink55: 'rgba(255,255,255,0.55)',
@@ -171,8 +215,9 @@ const semantic = {
   goldFill: '#F5CE5F',
   goldInk: '#1A1204',
   goldBg: 'rgba(245,206,95,0.14)',
-  cancelBg: '#E4F7EC',
-  cancelInk: '#16A254',
+  /* On black now (2026-10-06): the pale green that sat on the white sheet, as a dark green chip. */
+  cancelBg: 'rgba(43,216,122,0.14)',
+  cancelInk: '#2BD87A',
   tpZone: 'rgba(22,192,96,0.10)',
   slZone: 'rgba(255,69,58,0.09)',
 } as const;
@@ -197,6 +242,7 @@ const agent = {
 
 export const colors = Object.freeze({
   ...surfaces,
+  ...accent,
   ...ink,
   ...hairline,
   ...semantic,
@@ -242,7 +288,10 @@ export const allocationUnknown = surfaces.switchOff;
 export const border = Object.freeze({
   hairline: { borderWidth: 1, borderColor: colors.hairline },
   hairlineStrong: { borderWidth: 1, borderColor: colors.hairlineStrong },
-  card: { borderWidth: 1, borderColor: colors.cardBorder },
+  /** A card's outline, brighter along the top edge where a raised surface catches the light (2026-10-06). */
+  card: { borderWidth: 1, borderColor: colors.cardBorder, borderTopColor: colors.highlight },
+  /** A card that is the point of its screen: the accent's rim. */
+  accent: { borderWidth: 1, borderColor: colors.accentLine, borderTopColor: 'rgba(185,172,255,0.6)' },
   input: { borderWidth: 1, borderColor: colors.inputBorder },
   ghost: { borderWidth: 1, borderColor: colors.ghostBorder },
   selected: { borderWidth: 1, borderColor: colors.selectedBorder },
@@ -345,6 +394,13 @@ export const duration = Object.freeze({
    * at this it is breathing, and the eye stops going back to it.
    */
   breathe: 3600,
+  /**
+   * A press going in, and coming back (2026-10-06). A control that moves under the thumb is the cheapest life an app has:
+   * in at `press`, back out at `base`. Faster than the interaction scale because it is the touch itself, not what it does.
+   */
+  press: 90,
+  /** The ambient light at the top of a screen drifting, one way and back. Slow enough never to be looked at. */
+  ambient: 7000,
 } as const);
 
 /**
@@ -360,6 +416,37 @@ export const shadow = Object.freeze({
   bloomUp: '0px 0px 10px rgba(22,192,96,0.35)',
   bloomDown: '0px 0px 10px rgba(239,59,54,0.32)',
 } as const);
+
+/**
+ * Gradients (2026-10-06), as `expo-linear-gradient` stop lists, top-left to bottom-right unless a component says otherwise.
+ *
+ * A flat fill was the whole of the old surface language, and it is most of why the screens read as stale: black on black
+ * with a 6% outline has no light in it. A surface now falls from a lifted top to a deeper bottom, the way a real object
+ * lit from above does, and the primary action is the accent's own gradient.
+ */
+export const gradient = Object.freeze({
+  /** The primary action. */
+  primary: ['#A493FF', '#7259FF', '#5236F0'] as const,
+  /** A raised card, top to bottom. */
+  card: ['#14141B', '#0B0B0F'] as const,
+  /** A card that is the point of its screen: the accent washing in from the top. */
+  cardAccent: ['rgba(118,92,255,0.20)', 'rgba(118,92,255,0.04)', 'rgba(11,11,15,0)'] as const,
+  /** A profit, a filled order — P&L only, like `up`. */
+  up: ['#3AEB92', '#16B964'] as const,
+  /** The stop, a loss — P&L and danger only, like `down`. */
+  down: ['#FF6A5F', '#E5302A'] as const,
+  /** The sheet the ticket sits on. */
+  sheet: ['#13131A', '#0A0A0E'] as const,
+});
+
+/** Glows: the accent's light around what matters, as `boxShadow` strings. */
+export const glow = Object.freeze({
+  primary: '0px 10px 32px rgba(110,80,255,0.42)',
+  soft: '0px 0px 48px rgba(110,80,255,0.22)',
+  up: '0px 10px 28px rgba(43,216,122,0.28)',
+  down: '0px 10px 28px rgba(255,69,58,0.32)',
+  card: '0px 16px 40px rgba(0,0,0,0.45)',
+});
 
 /** The agent-orb bloom is derived from that agent's own `c1`. */
 export const orbBloom = (c1: string): string => `0px 14px 40px ${withAlpha(c1, 0.4)}`;
@@ -475,7 +562,7 @@ export const chart = Object.freeze({
     markDash: [3, 3] as const,
     markStroke: 1,
     markInk: 'rgba(255,255,255,0.22)',
-    markInkSheet: 'rgba(11,11,11,0.2)',
+    markInkSheet: 'rgba(255,255,255,0.22)',
   },
   volume: {
     height: 42,

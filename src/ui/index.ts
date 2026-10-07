@@ -88,6 +88,8 @@ export {
   type ButtonVariant,
 } from './Button';
 export { HoldButton, type HoldButtonProps } from './HoldButton';
+export { LiveDot } from './LiveDot';
+export { Aurora, Glow, type GlowProps } from './Aurora';
 export { StopCurtain, type StopCurtainProps, type StopState } from './StopCurtain';
 export { Eyebrow, type EyebrowProps } from './Eyebrow';
 export { BackButton, CloseButton, IconButton, HeaderBar, type IconButtonProps } from './IconButton';

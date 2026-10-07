@@ -22,12 +22,13 @@ import {
   type ViewStyle,
 } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Press } from './Press';
 import { Text } from './Text';
 import { heavyTap } from './haptics';
 import { HOLD_IDLE, holdRemaining, holdStep, type HoldEvent, type HoldState } from './holdToCommit';
 import { duration, holdFill, timing, useReducedMotion } from './motion';
-import { alpha, colors, radius, size, space } from './tokens';
+import { alpha, colors, glow, gradient, radius, size, space } from './tokens';
 
 /** The fill: the button's own red, deepened, so the white label keeps its contrast as the fill passes under it. */
 const FILL = alpha(colors.bg, 0.24);
@@ -182,9 +183,20 @@ export function HoldButton({
           paddingHorizontal: space.s20,
           backgroundColor: disabled ? colors.control : colors.candleDown,
         },
+        // The stop is the one red thing that is not a loss: lit like the primary action, in its own colour (2026-10-06).
+        disabled ? null : { boxShadow: glow.down, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderTopColor: 'rgba(255,255,255,0.3)' },
         style,
       ]}
     >
+      {disabled ? null : (
+        <LinearGradient
+          colors={gradient.down}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          pointerEvents="none"
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+        />
+      )}
       <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, pointerEvents: 'none' }}>
         <Animated.View style={[{ height: '100%', backgroundColor: FILL }, fillStyle]} />
       </View>

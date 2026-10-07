@@ -419,6 +419,19 @@ export const SETTLEMENT_VENUES: readonly `0x${string}`[] = [
   ...(HAS_MAINNET_STATE ? [AAVE_V3_POOL] : []),
 ];
 
+/**
+ * What each settlement venue is, by address (2026-10-07). The Venues screen listed the addresses the contract allows and
+ * nothing else; a person checking them against an explorer still needs to know which one is which.
+ */
+export const SETTLEMENT_VENUE_NAMES: Readonly<Record<string, string>> = Object.fromEntries([
+  ...(UNISWAP ? [[UNISWAP.router.toLowerCase(), 'Uniswap v3 · SwapRouter02']] : []),
+  ...(KURU ? [[KURU.venue.toLowerCase(), 'Kuru · xorr’s KuruVenue in front of the MON/USDC book']] : []),
+  ...(ONEINCH_ENABLED || IS_BASE_MAINNET_STATE || CHAIN_KEY === 'localnet' || CHAIN_KEY === 'base-sepolia'
+    ? [[ADDRESSES.oneInchRouter.toLowerCase(), '1inch · aggregation router']]
+    : []),
+  ...(HAS_MAINNET_STATE ? [[AAVE_V3_POOL.toLowerCase(), 'Aave v3 · pool']] : []),
+]);
+
 /** Where each chain shows a transaction. A record, so a chain added later says where, or does not compile. */
 const EXPLORER_TX: Record<ChainKey, (hash: string) => string> = {
   // A fork shares mainnet's history up to the fork block, so an explorer link is right for a

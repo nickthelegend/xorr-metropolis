@@ -29,6 +29,16 @@ export const pool = new Pool({
   options: `-c xorr.chain_key=${CHAIN_KEY}`,
 });
 
+/*
+ * An idle client whose connection drops — Postgres restarted, a network blip — emits `error` on the pool, and an
+ * `error` event nobody listens to takes the whole process down (2026-10-06: the executor exited mid-run when the local
+ * Postgres restarted, and the app showed "Can't reach xorr" until someone started it again). The pool has already
+ * discarded that client; the next query opens a fresh one. So the error is logged, and the executor keeps serving.
+ */
+pool.on('error', (err) => {
+  console.warn(`[db] an idle connection was lost and will be replaced: ${err.message}`);
+});
+
 export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   text: string,
   params: unknown[] = [],

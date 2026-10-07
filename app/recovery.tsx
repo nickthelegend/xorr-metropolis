@@ -30,6 +30,7 @@ import { usePrivyIdentity } from '@/auth/usePrivyIdentity';
 import { useStore } from '@/state/store';
 import { useKeyExport } from '@/wallet/useKeyExport';
 import { errorText } from '@/data/apiError';
+import { useMera } from '@/auth/mera/session';
 
 export default function Recovery() {
   const goBack = useGoBack();
@@ -39,6 +40,12 @@ export default function Recovery() {
   const setRecoveryBackedUp = useStore((s) => s.setRecoveryBackedUp);
   const done = useStore((s) => s.recoveryBackedUp);
   const keyExport = useKeyExport(wallet?.address);
+  /*
+   * A passkey account has no email and no key to export: the wallet is derived from the passkey each time (Mera). This
+   * screen told such an account "your email is the way back" and offered a Privy key export that has nothing to export
+   * (screen review, 2026-10-07). For it, the way back is the passkey, and the screen says that.
+   */
+  const passkey = useMera().signedIn;
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string>();
 
@@ -65,10 +72,12 @@ export default function Recovery() {
       </View>
 
       <Text variant="onboardingTitle" style={{ marginTop: space.s20 }}>
-        Your email is the way back
+        {passkey ? 'Your passkey is the way back' : 'Your email is the way back'}
       </Text>
       <Text variant="body" color={colors.ink55} style={{ marginTop: space.s10 }}>
-        Sign in with it on any device to open this wallet.
+        {passkey
+          ? 'Sign in with the same passkey on any device and this exact wallet comes back — it is made from the passkey, so there is no key to write down and nothing stored to lose.'
+          : 'Sign in with it on any device to open this wallet.'}
       </Text>
 
       <Fill style={{ marginTop: space.s26 }}>
@@ -81,7 +90,7 @@ export default function Recovery() {
             </Text>
           </SheetCard>
         ) : null}
-        {keyExport.supported ? (
+        {passkey ? null : keyExport.supported ? (
           <>
             <Button label="Export private key" variant="secondary" loading={exporting} onPress={exportKey} />
             <Text variant="footnote" color={colors.ink55} align="center" style={{ marginTop: space.s10 }}>

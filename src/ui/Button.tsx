@@ -22,12 +22,13 @@
  * fact — which is the only reason a button is ever green.
  */
 import React from 'react';
-import { ActivityIndicator, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { FigureKind } from './mask';
 import { Press } from './Press';
 import { DOUBLE_TAP_MS, pressGuardFor } from './pressGuard';
 import { Text } from './Text';
-import { border, colors, radius, size, space } from './tokens';
+import { border, colors, glow, gradient, radius, size, space } from './tokens';
 
 export type ButtonVariant =
   | 'primary'
@@ -42,16 +43,26 @@ interface Skin {
   fg: string;
   bordered: boolean;
   height: number;
+  /** Drawn over `bg`, top-left to bottom-right (2026-10-06). */
+  fill?: readonly [string, string, ...string[]];
+  /** The light around it. */
+  glow?: string;
 }
 
+/*
+ * The skins, 2026-10-06. The primary action was a white pill — clean, and the same weight as every other white thing on
+ * the screen, so nothing said "this one". It is now the accent's gradient with its own light and a lit top edge; the stop
+ * and a filled order keep their meaning (red, green) and gain the same depth. `sheetPrimary` is the primary: the sheet is
+ * black now.
+ */
+const PRIMARY: Skin = { bg: colors.accentDeep, fg: colors.ink, bordered: false, height: size.button, fill: gradient.primary, glow: glow.primary };
 const SKINS: Readonly<Record<ButtonVariant, Skin>> = Object.freeze({
-  primary: { bg: colors.ink, fg: colors.bg, bordered: false, height: size.button },
-  secondary: { bg: colors.control, fg: colors.ink, bordered: false, height: size.button },
-  ghost: { bg: 'transparent', fg: colors.ink65, bordered: true, height: size.ghost },
-  destructive: { bg: colors.candleDown, fg: colors.ink, bordered: false, height: size.buttonLg },
-  success: { bg: colors.up, fg: colors.upInk, bordered: false, height: size.button },
-  /** A primary CTA sitting on the light sheet: the ink inverts. */
-  sheetPrimary: { bg: colors.sheet.ink, fg: colors.sheet.bg, bordered: false, height: size.button },
+  primary: PRIMARY,
+  secondary: { bg: colors.control, fg: colors.ink, bordered: true, height: size.button },
+  ghost: { bg: 'transparent', fg: colors.ink70, bordered: true, height: size.ghost },
+  destructive: { bg: colors.candleDown, fg: colors.ink, bordered: false, height: size.buttonLg, fill: gradient.down, glow: glow.down },
+  success: { bg: colors.up, fg: colors.upInk, bordered: false, height: size.button, fill: gradient.up, glow: glow.up },
+  sheetPrimary: PRIMARY,
 });
 
 const DISABLED: Pick<Skin, 'bg' | 'fg'> = { bg: colors.control, fg: colors.ink35 };
@@ -175,6 +186,8 @@ export function Button({
   const bg = disabled ? DISABLED.bg : (backgroundColor ?? skin.bg);
   const fg = disabled ? DISABLED.fg : (color ?? skin.fg);
   const h = height ?? skin.height;
+  // A colour the screen chose (the gold CTA) is drawn flat, as it asked; a disabled button has no light.
+  const lit = !disabled && !backgroundColor && skin.fill ? skin : null;
 
   return (
     <Press
@@ -194,10 +207,20 @@ export function Button({
           paddingHorizontal: space.s20,
           backgroundColor: bg,
         },
-        skin.bordered && !disabled ? border.ghost : null,
+        skin.bordered && !disabled ? (variant === 'secondary' ? border.card : border.ghost) : null,
+        lit ? { boxShadow: lit.glow, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderTopColor: 'rgba(255,255,255,0.32)' } : null,
         style,
       ]}
     >
+      {lit?.fill ? (
+        <LinearGradient
+          colors={lit.fill}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { borderRadius: radius.sheet }]}
+        />
+      ) : null}
       {loading ? <ActivityIndicator size="small" color={fg} /> : null}
       <Text variant="button" color={fg} numberOfLines={1} figure={figure}>
         {label}

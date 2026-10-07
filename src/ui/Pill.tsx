@@ -52,7 +52,7 @@ export function Pill({
   const fg = isSelected
     ? light
       ? colors.sheet.bg
-      : colors.sheet.ink
+      : colors.onInk
     : light
       ? colors.sheet.muted
       : colors.ink50;
@@ -204,7 +204,7 @@ export function ChoiceChip({
         style,
       ]}
     >
-      <Text variant="control" color={selected ? colors.sheet.ink : colors.ink70} numberOfLines={1}>
+      <Text variant="control" color={selected ? colors.onInk : colors.ink70} numberOfLines={1}>
         {label}
       </Text>
     </Press>

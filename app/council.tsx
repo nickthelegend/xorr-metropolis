@@ -11,7 +11,9 @@ import React, { useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 import { useGoBack } from '@/nav/useGoBack';
 import { Rise } from '@/ui/Rise';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
+  AgentOrb,
   Button,
   EmptyState,
   ErrorState,
@@ -25,10 +27,12 @@ import {
   Tag,
   Text,
   colors,
+  glow,
   money,
   radius,
   size,
   space,
+  type Gradient,
   type TagTone,
 } from '@/ui';
 import { shortAddress, when } from '@/format';
@@ -57,6 +61,55 @@ function voteTone(v: CouncilBallot['vote']): TagTone {
 
 function decisionTone(d: CouncilRound['decision']): string {
   return d === 'approved' ? colors.up : d === 'vetoed' ? colors.down : colors.ink55;
+}
+
+/**
+ * Each seat's face (2026-10-06). The council was four names in a list; it is four characters now, each in one of the
+ * agent identity gradients, the same on the bench at the top and beside every vote it casts.
+ */
+const SEAT_GRADIENT: Record<CouncilBallot['persona'], Gradient> = {
+  'session-desk': colors.agent.momentum,
+  'risk-keeper': colors.agent.drawdown,
+  'trend-reader': colors.agent.earnings,
+  'macro-desk': colors.agent.yield,
+  strategist: colors.agent.strategist,
+};
+const SEAT_SHORT: Record<CouncilBallot['persona'], string> = onMonad
+  ? { 'session-desk': 'Price', 'risk-keeper': 'Risk', 'trend-reader': 'Trend', 'macro-desk': 'Perps', strategist: 'Kimi' }
+  : { 'session-desk': 'Session', 'risk-keeper': 'Risk', 'trend-reader': 'Trend', 'macro-desk': 'Macro', strategist: 'Strategist' };
+const SEATS: readonly CouncilBallot['persona'][] = ['session-desk', 'risk-keeper', 'trend-reader', 'macro-desk', 'strategist'];
+
+function voteColor(v: CouncilBallot['vote']): string {
+  return v === 'yes' ? colors.up : v === 'no' || v === 'veto' ? colors.down : colors.ink28;
+}
+
+/** The bench: every seat's face, the Strategist dimmed when it has no key to sit with. */
+function Bench({ strategistOff }: { strategistOff: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: space.s16 }}>
+      {SEATS.map((seat, i) => {
+        const off = seat === 'strategist' && strategistOff;
+        return (
+          <Rise key={seat} index={i} style={{ alignItems: 'center', gap: space.s6, opacity: off ? 0.35 : 1 }}>
+            <AgentOrb gradient={SEAT_GRADIENT[seat]} size={52} face identity={SEAT_NAMES[seat]} bloom={!off} />
+            <Text variant="secondarySm" color={off ? colors.ink40 : colors.ink70}>
+              {SEAT_SHORT[seat]}
+            </Text>
+          </Rise>
+        );
+      })}
+    </View>
+  );
+}
+
+/** A seat's colour, small, beside its vote. */
+function SeatDot({ seat }: { seat: CouncilBallot['persona'] }) {
+  const g = SEAT_GRADIENT[seat];
+  return (
+    <View style={{ width: 18, height: 18, borderRadius: 9, marginTop: 1, boxShadow: `0px 0px 10px ${g.c1}66` }}>
+      <LinearGradient colors={[g.c1, g.c2]} start={{ x: 0.2, y: 0.1 }} end={{ x: 0.9, y: 1 }} style={{ flex: 1, borderRadius: 9 }} />
+    </View>
+  );
 }
 
 function outcomeLine(r: CouncilRound): string {
@@ -89,7 +142,7 @@ type Roster = readonly Pick<Agent, 'id' | 'personaId' | 'name' | 'wallet'>[] | u
 /** A round this fresh was just convened on this screen: its seats are revealed one by one (FEATURES-100 #25). */
 const REVEAL_WITHIN_MS = 60_000;
 
-function RoundCard({ round, roster }: { round: CouncilRound; roster: Roster }) {
+function RoundCard({ round, roster, latest = false }: { round: CouncilRound; roster: Roster; latest?: boolean }) {
   const p = round.proposal;
   // Each seat arrives in turn and the outcome after them, so a person watches the vote happen. Older rounds are still.
   // The clock is a hook, not `Date.now()` in the render: a render must not read an impure value (it failed lint and CI).
@@ -106,27 +159,47 @@ function RoundCard({ round, roster }: { round: CouncilRound; roster: Roster }) {
   // An executed agent round was signed by that agent's own wallet (individual agents, 2026-09-23).
   const signer = round.outcome === 'executed' && round.txHash ? roundSigner(round.convenedBy, roster) : undefined;
   return (
-    <SheetCard bordered borderRadius={radius.panel} padding={space.s14}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <Text variant="rowPrimary">
+    <SheetCard bordered borderRadius={radius.panel} padding={space.s16} tone={latest ? 'accent' : 'default'}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.s8 }}>
+        <Text variant="rowPrimary" style={{ flexShrink: 1 }}>
           {p.side === 'buy' ? 'Buy' : 'Sell'} {money(p.usd)} {p.symbol}
         </Text>
-        <Text variant="control" color={decisionTone(round.decision)}>
-          {round.summary}
-        </Text>
+        {/* The verdict as a lit chip: the one word on the card everything else explains. */}
+        <View
+          style={{
+            paddingHorizontal: space.s10,
+            paddingVertical: space.s4,
+            borderRadius: radius.card,
+            backgroundColor: round.decision === 'approved' ? colors.upBg : round.decision === 'vetoed' ? colors.downBg : colors.neutralBg,
+            boxShadow: round.decision === 'approved' ? glow.up : undefined,
+          }}
+        >
+          <Text variant="control" color={decisionTone(round.decision)}>
+            {round.summary}
+          </Text>
+        </View>
       </View>
-      <View style={{ marginTop: space.s10, gap: space.s8 }}>
+      {/* The tally, one segment per seat in the order they sat. */}
+      <View style={{ flexDirection: 'row', gap: space.s4, marginTop: space.s12 }}>
+        {round.votes.map((v) => (
+          <View key={v.persona} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: voteColor(v.vote), opacity: v.vote === 'abstain' ? 1 : 0.9 }} />
+        ))}
+      </View>
+      <View style={{ marginTop: space.s14, gap: space.s10 }}>
         {round.votes.map((v, i) =>
           beat(
             i + 1,
             v.persona,
-            <View style={{ flexDirection: 'row', gap: space.s8, alignItems: 'flex-start' }}>
-              <Tag label={v.vote} tone={voteTone(v.vote)} small />
+            <View style={{ flexDirection: 'row', gap: space.s10, alignItems: 'flex-start' }}>
+              <SeatDot seat={v.persona} />
               <View style={{ flex: 1 }}>
-                <Text variant="secondarySm" color={colors.ink}>
-                  {SEAT_NAMES[v.persona]}
-                </Text>
-                <Text variant="footnote" color={colors.ink55}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s8 }}>
+                  <Text variant="secondarySm" color={colors.ink}>
+                    {SEAT_NAMES[v.persona]}
+                  </Text>
+                  <Tag label={v.vote} tone={voteTone(v.vote)} small />
+                </View>
+                <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s2 }}>
                   {v.reason}
                 </Text>
               </View>
@@ -193,6 +266,7 @@ export default function Council() {
             {`The Strategist seat (Kimi) is not configured on this executor — it needs ${strategist.data.needs}. Four desks vote.`}
           </Text>
         ) : null}
+        <Bench strategistOff={strategist.data ? !strategist.data.configured : false} />
         {CHAIN_KEY === 'monad-testnet' ? (
           // No spot venue on Monad testnet: an approved round trades the owner's Perpl desk (`council-executor.ts`).
           <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>
@@ -236,8 +310,8 @@ export default function Council() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: space.s30, gap: space.s10 }}
           >
-            {(data ?? []).map((r) => (
-              <RoundCard key={r.id} round={r} roster={roster.data} />
+            {(data ?? []).map((r, i) => (
+              <RoundCard key={r.id} round={r} roster={roster.data} latest={i === 0} />
             ))}
           </ScrollView>
         )}

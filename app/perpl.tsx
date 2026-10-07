@@ -15,7 +15,7 @@ import React, { useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
-import { Button, ErrorState, HeaderBar, LoadingRows, Screen, Segmented, SheetCard, Tag, Text, colors, money, price, radius, size, space } from '@/ui';
+import { Button, ErrorState, HeaderBar, LoadingRows, Screen, Segmented, SheetCard, Tag, Text, colors, money, price, radius, size, space, Glow } from '@/ui';
 import { CHAIN_KEY, PERPL_DESK_HERE } from '@/chain';
 import { percent } from '@/format';
 import { useAuth } from '@/auth/useAuth';
@@ -241,11 +241,12 @@ export default function PerplRisk() {
 
         {risk.data ? (
           <>
-            <SheetCard bordered borderRadius={radius.panel} padding={space.s14}>
-              <Text variant="footnote" color={colors.ink55}>
+            <SheetCard bordered borderRadius={radius.panel} padding={space.s16} tone="accent">
+              <Glow strength={0.25} style={{ top: -30, left: -40, right: 140, bottom: 10 }} />
+              <Text variant="footnote" color={colors.eyebrow}>
                 OPEN INTEREST
               </Text>
-              <Text variant="screenTitle" style={{ marginTop: space.s4 }}>
+              <Text variant="heroBalance" style={{ marginTop: space.s4 }}>
                 {money(totalOi, { decimals: 0 })}
               </Text>
               <Text variant="secondarySm" color={colors.ink55} style={{ marginTop: space.s6 }}>

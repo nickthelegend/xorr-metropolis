@@ -8,6 +8,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { Button, Fill, HeaderBar, Screen, Text, colors, space } from '@/ui';
+import { TRADE_ROUTE } from '@/nav/buildRoutes';
+import { onMonad } from '@/chain';
 
 export default function NotHere() {
   return (
@@ -24,7 +26,8 @@ export default function NotHere() {
           That screen has nothing behind it here.
         </Text>
         <View style={{ marginTop: space.s16, gap: space.s10 }}>
-          <Button label="Trade stocks" onPress={() => router.replace('/xstocks')} testID="nothere-xstocks" />
+          {/* Where this build trades — Monad lists no stocks, so "Trade stocks" there pointed at a screen that is also not here. */}
+          <Button label={onMonad ? 'See the markets' : 'Trade stocks'} onPress={() => router.replace(TRADE_ROUTE)} testID="nothere-trade" />
           <Button label="Go to your wallet" variant="ghost" onPress={() => router.replace('/')} testID="nothere-home" />
         </View>
       </Fill>

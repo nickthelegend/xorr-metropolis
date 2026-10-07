@@ -33,6 +33,9 @@ import {
   radius,
   size,
   space,
+  Eyebrow,
+  Glow,
+  LiveDot,
 } from '@/ui';
 import { useGrantDelegation } from '@/auth/useGrantDelegation';
 import { chainAccess } from '@/wallet/chainAccess';
@@ -89,7 +92,7 @@ function LiqMeter({ p }: { p: DeskPosition }) {
   return (
     <View style={{ marginTop: space.s6 }}>
       <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.neutralBg, overflow: 'hidden' }}>
-        <View style={{ width: `${fill * 100}%`, height: 6, backgroundColor: tone }} />
+        <View style={{ width: `${fill * 100}%`, height: 6, borderRadius: 3, backgroundColor: tone, boxShadow: `0px 0px 10px ${tone}` }} />
       </View>
       <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>
         Liquidation {px(p.liquidation)} · {share(d * 100)} away
@@ -100,13 +103,16 @@ function LiqMeter({ p }: { p: DeskPosition }) {
 
 function PositionCard({ p, onClose, closing }: { p: DeskPosition; onClose: () => void; closing: boolean }) {
   return (
-    <SheetCard bordered borderRadius={radius.panel} padding={space.s14}>
+    <SheetCard bordered borderRadius={radius.panel} padding={space.s16} tone="accent">
+      {/* The position's P&L in its own light (2026-10-06): the one number on the card that moves with the market. */}
+      <Glow color={p.pnl >= 0 ? colors.up : colors.down} strength={0.18} style={{ top: -20, right: -30, left: 160, bottom: 40 }} />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View style={{ flexDirection: 'row', gap: space.s8, alignItems: 'center' }}>
-          <Text variant="rowPrimary">{p.market}</Text>
+          <LiveDot color={p.long ? colors.up : colors.down} pulse />
+          <Text variant="cardTitleLg">{p.market}</Text>
           <Tag small label={p.long ? 'Long' : 'Short'} tone={p.long ? 'up' : 'down'} />
         </View>
-        <Text variant="rowPrimary" color={p.pnl >= 0 ? colors.up : colors.down}>
+        <Text variant="cardTitleLg" color={p.pnl >= 0 ? colors.up : colors.down}>
           {p.pnl >= 0 ? '+' : '−'}
           {money(Math.abs(p.pnl))}
         </Text>
@@ -276,7 +282,7 @@ export default function Perps() {
         {!d && !desk.error ? <LoadingRows count={2} height={size.rowLg} /> : null}
 
         {d ? (
-          <SheetCard bordered borderRadius={radius.panel} padding={space.s14}>
+          <SheetCard bordered borderRadius={radius.panel} padding={space.s16} tone={d.desk && d.operatorActive ? 'accent' : 'default'}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text variant="rowPrimary">Your desk · {d.network}</Text>
               {d.desk ? (
@@ -501,7 +507,7 @@ export default function Perps() {
 
         {d?.desk && d.accountId !== '0' ? (
           <>
-            <Text variant="control" color={colors.ink55}>Positions</Text>
+            <Eyebrow style={{ marginTop: space.s6 }}>Positions</Eyebrow>
             {d.positions.length === 0 ? (
               <EmptyState text="No open positions. Long or short above, or let an agent do it." />
             ) : (

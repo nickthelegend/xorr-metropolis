@@ -22,11 +22,23 @@
  * six-digit code, the send amount, a grid's bounds — the keypad covers the only control that
  * would accept what was just typed, and without this there is no way to move it. Caught by
  * driving the real app on a simulator; it is invisible on web, where the keyboard is hardware.
+ *
+ * Light and arrival (2026-10-06). Every screen gets the ambient light at its top (`Aurora`) and arrives: its content
+ * fades up a few points as the screen appears, so moving between screens reads as moving rather than as a cut. The layout
+ * keys a screen passes in `style` (centring, a gap) move to the content they arrange, so wrapping it changes nothing else.
  */
-import React from 'react';
-import { Keyboard, Platform, View, type StyleProp, type ViewStyle } from 'react-native';
+import React, { useEffect } from 'react';
+import { Keyboard, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, space } from './tokens';
+import { Aurora } from './Aurora';
+import { arrival, useReducedMotion } from './motion';
+import { colors, duration, space } from './tokens';
+
+/** How far a screen's content travels as it arrives. Less than a section's `Rise`: the whole screen moving is a lot. */
+const ARRIVE_FROM = 10;
+/** The style keys that arrange a screen's children, and so belong to the content box rather than the shell. */
+const LAYOUT_KEYS = ['justifyContent', 'alignItems', 'alignContent', 'gap', 'rowGap', 'columnGap', 'flexDirection', 'flexWrap'] as const;
 
 /** The breathing room design.md folds into its 54px top padding. */
 const TOP_BREATHING_ROOM = space.s10;
@@ -44,8 +56,10 @@ export interface ScreenProps {
   gutter?: 'gutter' | 'sheet' | 'none';
   /** A `TabBar` is rendered inside this screen, so it owns the bottom inset. */
   tabBar?: boolean;
-  /** The light sheet (Auto Close, order ticket). Everything else is true black. */
+  /** The sheet (Auto Close, order ticket): a raised black since 2026-10-06. */
   light?: boolean;
+  /** No ambient light: a screen with a picture of its own at the top (the welcome coin). */
+  dark?: boolean;
   /**
    * Presented as an iOS sheet (`presentation: 'modal'`) rather than pushed.
    *
@@ -65,11 +79,23 @@ export function Screen({
   tabBar = false,
   light = false,
   sheet = false,
+  dark = false,
   style,
   testID,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
   const asSheet = sheet && Platform.OS === 'ios';
+  const reduced = useReducedMotion();
+  const arrived = useSharedValue(0);
+  useEffect(() => {
+    arrived.value = withTiming(1, arrival(duration.enter, reduced));
+  }, [arrived, reduced]);
+  const arriving = useAnimatedStyle(() => ({
+    opacity: arrived.value,
+    transform: [{ translateY: (1 - arrived.value) * ARRIVE_FROM }],
+  }));
+  const flat = StyleSheet.flatten(style) ?? {};
+  const layout = Object.fromEntries(LAYOUT_KEYS.filter((k) => flat[k] !== undefined).map((k) => [k, flat[k]]));
 
   const paddingHorizontal =
     gutter === 'none' ? 0 : gutter === 'sheet' ? space.sheetGutter : space.gutter;
@@ -97,6 +123,7 @@ export function Screen({
         style,
       ]}
     >
+      {dark ? null : <Aurora intensity={light ? 0.6 : 1} />}
       {asSheet ? (
         <View
           style={{
@@ -109,7 +136,7 @@ export function Screen({
           }}
         />
       ) : null}
-      {children}
+      <Animated.View style={[{ flex: 1, minHeight: 0 }, layout, arriving]}>{children}</Animated.View>
     </View>
   );
 }

@@ -131,7 +131,13 @@ export default function Backtest() {
             Whenever a window is on its way, not only the first time. Keeping the last answer up while
             another lookback loaded put one window's numbers under a different lit pill.
           */
-          <LoadingRows count={3} height={size.row} />
+          <>
+            {/* A replay reads every daily close in the window first, from a price service that can be slow; say so. */}
+            <Text variant="footnote" color={colors.eyebrow} style={{ marginBottom: space.s10 }}>
+              Replaying the window on real daily closes…
+            </Text>
+            <LoadingRows count={3} height={size.row} />
+          </>
         ) : error ? (
           /*
             The executor refuses to backtest three of the four agents, and says why in one

@@ -115,8 +115,11 @@ describe('motion — animations.md', () => {
    * its way in here first.
    */
   it('interaction is 150 / 180 / 250; arrival is enter and draw; the skeleton pulses; an orb breathes', () => {
-    const { pulse, enter, draw, breathe, ...interaction } = duration;
+    const { pulse, enter, draw, breathe, press, ambient, ...interaction } = duration;
     expect(Object.values(interaction).sort((a, b) => a - b)).toEqual([150, 180, 250]);
+    // 2026-10-06: a control gives under the thumb, faster than anything it does; the ambient drift is the slowest thing.
+    expect(press).toBeLessThan(150);
+    expect(ambient).toBeGreaterThan(breathe);
     expect(enter).toBe(420);
     expect(draw).toBe(700);
     expect(pulse).toBe(900);
@@ -144,6 +147,11 @@ describe('motion — animations.md', () => {
   //   ValueTimeline   the recorded history revealed L→R     700ms  (arrival; no point ever moves to a new value)
   //   AgentOrb        the agent's stage: breathe / settle  3600ms (thinking) · 900ms (executing) · 250ms (decided, filled)
   //   StopCurtain     the kill switch's own screen         420ms  (the curtain down) · 250ms (the confirm badge)
+  // 2026-10-06, "the UI has no life" — the owner's verdict on the recorded demo:
+  //   Press           a control giving under the thumb     90ms in · 180ms out
+  //   Screen          the whole screen arriving            420ms  (arrival, once per mount)
+  //   LiveDot         a ring leaving a live status dot     1800ms loop (only while live; never on a warning)
+  //   RoutingBars     two venues' bars drawing in          700ms  (arrival)
   // A new entry here means a primitive started animating something the policy does not sanction.
   // Argue it into motion.ts first, or take the animation out.
   it('only the sanctioned primitives animate', () => {
@@ -158,9 +166,13 @@ describe('motion — animations.md', () => {
       'CloseResult.tsx',
       'FillReceipt.tsx',
       'HoldButton.tsx',
+      'LiveDot.tsx',
+      'Press.tsx',
       'Progress.tsx',
       'Rise.tsx',
       'RollingNumber.tsx',
+      'RoutingBars.tsx',
+      'Screen.tsx',
       'Segmented.tsx',
       'States.tsx',
       'StopCurtain.tsx',
@@ -189,7 +201,8 @@ describe('motion — animations.md', () => {
       .filter(({ src }) => /withRepeat/.test(stripComments(src)))
       .map(({ rel }) => rel)
       .sort();
-    expect(looping).toEqual(['AgentOrb.tsx', 'States.tsx', 'TradingTicker.tsx']);
+    // LiveDot (2026-10-06): a live status breathes; it stops the moment the status is anything but live.
+    expect(looping).toEqual(['AgentOrb.tsx', 'LiveDot.tsx', 'States.tsx', 'TradingTicker.tsx']);
   });
 
   /*
@@ -308,9 +321,16 @@ describe('tokens', () => {
     expect(colors.hairline).toBe('rgba(255,255,255,0.05)');
     expect(colors.hairlineStrong).toBe('rgba(255,255,255,0.055)');
     expect(colors.cardBorder).toBe('rgba(255,255,255,0.06)');
-    expect(colors.sheet.bg).toBe('#FFFFFF');
-    expect(colors.sheet.fill).toBe('#F2F2F5');
-    expect(colors.sheet.tick).toBe('#E4E4E9');
+    // The sheet is black since 2026-10-06 (black theme only): a raised black with the same white ink as every screen.
+    expect(colors.sheet.bg).toBe('#0B0B10');
+    expect(colors.sheet.ink).toBe('#FFFFFF');
+    expect(colors.onInk).toBe('#0B0B0B');
+  });
+
+  it('the accent is never a P&L colour', () => {
+    for (const c of [colors.accent, colors.accentHi, colors.accentDeep]) {
+      expect([colors.up, colors.down, colors.warn, colors.candleUp, colors.candleDown]).not.toContain(c);
+    }
   });
 
   it('every agent gradient is a c1/c2 pair', () => {

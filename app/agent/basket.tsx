@@ -15,6 +15,7 @@ import { useGoBack } from '@/nav/useGoBack';
 import { onMonad } from '@/chain';
 import {
   BackButton,
+  EmptyState,
   ErrorState,
   Fill,
   LoadingRows,
@@ -67,9 +68,10 @@ export default function AgentBasket() {
         ) : !state ? (
           <LoadingRows count={4} height={size.rowLg} />
         ) : !state.configured ? (
-          <Text variant="secondary" color={colors.ink55}>
-            {`No basket set. A basket is a list of target weights — ${onMonad ? '40% WETH, 30% WBTC, 30% WMON' : '40% NVDAx, 30% TSLAx, 30% AAPLx'} — that the agent buys and sells to hold, once a sleeve drifts past the band you choose.`}
-          </Text>
+          /* The shared empty state (2026-10-07): a paragraph alone at the top of a black screen read as half-drawn. */
+          <EmptyState
+            text={`No basket set. A basket is a list of target weights — ${onMonad ? '40% WETH, 30% WBTC, 30% WMON' : '40% NVDAx, 30% TSLAx, 30% AAPLx'} — that the agent buys and sells to hold, once a sleeve drifts past the band you choose.`}
+          />
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}

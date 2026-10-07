@@ -139,6 +139,8 @@ export type DelegationParams = {
   contract: string;
   delegate: string;
   venues: string[];
+  /** Each venue's name, by lower-cased address (2026-10-07). An executor older than that sends none. */
+  venueNames?: Record<string, string>;
   token: string;
   tokens?: { symbol: string; address: string }[];
 };
