@@ -195,6 +195,8 @@ export default function Settings() {
           */}
           {/* The three-step explainer, again (ROADMAP-WIN F2): what xorr is, for anyone handed this phone. */}
           <Row title="How xorr works" height={SETTING_ROW} onPress={() => router.push({ pathname: '/how', params: { from: 'settings' } })} testID="settings-how" />
+          {/* Monad's own technology and the sponsors', each read live, each saying where it runs (ROADMAP-WIN F4). */}
+          <Row title="Built on Monad" height={SETTING_ROW} onPress={() => router.push('/monad')} testID="settings-monad" />
           <Row
             title="Explore"
             value={

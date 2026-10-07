@@ -70,7 +70,7 @@ import {
   type SetupStepState,
 } from '@/state/derived';
 import { isAddress, type Address } from 'viem';
-import { pinnedDelegation, CHAIN_KEY, settlementSymbol } from '@/chain';
+import { pinnedDelegation, CHAIN_KEY, onMonad, settlementSymbol } from '@/chain';
 import { api } from '@/data/api';
 import { xStockGainers } from '@/markets/xstockClass';
 import { isPriced, stockName } from '@/markets/catalog';
@@ -80,6 +80,7 @@ import { killSwitchChip } from '@/state/killSwitch';
 import { KillSwitchChip } from '@/ui/KillSwitchChip';
 import { Glow } from '@/ui/Aurora';
 import { Avatar, QuickAction, QuickActions } from '@/ui/QuickAction';
+import { MonadPulse, useMonadPulse } from '@/speed/SpeedReceipt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PERPS_ROUTE, TRADE_ROUTE, shownHere } from '@/nav/buildRoutes';
 import { gradient } from '@/ui/tokens';
@@ -621,6 +622,9 @@ export default function Home() {
           </Rise>
         )}
 
+        {/* The chain under all of it, live, and the way to everything xorr uses of it (ROADMAP-WIN F4). */}
+        {onMonad ? <HomeMonadLine /> : null}
+
         {/*
           Said on Home, before anything asks for a permission (PLAN.md 4.3). Where nothing settles — Base Sepolia, where
           1inch has no deployment — a strategy is watched and never filled, and a person who grants a permission and waits
@@ -989,5 +993,24 @@ function AusdLine() {
     <Text variant="footnote" color={peg.data?.stale ? colors.warn : colors.ink55} style={{ marginTop: space.s6 }}>
       {`In AUSD, Agora’s dollar${pegText}`}
     </Text>
+  );
+}
+
+/** Monad mainnet's head and cadence, live, opening Built on Monad. Nothing until the first read lands. */
+function HomeMonadLine() {
+  const router = useRouter();
+  const pulse = useMonadPulse();
+  if (!pulse?.monad.blockMs) return null;
+  return (
+    <View style={{ marginTop: space.s16, paddingHorizontal: space.gutter }}>
+      <Press onPress={() => router.push('/monad')} accessibilityRole="link" accessibilityLabel="Built on Monad" testID="home-monad">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s8 }}>
+          <MonadPulse pulse={pulse} compact />
+          <Text variant="footnote" color={colors.accentHi}>
+            Built on Monad ›
+          </Text>
+        </View>
+      </Press>
+    </View>
   );
 }

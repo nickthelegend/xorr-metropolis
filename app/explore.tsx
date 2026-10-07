@@ -82,6 +82,7 @@ const GROUPS: Group[] = [
   {
     title: 'Proof',
     items: [
+      { route: '/monad', title: 'Built on Monad', detail: 'What only Monad has, read live' },
       { route: '/verify', title: 'Verification', detail: 'Live checks, with evidence' },
       { route: '/judge', title: 'Check it yourself', detail: 'Every claim, run again' },
       { route: '/sponsors', title: 'How it works', detail: 'The tech behind xorr' },

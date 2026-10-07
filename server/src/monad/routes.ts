@@ -14,6 +14,12 @@ import { perplRisk } from './perpl-risk.js';
 import { CHAINLINK_MONAD, readFeed, type ChainlinkSymbol } from './chainlink.js';
 import { chainCadence, monadPulse, speedReceipt } from './speed.js';
 import { commitStream } from './commits.js';
+import { monadNative, txpoolStatus } from './native.js';
+import { sponsorsLive } from './sponsors-live.js';
+import { checkPasskey, issueChallenge, PasskeyCheckError, type Assertion } from './passkey-p256.js';
+import { monadMainnet } from './mainnet.js';
+import { publicClient } from '../evm/client.js';
+import type { Hex } from 'viem';
 import { currentWallet } from '../routes/wallet-context.js';
 import { one } from '../db/index.js';
 import { CHAIN_KEY } from '../evm/chains.js';
@@ -66,6 +72,37 @@ monadRoutes.get('/monad/pulse', async (c) => c.json(await monadPulse()));
  * answers empty and fills on the next poll; a minute with no asks closes it.
  */
 monadRoutes.get('/monad/commits', (c) => c.json(commitStream().snapshot()));
+
+/**
+ * The rest of what xorr uses of Monad, read live (`native.ts`): the staking precompile, P256VERIFY, txpool status, the
+ * sync send, the reserve precompile, the canonical contracts — each from Monad mainnet and from the executor's own chain,
+ * so the screen can say where each runs. Public: every reading is of a public chain.
+ */
+monadRoutes.get('/monad/native', async (c) => c.json(await monadNative()));
+
+/** The sponsors' technology on Monad, each with a reading made now (`sponsors-live.ts`). Public, like the prices it reads. */
+monadRoutes.get('/monad/sponsors', async (c) => c.json(await sponsorsLive()));
+
+/** Monad's view of a transaction before it is in a block, on the executor's chain and on mainnet (anvil has none). */
+monadRoutes.get('/monad/txpool/:hash', async (c) => {
+  const hash = c.req.param('hash');
+  if (!/^0x[0-9a-fA-F]{64}$/.test(hash)) return c.json({ error: 'bad_hash', detail: 'A transaction hash is 0x and 64 hex characters.' }, 400);
+  const [executor, mainnet] = await Promise.all([txpoolStatus(publicClient, hash as Hex), txpoolStatus(monadMainnet(), hash as Hex)]);
+  return c.json({ executor, mainnet });
+});
+
+/** A passkey checked by Monad's P256VERIFY (`passkey-p256.ts`): a challenge to sign, then the check. */
+monadRoutes.post('/monad/p256/challenge', (c) => c.json(issueChallenge()));
+monadRoutes.post('/monad/p256/verify', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { assertions?: Assertion[]; publicKey?: Hex } | null;
+  if (!body || !Array.isArray(body.assertions)) return c.json({ error: 'bad_assertion', detail: 'Send {assertions: [{authenticatorData, clientDataJSON, signature}], publicKey?}.' }, 400);
+  try {
+    return c.json(await checkPasskey({ assertions: body.assertions, publicKey: body.publicKey }, { mainnet: monadMainnet(), executor: publicClient }));
+  } catch (e) {
+    if (e instanceof PasskeyCheckError) return c.json({ error: e.code, detail: e.message }, 400);
+    throw e;
+  }
+});
 
 monadRoutes.get('/speed/:tx', async (c) => {
   const w = await currentWallet(c);

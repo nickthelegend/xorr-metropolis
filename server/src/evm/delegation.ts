@@ -21,6 +21,13 @@ import { markBroadcast } from '../http/request-id.js';
 import { ADDRESSES, IS_MONAD, SETTLEMENT_VENUES } from './chains.js';
 import { broadcast } from './send.js';
 import { withHeadroom } from './gas-limit.js';
+import { txpoolStatus } from '../monad/native.js';
+
+/** Whether Monad's txpool holds `hash`: any status but unknown. False on a node without the method. */
+async function inMonadTxpool(hash: Hex): Promise<boolean> {
+  const s = await txpoolStatus(publicClient, hash);
+  return s.ok && !/unknown/i.test(s.status);
+}
 import 'dotenv/config';
 
 export const DELEGATION_ADDRESS = (process.env.DELEGATION_ADDRESS ??
@@ -509,10 +516,17 @@ export async function waitForReceipt(
    * unknown after `lookupMs` is absent, which keeps the check this function exists for.
    */
   const deadline = Date.now() + lookupMs;
-  let known = await publicClient.getTransaction({ hash }).catch(() => undefined);
+  /*
+   * On Monad `eth_getTransactionByHash` does not return a PENDING transaction — only one already in a block — so a hash
+   * the node holds but has not included would read as absent. Monad's own `txpool_statusByHash` answers for those
+   * (MONAD-TECH item 3); the fork has no such method, and there every send is mined at once anyway.
+   */
+  const lookup = async () =>
+    (await publicClient.getTransaction({ hash }).catch(() => undefined)) ?? (IS_MONAD && (await inMonadTxpool(hash)) ? true : undefined);
+  let known = await lookup();
   while (!known && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 1_000));
-    known = await publicClient.getTransaction({ hash }).catch(() => undefined);
+    known = await lookup();
   }
   if (!known) return undefined;
 

@@ -39,6 +39,10 @@ const PUBLIC_PATHS = new Set([
   /** Monad mainnet's head, its measured block cadence and gas, and Ethereum's gas for comparison: facts about public chains. */
   '/monad/pulse',
   '/monad/commits',
+  '/monad/native',
+  '/monad/sponsors',
+  '/monad/p256/challenge',
+  '/monad/p256/verify',
   // How a signed-out person becomes signed in with a passkey (`auth/passkey-session.ts`).
   '/auth/passkey/challenge',
   '/auth/passkey/session',
@@ -91,7 +95,7 @@ const PUBLIC_PATHS = new Set([
  * under `/strategies`, which is NOT public: that one is the caller's own live strategies.
  */
 // `/monad/feed/` — a public Chainlink price by symbol, like the rest of `/monad/*`.
-const PUBLIC_PREFIXES = ['/perp/', '/strategies/library', '/monad/feed/'];
+const PUBLIC_PREFIXES = ['/perp/', '/strategies/library', '/monad/feed/', '/monad/txpool/'];
 
 /**
  * The public surface, published.

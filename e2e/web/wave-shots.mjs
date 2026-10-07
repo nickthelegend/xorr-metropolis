@@ -100,6 +100,23 @@ if (FEATURES.some((f) => f !== 'f2' && f !== 'm1')) {
   await v(page.getByText(/^Bought /)).waitFor({ timeout: T.chain });
 }
 
+// Built on Monad (F4 and MONAD-TECH items 1–8): Home's live line, the native items, a passkey checked by 0x0100, sponsors.
+if (FEATURES.includes('f4')) {
+  await go('/');
+  await v(page.getByTestId('home-monad')).waitFor({ timeout: T.ui });
+  await shot('f4-home-monad-line', 'home-monad');
+  await v(page.getByTestId('home-monad')).click();
+  await v(page.getByTestId('commit-stats')).waitFor({ timeout: T.ui });
+  await v(page.getByTestId('monad-item-staking')).waitFor({ timeout: T.ui });
+  await shot('f4-monad-top');
+  await v(page.getByTestId('monad-passkey-check')).click();
+  await v(page.getByTestId('monad-passkey-result')).waitFor({ timeout: T.ui });
+  await shot('f4-monad-passkey', 'monad-passkey-result');
+  await shot('f4-monad-staking-gas', 'monad-item-gas');
+  await shot('f4-monad-contracts', 'monad-item-contracts');
+  await shot('f4-monad-sponsors', 'monad-sponsor-envio');
+}
+
 // The fill's two timers and Monad's own pipeline under them (MONAD-TECH items 1 and 2).
 if (FEATURES.includes('m2')) {
   await go('/runs');
