@@ -91,17 +91,18 @@ export function SpeedReceipt({ tx }: { tx: string }) {
       ) : null}
       {monad ? (
         <View style={{ marginTop: space.s14, gap: space.s8 }} testID="speed-cost">
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Text variant="rowPrimary" style={{ flexShrink: 1 }}>
-              {`${monad} on Monad`}
-              {d.monadGasGwei ? (
-                <Text variant="secondarySm" color={colors.ink55}>{` at ${d.pricedAt === 'mainnet' ? 'mainnet’s ' : ''}${Number(d.monadGasGwei).toLocaleString('en-US', { maximumSignificantDigits: 3 })} gwei`}</Text>
-              ) : null}
-            </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.s10 }}>
+            <Text variant="rowPrimary" style={{ flexShrink: 1 }}>{`${monad} on Monad`}</Text>
             {x ? (
-              <Text variant="control" color={colors.accentHi}>{`${x.toLocaleString('en-US')}× less`}</Text>
+              <Text variant="control" color={colors.accentHi} numberOfLines={1}>{`${x.toLocaleString('en-US')}× less`}</Text>
             ) : null}
           </View>
+          {d.monadGasGwei ? (
+            // The price on its own line: beside the cost it wrapped "gwei" onto a line of its own at desktop width.
+            <Text variant="footnote" color={colors.ink55} style={{ marginTop: -space.s4 }}>
+              {`the gas declared, at ${d.pricedAt === 'mainnet' ? 'Monad mainnet’s ' : ''}${Number(d.monadGasGwei).toLocaleString('en-US', { maximumSignificantDigits: 3 })} gwei`}
+            </Text>
+          ) : null}
           {share !== null ? (
             <View style={{ gap: space.s6 }}>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.control }}>
