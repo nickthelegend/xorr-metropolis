@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { cheaperBy, groupDigits, tinyUsd } from './speed';
+import { cheaperBy, groupDigits, msWords, tinyUsd } from './speed';
 import { voteToFillSec } from './council';
 
 // The helpers under test never call the executor; the client and what it imports are left out (vi.mock is hoisted).
@@ -34,5 +34,13 @@ describe('voteToFillSec — a round, convened to confirmed', () => {
   it('a round that sent nothing has no fill time', () => {
     expect(voteToFillSec({ outcome: 'not_executed', createdAt: '2026-10-07T10:00:00.000Z', settledAt: '2026-10-07T10:00:00.500Z' })).toBeNull();
     expect(voteToFillSec({ outcome: 'executed', createdAt: '2026-10-07T10:00:00.000Z', settledAt: null })).toBeNull();
+  });
+});
+
+describe('msWords', () => {
+  it('ms under a second, seconds from one', () => {
+    expect(msWords(422)).toBe('422 ms');
+    expect(msWords(1337)).toBe('1.3 s');
+    expect(msWords(null)).toBeNull();
   });
 });

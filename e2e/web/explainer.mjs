@@ -35,6 +35,11 @@ for (const [i, title] of steps.entries()) {
     // Monad mainnet's cadence, live: wait for the read rather than photograph "Reading the chain…".
     await v(page.getByText(/^\d+ ms$/)).waitFor({ timeout: 30_000 }).catch(() => undefined);
     console.log(`✓ step 3: ${(await v(page.getByTestId('how-monad')).innerText()).replace(/\n+/g, ' · ').slice(0, 160) || card}`);
+    // Monad's commit states, live: real blocks going final, timed (MONAD-TECH item 1).
+    await v(page.getByTestId('commit-stats')).waitFor({ timeout: 30_000 }).catch(() => fail('no live commit states on step 3'));
+    const chips = await page.getByTestId('commit-chip').filter({ visible: true }).count();
+    if (chips < 3) await fail(`the commit strip shows ${chips} blocks`);
+    console.log(`✓ commit states: ${chips} blocks · ${(await v(page.getByTestId('commit-stats')).innerText()).slice(0, 120)}`);
   } else {
     console.log(`✓ step ${i + 1}: ${title}`);
   }

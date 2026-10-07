@@ -28,7 +28,28 @@ export type SpeedReceipt = {
   pulse: Pulse;
 };
 
+/** One Monad block proposal as the commit-state stream showed it (`server/src/monad/commits.ts`). */
+export type CommitState = 'Proposed' | 'Voted' | 'Finalized' | 'Verified';
+export type CommitBlock = {
+  number: number;
+  blockId: string;
+  hash: string;
+  gasUsed: number;
+  state: CommitState;
+  /** ms after Proposed at which each later state arrived; null when the proposal itself was not seen. */
+  ms: { Voted: number | null; Finalized: number | null; Verified: number | null } | null;
+};
+export type Commits = {
+  network: string;
+  live: boolean;
+  error: string | null;
+  blocks: CommitBlock[];
+  stats: { samples: number; votedMs: number | null; finalizedMs: number | null; verifiedMs: number | null };
+};
+
 export const speed = {
+  /** Monad mainnet's newest blocks moving through Proposed → Voted → Finalized → Verified, timed. Public. */
+  commits: () => api.get<Commits>('/monad/commits'),
   /** Monad mainnet now: head block, measured block interval, gas; Ethereum's gas for comparison. Public. */
   pulse: () => api.get<Pulse>('/monad/pulse'),
   /** One of your fills: its ms from broadcast to receipt, block, gas, and cost here against Ethereum. */
@@ -54,4 +75,10 @@ export function cheaperBy(monadUsd: number | null, ethereumUsd: number | null): 
   if (!monadUsd || !ethereumUsd || !(monadUsd > 0) || !(ethereumUsd > monadUsd)) return null;
   const x = ethereumUsd / monadUsd;
   return x >= 100 ? Math.round(x / 10) * 10 : x >= 10 ? Math.round(x) : Math.round(x * 10) / 10;
+}
+
+/** "480 ms" under a second, "1.4 s" from one up; null stays null. */
+export function msWords(ms: number | null | undefined): string | null {
+  if (ms === null || ms === undefined || !Number.isFinite(ms)) return null;
+  return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 })} s`;
 }

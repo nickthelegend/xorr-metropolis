@@ -13,6 +13,7 @@ import { perplContext } from './perpl.js';
 import { perplRisk } from './perpl-risk.js';
 import { CHAINLINK_MONAD, readFeed, type ChainlinkSymbol } from './chainlink.js';
 import { chainCadence, monadPulse, speedReceipt } from './speed.js';
+import { commitStream } from './commits.js';
 import { currentWallet } from '../routes/wallet-context.js';
 import { one } from '../db/index.js';
 import { CHAIN_KEY } from '../evm/chains.js';
@@ -58,6 +59,13 @@ monadRoutes.get('/monad/perpl/risk', async (c) => {
  * are facts about a public chain — and `/speed/:tx` is a fill of the caller's own, priced at the pulse's rates.
  */
 monadRoutes.get('/monad/pulse', async (c) => c.json(await monadPulse()));
+
+/**
+ * Monad mainnet's commit states, live (`commits.ts`): the newest blocks going Proposed → Voted → Finalized → Verified,
+ * each timed from its proposal, and the medians. Public, like the pulse. The first ask opens the subscription, so it
+ * answers empty and fills on the next poll; a minute with no asks closes it.
+ */
+monadRoutes.get('/monad/commits', (c) => c.json(commitStream().snapshot()));
 
 monadRoutes.get('/speed/:tx', async (c) => {
   const w = await currentWallet(c);

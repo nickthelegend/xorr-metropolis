@@ -66,8 +66,18 @@ if (FEATURES.includes('f2')) {
   }
 }
 
+// Monad's commit states on the explainer's third step (MONAD-TECH item 1): real mainnet blocks going final, timed.
+if (FEATURES.includes('m1')) {
+  await go('/welcome');
+  await v(page.getByTestId('welcome-start')).click({ timeout: T.chain });
+  for (const n of [1, 2]) await v(page.getByTestId(`how-next-${n}`)).click({ timeout: T.ui });
+  await v(page.getByTestId('commit-stats')).waitFor({ timeout: T.ui });
+  await page.waitForTimeout(1_500);
+  await shot('m1-commit-strip');
+}
+
 // A real account with one fill, for every feature that shows one (all but the explainer).
-if (FEATURES.some((f) => f !== 'f2')) {
+if (FEATURES.some((f) => f !== 'f2' && f !== 'm1')) {
   await go('/wallet');
   await page.getByTestId('passkey-create').click({ timeout: T.chain });
   await v(page.getByText('Continue — add funds', { exact: true })).click({ timeout: T.chain });

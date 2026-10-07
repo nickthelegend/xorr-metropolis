@@ -56,6 +56,7 @@ export const PUBLIC_PATHS: readonly string[] = [
   '/monad/perpl',
   '/monad/perpl/risk',
   '/monad/pulse',
+  '/monad/commits',
   '/auth/passkey/challenge',
   '/auth/passkey/session',
   '/perps/markets',

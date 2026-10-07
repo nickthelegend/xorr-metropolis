@@ -14,6 +14,7 @@ import { Glow, LiveDot, SheetCard, Text, colors, radius, space } from '@/ui';
 import { useAsync } from '@/data/useAsync';
 import { usePoll } from '@/data/usePoll';
 import { cheaperBy, groupDigits, speed, tinyUsd, type Pulse } from '@/data/speed';
+import { CommitStrip } from './CommitStrip';
 
 /** One line of Monad mainnet, live: head block and measured cadence. Renders nothing until it has both. */
 export function MonadPulse({ pulse, compact = false }: { pulse: Pulse | undefined; compact?: boolean }) {
@@ -120,6 +121,10 @@ export function SpeedReceipt({ tx }: { tx: string }) {
       ) : null}
       <View style={{ marginTop: space.s14 }}>
         <MonadPulse pulse={pulse} />
+      </View>
+      {/* Final, not just mined: Monad's own blocks going through consensus, live (MONAD-TECH item 1). */}
+      <View style={{ marginTop: space.s14 }}>
+        <CommitStrip count={4} />
       </View>
     </SheetCard>
   );

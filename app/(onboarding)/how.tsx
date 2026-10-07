@@ -12,12 +12,12 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { AgentOrb, Button, Fill, Glow, LiveDot, Press, Screen, SheetCard, Text, colors, glow, radius, size, space } from '@/ui';
+import { AgentOrb, Button, Fill, Glow, Press, Screen, SheetCard, Text, colors, glow, radius, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { Icon, type IconName } from '@/design/Icon';
 import { useStore } from '@/state/store';
-import { groupDigits } from '@/data/speed';
 import { useMonadPulse } from '@/speed/SpeedReceipt';
+import { CommitStrip } from '@/speed/CommitStrip';
 
 const SEATS = [
   { name: 'Price Desk', short: 'Price', g: colors.agent.momentum },
@@ -99,7 +99,6 @@ function Step({ step }: { step: number }) {
     );
   }
   const ms = pulse?.monad.blockMs;
-  const block = groupDigits(pulse?.monad.block);
   return (
     <>
       <Rise index={0}>
@@ -118,12 +117,10 @@ function Step({ step }: { step: number }) {
               Reading the chain…
             </Text>
           )}
-          {block ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s8, marginTop: space.s12 }}>
-              <LiveDot color={colors.accentHi} pulse />
-              <Text variant="secondarySm" color={colors.ink70}>{`Block ${block}`}</Text>
-            </View>
-          ) : null}
+          {/* The newest blocks going final, from Monad's commit-state stream: the 300 ms, watched rather than stated. */}
+          <View style={{ marginTop: space.s14 }}>
+            <CommitStrip count={4} />
+          </View>
           <View
             style={{
               marginTop: space.s16,
