@@ -33,13 +33,15 @@ const OUT_DIR = process.env.OUT_DIR ?? 'docs/demo/flows';
  */
 const FLOWS = [
   ['00-full-tour', null],
-  ['01-onboarding-passkey', ['open', 'passkey', 'stateless']],
+  ['01-onboarding-passkey', ['explainer', 'open', 'passkey', 'stateless']],
   ['02-funding', ['fund']],
   ['03-permission-and-council', ['grant', 'council']],
   ['04-buy-kuru-or-uniswap', ['markets', 'buy and route']],
   ['05-perpl-desk-long-and-close', ['perps desk', 'long and exits', 'risk']],
   ['06-history-envio', ['history']],
   ['07-stop', ['stop']],
+  ['08-gauntlet', ['gauntlet']],
+  ['09-built-on-monad', ['built on monad']],
 ];
 /** Each video's height: 1080 lines at most, H.264, so it plays anywhere and stays small. */
 const HEIGHT = 1080;
@@ -157,12 +159,29 @@ for (let ok = 0, i = 0; ok < 3 && i < 120; i++) {
 
 let landed = 0;
 let heldAtLanding = 0;
-await beat('open', async () => {
-  await wait(page.goto(`${WEB}/wallet`, { waitUntil: 'domcontentloaded', timeout: 180_000 }));
-  await wait(page.getByTestId('passkey-create').waitFor({ timeout: 180_000 }));
+// The first minute a judge sees (ROADMAP-WIN F2): what xorr is, then Monad's blocks going final, live (MONAD-TECH 1).
+await beat('explainer', async () => {
+  await wait(page.goto(`${WEB}/welcome`, { waitUntil: 'domcontentloaded', timeout: 180_000 }));
+  await wait(v(page.getByTestId('welcome-start')).waitFor({ timeout: 180_000 }));
   cuts.push([0, now()]); // the blank page and the first load
   await caption('xorr on Monad', 'A council of AI agents trades for you — inside a limit the chain enforces. Recorded live on a fork of Monad mainnet.');
-  await hold(5);
+  await hold(4);
+  await v(page.getByTestId('welcome-start')).click({ timeout: T.ui });
+  await caption('How xorr works', 'Three steps before sign-up: a council votes on every trade, inside a limit the chain enforces, on Monad.');
+  await hold(2.5);
+  await v(page.getByTestId('how-next-1')).click({ timeout: T.ui });
+  await hold(2.5);
+  await v(page.getByTestId('how-next-2')).click({ timeout: T.ui });
+  await wait(v(page.getByTestId('commit-stats')).waitFor({ timeout: T.ui }));
+  const stats = await v(page.getByTestId('commit-stats')).innerText();
+  const m = stats.match(/voted in ([\d.]+ m?s), final in ([\d.]+ m?s)/);
+  await caption('Monad mainnet, live', m ? `Each block Proposed → Voted → Final, from Monad’s own stream: voted in ${m[1]}, final in ${m[2]}.` : 'Each block Proposed → Voted → Final, from Monad’s own stream.');
+  await hold(5.5);
+});
+
+await beat('open', async () => {
+  await go('/wallet', () => page.getByTestId('passkey-create'));
+  await hold(1);
 });
 
 await beat('passkey', async () => {
@@ -241,6 +260,20 @@ await beat('buy and route', async () => {
   await wait(v(page.getByText(/^Filled$/)).waitFor({ timeout: T.ui }));
   const routing = await page.getByTestId('run-routing').innerText({ timeout: 10_000 }).catch(() => null);
   await caption('What routing was worth', routing ?? 'One venue measured for this fill.');
+  await hold(5);
+  // The speed receipt (ROADMAP-WIN F1, MONAD-TECH 2): the fill's time with its receipt from the send, and its gas on Monad.
+  const card = v(page.getByTestId('speed-receipt'));
+  await wait(card.waitFor({ timeout: T.ui }));
+  await card.scrollIntoViewIfNeeded();
+  const ms = await v(page.getByTestId('speed-ms')).innerText().catch(() => '');
+  const cost = await v(page.getByTestId('speed-cost')).innerText().catch(() => '');
+  const exec = ms.match(/executed in ([\d,]+ ms)/)?.[1];
+  const usd = cost.match(/(\$[\d.]+) on Monad/)?.[1];
+  const x = cost.match(/([\d,]+)× less/)?.[1];
+  await caption(
+    'The speed receipt',
+    `${exec ? `Executed in ${exec} on the fork, its receipt returned with the send. ` : ''}${usd ? `Its gas: ${usd} on Monad${x ? `, ${x}× less than the same gas on Ethereum` : ''}.` : ''}`.trim() || 'Every fill carries its speed and its cost.',
+  );
   await hold(6);
 });
 
@@ -261,12 +294,11 @@ await beat('council', async () => {
       : `${verdict.replace(/\.$/, '')} — so nothing was sent. The council is the brake as well as the trigger.`,
   );
   await hold(4);
-  for (let i = 0; i < 3; i++) {
-    await page.mouse.wheel(0, 380);
-    await hold(1.6);
-  }
-  const kimiOff = await page.getByTestId('council-strategist-off').isVisible().catch(() => false);
-  await caption('The Strategist seat', kimiOff ? 'Kimi decides split rounds when its key is set. Here it has none, and the screen says so — no stand-in vote.' : 'Kimi weighs the four desks and decides split rounds. It cannot veto.');
+  // The replay (ROADMAP-WIN F3): the round again, seat by seat, with what each desk read. Played, not cut.
+  await v(page.getByTestId('council-replay')).click({ timeout: T.ui });
+  await wait(v(page.getByTestId('replay-proposal')).waitFor({ timeout: T.ui }));
+  await caption('Replay', 'The round again, seat by seat: what each desk read when it voted, then the verdict and what the chain did.');
+  await v(page.getByTestId('replay-outcome')).waitFor({ timeout: 30_000 });
   await hold(3);
 });
 
@@ -335,6 +367,31 @@ await beat('history', async () => {
     await wait(page.waitForTimeout(3000));
   }
   throw new Error('History never showed the indexed record');
+});
+
+// The research behind every strategy the agents run (ROADMAP-WIN F5).
+await beat('gauntlet', async () => {
+  await go('/gauntlet', () => v(page.getByTestId('gauntlet-funnel')));
+  await caption('The strategy gauntlet', '313 strategies backtested, then tested on data they never saw. 10 survived — and each of the rest says where it fell.');
+  await hold(5);
+});
+
+// Everything xorr uses of Monad itself, read live (ROADMAP-WIN F4, MONAD-TECH 1–8).
+await beat('built on monad', async () => {
+  await go('/monad', () => v(page.getByTestId('monad-item-commits')));
+  await caption('Built on Monad', 'What xorr uses of Monad itself — each read live, each saying where it runs.');
+  await hold(3);
+  await v(page.getByTestId('monad-passkey-check')).scrollIntoViewIfNeeded();
+  await v(page.getByTestId('monad-passkey-check')).click({ timeout: T.ui });
+  await wait(v(page.getByTestId('monad-passkey-result')).waitFor({ timeout: T.ui }));
+  await v(page.getByTestId('monad-passkey-result')).scrollIntoViewIfNeeded();
+  await caption('Your passkey, checked by Monad', 'The passkey signs a challenge, and Monad’s P256 precompile verifies the signature — on mainnet and on the fork.');
+  await hold(4.5);
+  await v(page.getByTestId('monad-item-staking')).scrollIntoViewIfNeeded();
+  await caption('Staking and x402', 'Native staking read from the 0x1000 precompile; other agents pay per call for the council’s read through Monad’s x402 facilitator.');
+  await hold(3);
+  await v(page.getByTestId('monad-item-x402')).scrollIntoViewIfNeeded();
+  await hold(2.5);
 });
 
 await beat('stop', async () => {

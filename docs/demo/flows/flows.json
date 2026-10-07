@@ -1,111 +1,134 @@
 {
-  "recorded": "2026-10-07T12:44:05.548Z",
+  "recorded": "2026-10-07T20:38:11.248Z",
   "beats": [
     {
+      "name": "explainer",
+      "at": 3.04,
+      "end": 22.532
+    },
+    {
       "name": "open",
-      "at": 3.044,
-      "end": 9.091
+      "at": 22.533,
+      "end": 24.707
     },
     {
       "name": "passkey",
-      "at": 9.091,
-      "end": 12.238
+      "at": 24.707,
+      "end": 27.826
     },
     {
       "name": "fund",
-      "at": 12.238,
-      "end": 18.135
+      "at": 27.826,
+      "end": 33.862
     },
     {
       "name": "grant",
-      "at": 18.136,
-      "end": 27.627
+      "at": 33.863,
+      "end": 42.783
     },
     {
       "name": "stateless",
-      "at": 27.628,
-      "end": 33.004
+      "at": 42.784,
+      "end": 50.842
     },
     {
       "name": "home",
-      "at": 33.004,
-      "end": 37.604
+      "at": 50.842,
+      "end": 57.444
     },
     {
       "name": "markets",
-      "at": 37.604,
-      "end": 41.741
+      "at": 57.445,
+      "end": 63.825
     },
     {
       "name": "buy and route",
-      "at": 41.741,
-      "end": 59.518
+      "at": 63.825,
+      "end": 95.157
     },
     {
       "name": "council",
-      "at": 59.519,
-      "end": 75.113
+      "at": 95.158,
+      "end": 118.067
     },
     {
       "name": "perps desk",
-      "at": 75.113,
-      "end": 85.598
+      "at": 118.067,
+      "end": 131.16
     },
     {
       "name": "long and exits",
-      "at": 85.598,
-      "end": 98.909
+      "at": 131.16,
+      "end": 148.987
     },
     {
       "name": "risk",
-      "at": 98.91,
-      "end": 107.271
+      "at": 148.988,
+      "end": 163.169
     },
     {
       "name": "history",
-      "at": 107.271,
-      "end": 113.45
+      "at": 163.17,
+      "end": 174.234
+    },
+    {
+      "name": "gauntlet",
+      "at": 174.234,
+      "end": 182.129
+    },
+    {
+      "name": "built on monad",
+      "at": 182.129,
+      "end": 199.962
     },
     {
       "name": "stop",
-      "at": 113.45,
-      "end": 124.158
+      "at": 199.963,
+      "end": 212.996
     }
   ],
-  "cuts": 10,
-  "blankFramesCut": 233,
+  "cuts": 18,
+  "blankFramesCut": 798,
   "videos": [
     {
       "file": "docs/demo/flows/00-full-tour.mp4",
-      "seconds": 110.4
+      "seconds": 157.6
     },
     {
       "file": "docs/demo/flows/01-onboarding-passkey.mp4",
-      "seconds": 12.7
+      "seconds": 26
     },
     {
       "file": "docs/demo/flows/02-funding.mp4",
-      "seconds": 5.9
+      "seconds": 6
     },
     {
       "file": "docs/demo/flows/03-permission-and-council.mp4",
-      "seconds": 24.6
+      "seconds": 29
     },
     {
       "file": "docs/demo/flows/04-buy-kuru-or-uniswap.mp4",
-      "seconds": 16.5
+      "seconds": 21.9
     },
     {
       "file": "docs/demo/flows/05-perpl-desk-long-and-close.mp4",
-      "seconds": 31
+      "seconds": 32.9
     },
     {
       "file": "docs/demo/flows/06-history-envio.mp4",
-      "seconds": 5.5
+      "seconds": 7.5
     },
     {
       "file": "docs/demo/flows/07-stop.mp4",
-      "seconds": 10.1
+      "seconds": 11.2
+    },
+    {
+      "file": "docs/demo/flows/08-gauntlet.mp4",
+      "seconds": 5.3
+    },
+    {
+      "file": "docs/demo/flows/09-built-on-monad.mp4",
+      "seconds": 13.6
     }
   ]
 }

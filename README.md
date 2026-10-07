@@ -11,7 +11,7 @@ vote shown beside the transaction it produced, and none of it able to touch more
 enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 300 ms and are final two
 blocks later, about 600 ms.
 
-**Demo — the full tour (1:50, 7 Oct):** [`docs/demo/flows/00-full-tour.mp4`](docs/demo/flows/00-full-tour.mp4), recorded live
+**Demo — the full tour (2:38, 8 Oct):** [`docs/demo/flows/00-full-tour.mp4`](docs/demo/flows/00-full-tour.mp4), recorded live
 on a fork of Monad mainnet by `npm run demo:record`, captioned, waits cut. And each flow on its own, cut from the same run:
 [onboarding and the passkey](docs/demo/flows/01-onboarding-passkey.mp4) ·
 [funding](docs/demo/flows/02-funding.mp4) ·
@@ -19,7 +19,9 @@ on a fork of Monad mainnet by `npm run demo:record`, captioned, waits cut. And e
 [a buy routed Kuru or Uniswap](docs/demo/flows/04-buy-kuru-or-uniswap.mp4) ·
 [the Perpl desk, long and close](docs/demo/flows/05-perpl-desk-long-and-close.mp4) ·
 [History, indexed by Envio](docs/demo/flows/06-history-envio.mp4) ·
-[hold to stop](docs/demo/flows/07-stop.mp4). The 24 Sep cut with Perpl on Monad testnet:
+[hold to stop](docs/demo/flows/07-stop.mp4) ·
+[the strategy gauntlet](docs/demo/flows/08-gauntlet.mp4) ·
+[Built on Monad](docs/demo/flows/09-built-on-monad.mp4). The 24 Sep cut with Perpl on Monad testnet:
 [`docs/demo/xorr-monad-demo.mp4`](docs/demo/xorr-monad-demo.mp4) (2:59).
 
 **Every screen** — 103 of them at phone and desktop size, with real data — in [`docs/screens/`](docs/screens/) (the gallery,

@@ -25,7 +25,7 @@ go through Perpl's own DelegatedAccount: the agent can trade there but never wit
 | Tagline | A council of AI agents trades for you on Monad, inside a permission you can revoke |
 | Track | 01 — Onchain Finance & Trading |
 | Repository | https://github.com/nickthelegend/xorr-metropolis (public, MIT) |
-| Demo video (≤ 3 min) | [`docs/demo/flows/00-full-tour.mp4`](demo/flows/00-full-tour.mp4) (1:50, 7 Oct, the current product on a fork of Monad mainnet), with each flow on its own in [`docs/demo/flows/`](demo/flows/); [`docs/demo/xorr-monad-demo.mp4`](demo/xorr-monad-demo.mp4) (2:59, 24 Sep, with Perpl on Monad testnet); the final cut on testnet follows the go ([script below](#3-minute-demo-script)) |
+| Demo video (≤ 3 min) | [`docs/demo/flows/00-full-tour.mp4`](demo/flows/00-full-tour.mp4) (2:38, 8 Oct, the current product on a fork of Monad mainnet: the explainer with Monad's blocks going final live, the speed receipt, the council replay, the gauntlet, Built on Monad), with each flow on its own in [`docs/demo/flows/`](demo/flows/); [`docs/demo/xorr-monad-demo.mp4`](demo/xorr-monad-demo.mp4) (2:59, 24 Sep, with Perpl on Monad testnet); the final cut on testnet follows the go ([script below](#3-minute-demo-script)) |
 | Every screen | [`docs/screens/`](screens/) — 103 screens at phone and desktop size, scored in [`screens/REVIEW.md`](screens/REVIEW.md), contact sheets in [`screens/sheets/`](screens/sheets/); `index.html` there is the gallery from a checkout |
 | Live app | after the go (DEPLOY-LATER §6); locally: `sh infra/monad-fork/local-stack.sh refork` |
 | Contracts (Monad testnet, 10143) | `XorrDelegation` [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) (Sourcify-verified) · `XorrAuditAnchor` [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
@@ -260,9 +260,9 @@ the evidence. What a judge can check without trusting us:
 ## 3-minute demo script
 
 Recorded from the hosted testnet app after the go, with the Kuru beat from the fork. The shot list and recording notes
-are in [`DEPLOY-LATER.md`](DEPLOY-LATER.md) §10. The 6 Oct fork cut,
+are in [`DEPLOY-LATER.md`](DEPLOY-LATER.md) §10. The 8 Oct fork cut,
 [`demo/flows/00-full-tour.mp4`](demo/flows/00-full-tour.mp4), is the same order without the terminal and explorer
-beats (0:00–1:50, captions in the frame, recorded by `npm run demo:record`), and `demo/flows/01…07` are its flows one by one.
+beats (0:00–2:38, captions in the frame, recorded by `npm run demo:record`), and `demo/flows/01…09` are its flows one by one.
 
 | Time | On screen | Words |
 |---|---|---|
