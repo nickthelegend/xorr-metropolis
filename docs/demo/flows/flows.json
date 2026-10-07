@@ -1,0 +1,111 @@
+{
+  "recorded": "2026-10-07T12:44:05.548Z",
+  "beats": [
+    {
+      "name": "open",
+      "at": 3.044,
+      "end": 9.091
+    },
+    {
+      "name": "passkey",
+      "at": 9.091,
+      "end": 12.238
+    },
+    {
+      "name": "fund",
+      "at": 12.238,
+      "end": 18.135
+    },
+    {
+      "name": "grant",
+      "at": 18.136,
+      "end": 27.627
+    },
+    {
+      "name": "stateless",
+      "at": 27.628,
+      "end": 33.004
+    },
+    {
+      "name": "home",
+      "at": 33.004,
+      "end": 37.604
+    },
+    {
+      "name": "markets",
+      "at": 37.604,
+      "end": 41.741
+    },
+    {
+      "name": "buy and route",
+      "at": 41.741,
+      "end": 59.518
+    },
+    {
+      "name": "council",
+      "at": 59.519,
+      "end": 75.113
+    },
+    {
+      "name": "perps desk",
+      "at": 75.113,
+      "end": 85.598
+    },
+    {
+      "name": "long and exits",
+      "at": 85.598,
+      "end": 98.909
+    },
+    {
+      "name": "risk",
+      "at": 98.91,
+      "end": 107.271
+    },
+    {
+      "name": "history",
+      "at": 107.271,
+      "end": 113.45
+    },
+    {
+      "name": "stop",
+      "at": 113.45,
+      "end": 124.158
+    }
+  ],
+  "cuts": 10,
+  "blankFramesCut": 233,
+  "videos": [
+    {
+      "file": "docs/demo/flows/00-full-tour.mp4",
+      "seconds": 110.4
+    },
+    {
+      "file": "docs/demo/flows/01-onboarding-passkey.mp4",
+      "seconds": 12.7
+    },
+    {
+      "file": "docs/demo/flows/02-funding.mp4",
+      "seconds": 5.9
+    },
+    {
+      "file": "docs/demo/flows/03-permission-and-council.mp4",
+      "seconds": 24.6
+    },
+    {
+      "file": "docs/demo/flows/04-buy-kuru-or-uniswap.mp4",
+      "seconds": 16.5
+    },
+    {
+      "file": "docs/demo/flows/05-perpl-desk-long-and-close.mp4",
+      "seconds": 31
+    },
+    {
+      "file": "docs/demo/flows/06-history-envio.mp4",
+      "seconds": 5.5
+    },
+    {
+      "file": "docs/demo/flows/07-stop.mp4",
+      "seconds": 10.1
+    }
+  ]
+}

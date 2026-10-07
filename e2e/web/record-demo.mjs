@@ -10,24 +10,49 @@
  * either side; everything a viewer should read stays at full length.
  *
  *   sh infra/monad-fork/local-stack.sh up
- *   WEB=http://localhost:8092 API=http://localhost:8790 node e2e/web/record-demo.mjs     # → docs/demo/xorr-monad-fork-demo.mp4
+ *   WEB=http://localhost:8092 API=http://localhost:8790 node e2e/web/record-demo.mjs     # → docs/demo/flows/*.mp4
+ *
+ * One real run, then every flow cut from it (onboarding, funding, permission and council, the buy, the Perpl desk,
+ * History, the stop) and the whole of it as the tour, `00-full-tour.mp4`.
  *
  * The beats that need a live network (the MetaMask plugin in a terminal, the CRE report and the stop on MonadVision)
  * are recorded after the testnet go (docs/DEPLOY-LATER.md §10).
  */
 import { chromium } from 'playwright';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const WEB = process.env.WEB ?? 'http://localhost:8092';
 const API = process.env.API ?? 'http://localhost:8790';
-const OUT = process.env.OUT_FILE ?? 'docs/demo/xorr-monad-fork-demo.mp4';
+const OUT_DIR = process.env.OUT_DIR ?? 'docs/demo/flows';
+/**
+ * The flows cut from the one recording (2026-10-07), each the beats it is made of. A flow is the real run's own frames
+ * for those beats, with the same waits cut — not a re-enactment.
+ */
+const FLOWS = [
+  ['00-full-tour', null],
+  ['01-onboarding-passkey', ['open', 'passkey', 'stateless']],
+  ['02-funding', ['fund']],
+  ['03-permission-and-council', ['grant', 'council']],
+  ['04-buy-kuru-or-uniswap', ['markets', 'buy and route']],
+  ['05-perpl-desk-long-and-close', ['perps desk', 'long and exits', 'risk']],
+  ['06-history-envio', ['history']],
+  ['07-stop', ['stop']],
+];
+/** Each video's height: 1080 lines at most, H.264, so it plays anywhere and stays small. */
+const HEIGHT = 1080;
 const T = { ui: 60_000, chain: 180_000 };
 const VIEW = { width: 390, height: 844 };
 const BAR = 112; // the caption bar under the app, in CSS pixels
 
+if (process.env.ENCODE_FROM) {
+  // Encode again from a recording already made: its raw video and the beats saved beside it.
+  const saved = JSON.parse(readFileSync(join(process.env.ENCODE_FROM, 'beats.json'), 'utf8'));
+  encode(saved.raw, saved.beats, saved.cuts, process.env.ENCODE_FROM);
+  process.exit(0);
+}
 const dir = mkdtempSync(join(tmpdir(), 'xorr-demo-'));
 const browser = await chromium.launch();
 // Recorded at the viewport's own size: a larger video size only pads the picture with grey; it is scaled up at the end.
@@ -111,7 +136,7 @@ async function beat(name, fn) {
   const a = now();
   try {
     await fn();
-    beats.push({ name, at: a });
+    beats.push({ name, at: a, end: now() });
     console.log(`✓ ${name}`);
   } catch (e) {
     console.log(`✗ ${name}: ${e instanceof Error ? e.message.split('\n')[0] : e}`);
@@ -149,14 +174,19 @@ await beat('passkey', async () => {
   await hold(3);
 });
 
-await beat('fund and grant', async () => {
-  await caption('Test funds, then the permission', 'A daily limit, an end date, the venues. Mera’s signing session signs it — no wallet popup.');
+await beat('fund', async () => {
+  await caption('Test funds', 'Your own address, and a thousand test dollars from the fork — real USDC, moved on a copy of Monad.');
   await tap('Continue — add funds');
   const get = v(page.getByText(/^Get [\d,]+ test USDC$/));
   await wait(get.waitFor({ timeout: T.ui }));
+  await hold(1.5);
   await get.click();
   await wait(v(page.getByText(/^Added [\d,.]+ USDC/)).waitFor({ timeout: T.chain }));
-  await hold(1.5);
+  await hold(2.5);
+});
+
+await beat('grant', async () => {
+  await caption('The permission', 'A daily limit, an end date, the venues. Mera’s signing session signs it — no wallet popup.');
   await tap('Continue — set the limits');
   await hold(3);
   await tap('Sign this permission');
@@ -182,6 +212,18 @@ await beat('stateless', async () => {
   if (after !== before) throw new Error(`a different account came back: ${after}`);
   await caption('The stateless test', `Same account: ${after.slice(0, 6)}…${after.slice(-4)}. Nothing that signs was ever stored.`);
   await hold(3);
+});
+
+await beat('home', async () => {
+  await go('/', () => v(page.getByText(/^Add funds$/)));
+  await caption('Home', 'Your balance, the agents, and the next step where the eye already is.');
+  await hold(4);
+});
+
+await beat('markets', async () => {
+  await go('/markets', () => v(page.getByText(/^MON$/)));
+  await caption('Markets', 'Spot prices, live. Every buy is checked against Chainlink before it fills.');
+  await hold(3.5);
 });
 
 await beat('buy and route', async () => {
@@ -211,7 +253,13 @@ await beat('council', async () => {
   const body = await text();
   const verdict = body.match(/Approved \d–\d\.|Not approved[^\n]*|Vetoed[^\n]*/)?.[0] ?? '';
   const outcome = body.match(/\n(Executed|Not executed|Failed|Refused)\n/)?.[1] ?? '';
-  await caption('The council', `${verdict} ${outcome}. The vote and the fill land within a second — Monad’s 400 ms blocks.`);
+  // The caption says what this round did: a round the council turned down sent nothing, and must not be described as a fill.
+  await caption(
+    'The council',
+    /Executed/.test(outcome)
+      ? `${verdict} ${outcome}. The vote and the fill land within a second — Monad’s 400 ms blocks.`
+      : `${verdict.replace(/\.$/, '')} — so nothing was sent. The council is the brake as well as the trigger.`,
+  );
   await hold(4);
   for (let i = 0; i < 3; i++) {
     await page.mouse.wheel(0, 380);
@@ -316,13 +364,52 @@ const raw = await video.path();
 const benign = errors.filter((e) => !/favicon/.test(e));
 console.log(`console errors: ${benign.length}${benign.length ? `\n  ${benign.join('\n  ')}` : ''}`);
 
-// ------------------------------------------------------------------ cut the waits, encode
-// A page load paints the browser's blank white for a fraction of a second before the app draws, and the app is dark: any
-// frame that is almost entirely white (average luma ≥ 220) is that blank page, and is dropped.
-
-const keep = cuts.map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+') || '0';
-execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', raw, '-vf', `fps=25,select='not(${keep})',signalstats,metadata=mode=select:key=lavfi.signalstats.YAVG:value=220:function=less,setpts=N/25/TB,scale=780:-2:flags=lanczos`, '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '22', '-movflags', '+faststart', OUT]);
-const seconds = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', OUT]).toString().trim());
-writeFileSync(`${dir}/beats.json`, JSON.stringify({ beats, cuts }, null, 2));
-console.log(`${OUT}: ${seconds.toFixed(1)} s after cutting ${cuts.length} waits (${cuts.reduce((s, [a, b]) => s + b - a, 0).toFixed(0)} s); raw ${raw}; files ${readdirSync(dir).join(', ')}`);
+// The timings first, so an encode that fails can be run again from the same recording (ENCODE_FROM=<dir>).
+writeFileSync(join(dir, 'beats.json'), JSON.stringify({ beats, cuts, raw }, null, 2));
+encode(raw, beats, cuts, dir);
 process.exit(benign.length ? 1 : 0);
+
+// ------------------------------------------------------------------ cut the waits and the blank page loads, encode
+/** Cut the waits and the blank page loads from the raw recording, and write the tour and every flow. */
+function encode(raw, beats, cuts, dir) {
+  /*
+   * A page load paints the browser's blank white for a moment before the app draws, and the app is black. Those frames are
+   * found by the APP's area alone — the caption bar under it is dark and, averaged in, hid them (the 6 Oct cut kept seven
+   * flashes for exactly that reason) — and cut like any wait.
+   */
+  const appH = VIEW.height - BAR;
+  const stats = execFileSync('ffmpeg', ['-loglevel', 'error', '-i', raw, '-vf', `fps=25,crop=iw:${appH}:0:0,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-`, '-f', 'null', '-'], { maxBuffer: 64 * 1024 * 1024 }).toString();
+  const white = [];
+  let t = null;
+  for (const line of stats.split('\n')) {
+    const tm = line.match(/pts_time:([\d.]+)/);
+    if (tm) t = Number(tm[1]);
+    const ym = line.match(/YAVG=([\d.]+)/);
+    if (ym && t !== null && Number(ym[1]) >= 200) white.push([t - 0.03, t + 0.05]);
+  }
+  // One range per run of excluded time: a page load is dozens of consecutive blank frames, and an expression with a term
+  // per frame is too large for ffmpeg to allocate (the first 7 Oct run failed exactly so).
+  const excluded = [...cuts, ...white]
+    .sort((a, b) => a[0] - b[0])
+    .reduce((out, [a, b]) => {
+      const last = out[out.length - 1];
+      if (last && a <= last[1] + 0.05) last[1] = Math.max(last[1], b);
+      else out.push([a, b]);
+      return out;
+    }, []);
+  const notExcluded = `not(${excluded.map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+') || '0'})`;
+  mkdirSync(OUT_DIR, { recursive: true });
+  const made = [];
+  for (const [name, names] of FLOWS) {
+    const windows = names ? beats.filter((b) => names.includes(b.name)).map((b) => [b.at, b.end]) : null;
+    if (names && !windows.length) continue;
+    const inFlow = windows ? `(${windows.map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+')})*` : '';
+    const file = join(OUT_DIR, `${name}.mp4`);
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', raw, '-vf', `fps=25,select='${inFlow}${notExcluded}',setpts=N/25/TB,scale=-2:${HEIGHT}:flags=lanczos`, '-an', '-c:v', 'libx264', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-crf', '23', '-movflags', '+faststart', file]);
+    const seconds = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file]).toString().trim());
+    made.push({ file, seconds: Number(seconds.toFixed(1)) });
+    console.log(`${file}: ${seconds.toFixed(1)} s`);
+  }
+  writeFileSync(join(OUT_DIR, 'flows.json'), JSON.stringify({ recorded: new Date().toISOString(), beats, cuts: cuts.length, blankFramesCut: white.length, videos: made }, null, 2));
+  console.log(`cut ${cuts.length} waits and ${white.length} blank frames; raw ${raw}; files ${readdirSync(dir).join(', ')}`);
+}
