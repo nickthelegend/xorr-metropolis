@@ -193,6 +193,8 @@ export default function Settings() {
             approvals, the runs, the subgraph. Thirty-odd surfaces cannot each earn a row here, and
             a screen nobody can reach is worse than no screen.
           */}
+          {/* The three-step explainer, again (ROADMAP-WIN F2): what xorr is, for anyone handed this phone. */}
+          <Row title="How xorr works" height={SETTING_ROW} onPress={() => router.push({ pathname: '/how', params: { from: 'settings' } })} testID="settings-how" />
           <Row
             title="Explore"
             value={

@@ -22,6 +22,7 @@
     "e2e:crawl": "node e2e/web/crawl.mjs",
     "e2e:flows": "node e2e/web/flows.mjs",
     "e2e:email": "node e2e/web/email-signin.mjs",
+    "e2e:explainer": "node e2e/web/explainer.mjs",
     "demo:record": "node e2e/web/record-demo.mjs"
   },
   "dependencies": {

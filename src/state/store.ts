@@ -128,6 +128,9 @@ type ViewsSlice = {
    * can see this phone, not whose wallet is on it.
    */
   balancesHidden: boolean;
+  /** The three-step explainer before sign-up has been seen on this device (docs/ROADMAP-WIN.md F2). Not an account's. */
+  howSeen: boolean;
+  setHowSeen: (v: boolean) => void;
   setActFilter: (i: number) => void;
   setLbSort: (i: number) => void;
   setBtLook: (i: number) => void;
@@ -315,6 +318,8 @@ export const useStore = create<Store>()(
       btLook: 1,
       btCapital: 5000,
       balancesHidden: false,
+      howSeen: false,
+      setHowSeen: (howSeen) => set({ howSeen }),
       setActFilter: (actFilter) => set({ actFilter }),
       setLbSort: (lbSort) => set({ lbSort }),
       setBtLook: (btLook) => set({ btLook }),
@@ -370,6 +375,7 @@ export const useStore = create<Store>()(
         btLook: s.btLook,
         btCapital: s.btCapital,
         balancesHidden: s.balancesHidden,
+        howSeen: s.howSeen,
         goals: s.goals,
         riskQ: s.riskQ,
         weights: s.weights,

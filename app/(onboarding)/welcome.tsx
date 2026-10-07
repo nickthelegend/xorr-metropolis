@@ -22,6 +22,7 @@ import { TRADE_ROUTE } from '@/nav/buildRoutes';
 import { CoinHero } from '@/design/CoinHero';
 import { Button, Fill, Press, Screen, signIn, Text, colors, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
+import { useStore } from '@/state/store';
 
 const WORDMARK = require('../../assets/brand/xorr-wordmark.png');
 /** The wordmark art is 833×166; drawn at the landing header's height. */
@@ -29,6 +30,7 @@ const WORDMARK_H = 18;
 const WORDMARK_W = Math.round((WORDMARK_H * 833) / 166);
 
 export default function Splash() {
+  const howSeen = useStore((st) => st.howSeen);
   const router = useRouter();
   return (
     <Screen gutter="none">
@@ -63,7 +65,8 @@ export default function Splash() {
         </Rise>
 
         <Rise index={2} style={{ marginTop: space.s26 }}>
-          <Button label="Get started" onPress={() => router.push('/goals')} />
+          {/* The three-step explainer first, once on this device (ROADMAP-WIN F2); after that, straight on. */}
+          <Button label="Get started" onPress={() => router.push(howSeen ? '/goals' : '/how')} testID="welcome-start" />
           {/* A wallet that already exists goes straight to the email step, not through the questions a new one answers. */}
           <Button label="Sign in" variant="ghost" onPress={signIn} style={{ marginTop: space.s10 }} />
           {/*

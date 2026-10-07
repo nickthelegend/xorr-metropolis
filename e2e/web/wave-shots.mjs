@@ -53,22 +53,37 @@ for (let ok = 0, i = 0; ok < 3 && i < 180; i++) {
   await new Promise((r) => setTimeout(r, 1000));
 }
 
-// A real account with one fill.
-await go('/wallet');
-await page.getByTestId('passkey-create').click({ timeout: T.chain });
-await v(page.getByText('Continue — add funds', { exact: true })).click({ timeout: T.chain });
-await v(page.getByText(/^Get [\d,]+ test USDC$/)).click({ timeout: T.ui });
-await v(page.getByText(/^Added [\d,.]+ USDC/)).waitFor({ timeout: T.chain });
-await v(page.getByText('Continue — set the limits', { exact: true })).click();
-await v(page.getByText('Sign this permission', { exact: true })).click();
-await page.waitForURL((u) => !u.pathname.includes('delegate'), { timeout: T.chain });
-await go('/order/WMON');
-await v(page.getByRole('button', { name: /^Buy \$/ })).waitFor({ timeout: T.ui });
-for (let i = 0; i < 7; i++) await v(page.getByLabel('Delete', { exact: true })).click();
-await v(page.getByLabel('2', { exact: true })).click();
-await v(page.getByLabel('0', { exact: true })).click();
-await page.getByRole('button', { name: 'Buy $20 of WMON' }).click({ timeout: T.ui });
-await v(page.getByText(/^Bought /)).waitFor({ timeout: T.chain });
+// F2 comes first: the explainer is what a person sees before they have an account.
+if (FEATURES.includes('f2')) {
+  await go('/welcome');
+  await shot('f2-welcome');
+  await v(page.getByTestId('welcome-start')).click({ timeout: T.chain });
+  for (const n of [1, 2, 3]) {
+    await page.waitForTimeout(1_200);
+    if (n === 3) await v(page.getByText(/^\d+ ms$/)).waitFor({ timeout: 30_000 }).catch(() => undefined);
+    await shot(`f2-how-${n}`);
+    if (n < 3) await v(page.getByTestId(`how-next-${n}`)).click();
+  }
+}
+
+// A real account with one fill, for every feature that shows one (all but the explainer).
+if (FEATURES.some((f) => f !== 'f2')) {
+  await go('/wallet');
+  await page.getByTestId('passkey-create').click({ timeout: T.chain });
+  await v(page.getByText('Continue — add funds', { exact: true })).click({ timeout: T.chain });
+  await v(page.getByText(/^Get [\d,]+ test USDC$/)).click({ timeout: T.ui });
+  await v(page.getByText(/^Added [\d,.]+ USDC/)).waitFor({ timeout: T.chain });
+  await v(page.getByText('Continue — set the limits', { exact: true })).click();
+  await v(page.getByText('Sign this permission', { exact: true })).click();
+  await page.waitForURL((u) => !u.pathname.includes('delegate'), { timeout: T.chain });
+  await go('/order/WMON');
+  await v(page.getByRole('button', { name: /^Buy \$/ })).waitFor({ timeout: T.ui });
+  for (let i = 0; i < 7; i++) await v(page.getByLabel('Delete', { exact: true })).click();
+  await v(page.getByLabel('2', { exact: true })).click();
+  await v(page.getByLabel('0', { exact: true })).click();
+  await page.getByRole('button', { name: 'Buy $20 of WMON' }).click({ timeout: T.ui });
+  await v(page.getByText(/^Bought /)).waitFor({ timeout: T.chain });
+}
 
 if (FEATURES.includes('f1')) {
   await go('/runs');

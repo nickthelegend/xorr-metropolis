@@ -130,8 +130,10 @@ Each: *objective* — *acceptance* — *verify* — status.
   gas on Ethereum; Monad mainnet's measured cadence (`/monad/pulse`, `/speed/:tx`); on the Run receipt and the council round.
   Live on 7 Oct: a block every 300 ms on mainnet; a $20 buy's gas $0.00085 on Monad at 102 gwei against $0.32 on Ethereum
   at 0.63 gwei (340×). `e2e:fork` checks the card; `docs/screens/wave/f1-*`.
-- I2 **NOT STARTED** F2 First-run explainer — three steps before the wallet (the council, the chain's limit, the stop with
-  Monad live); skippable, shown once, reachable from Settings.
+- I2 **DONE** F2 First-run explainer — `/how`, three steps between "Get started" and sign-up: the council (five seats),
+  the permission the chain enforces, and the stop with Monad mainnet's cadence read live. Skippable at every step, shown
+  once per device (`howSeen`), and "How xorr works" in Settings opens it again and returns there. `e2e:explainer`;
+  `docs/screens/wave/f2-*`.
 - I3 **NOT STARTED** F3 Council replay — `/council/<id>`: readings and votes seat by seat, the verdict, the fill and its speed.
 - I4 **NOT STARTED** F4 Built on Monad — every sponsor integration with a live reading, named for its bounty.
 - I5 **NOT STARTED** F5 The strategy gauntlet — the library as a page: tested vs survived, out-of-sample numbers, filters.
