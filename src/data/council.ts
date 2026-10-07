@@ -23,8 +23,17 @@ export type CouncilRound = {
   convenedBy: string;
   chain: string;
   createdAt: string;
+  /** When the round was settled — sent and confirmed, or decided not to send. Absent while pending. */
+  settledAt?: string | null;
   votes: CouncilBallot[];
 };
+
+/** Seconds from the council convening to its trade confirmed, for an executed round; null otherwise. */
+export function voteToFillSec(r: Pick<CouncilRound, 'outcome' | 'createdAt' | 'settledAt'>): number | null {
+  if (r.outcome !== 'executed' || !r.settledAt) return null;
+  const s = (Date.parse(r.settledAt) - Date.parse(r.createdAt)) / 1000;
+  return Number.isFinite(s) && s >= 0 ? s : null;
+}
 
 export type CouncilSeat = { id: CouncilSeatId; name: string; role: string };
 

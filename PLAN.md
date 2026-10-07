@@ -125,6 +125,19 @@ Each: *objective* — *acceptance* — *verify* — status.
   browser window across 402 px remounted the whole app (`PhoneFrame`); a passkey account was told its email was its way
   back; unlimited allowances printed as 78 digits; "Trade stocks" offered on Monad; venues unnamed; the browser's focus box.
 
+### P-I — Development wave: what wins (7 Oct; `docs/ROADMAP-WIN.md` has the review and the full acceptance criteria)
+- I1 **DONE** F1 Monad speed receipt — each fill's send-to-confirm ms, block, gas and its cost on Monad against the same
+  gas on Ethereum; Monad mainnet's measured cadence (`/monad/pulse`, `/speed/:tx`); on the Run receipt and the council round.
+  Live on 7 Oct: a block every 300 ms on mainnet; a $20 buy's gas $0.00085 on Monad at 102 gwei against $0.32 on Ethereum
+  at 0.63 gwei (340×). `e2e:fork` checks the card; `docs/screens/wave/f1-*`.
+- I2 **NOT STARTED** F2 First-run explainer — three steps before the wallet (the council, the chain's limit, the stop with
+  Monad live); skippable, shown once, reachable from Settings.
+- I3 **NOT STARTED** F3 Council replay — `/council/<id>`: readings and votes seat by seat, the verdict, the fill and its speed.
+- I4 **NOT STARTED** F4 Built on Monad — every sponsor integration with a live reading, named for its bounty.
+- I5 **NOT STARTED** F5 The strategy gauntlet — the library as a page: tested vs survived, out-of-sample numbers, filters.
+- Each: real fork data, unit + e2e tests, console and network clean, before/after at 1440 and 390 in `docs/screens/wave/`,
+  one commit, pushed, CI green.
+
 ## 4. Gaps (audit from the code, 6 Oct)
 
 `git grep -iE "mock|stub|fake|dummy|placeholder|TODO|FIXME|hardcod|fixture"` over `app/`, `src/`, `server/src` (tests,

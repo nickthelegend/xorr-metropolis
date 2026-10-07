@@ -36,6 +36,8 @@ const PUBLIC_PATHS = new Set([
   '/monad/crosscheck',
   '/monad/perpl',
   '/monad/perpl/risk',
+  /** Monad mainnet's head, its measured block cadence and gas, and Ethereum's gas for comparison: facts about public chains. */
+  '/monad/pulse',
   // How a signed-out person becomes signed in with a passkey (`auth/passkey-session.ts`).
   '/auth/passkey/challenge',
   '/auth/passkey/session',

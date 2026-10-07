@@ -118,6 +118,11 @@ await step('buy $20 of MON, and see where it filled', async () => {
   await page.getByText(/^Filled$/).filter({ visible: true }).first().waitFor({ timeout: T.ui });
   const routing = await page.getByTestId('run-routing').innerText({ timeout: 10_000 }).catch(() => null);
   say(`  ${routing ?? 'one venue measured for this fill'}`);
+  // The Monad speed receipt (ROADMAP-WIN F1): this fill's time to confirm and its cost, and Monad mainnet's live cadence.
+  const receipt = page.getByTestId('speed-receipt').filter({ visible: true }).first();
+  await receipt.waitFor({ timeout: 30_000 });
+  await page.getByTestId('speed-ms').filter({ visible: true }).first().waitFor({ timeout: 30_000 });
+  say(`  ${(await receipt.innerText()).replace(/\n+/g, ' · ').slice(0, 300)}`);
   await shot('run');
 });
 

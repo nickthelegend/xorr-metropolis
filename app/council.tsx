@@ -41,7 +41,7 @@ import type { Agent } from '@/data/types';
 import { convenedByLabel, roundSigner } from '@/agents/agentPermission';
 import { useAsync } from '@/data/useAsync';
 import { apiProse } from '@/data/apiError';
-import { council, type CouncilBallot, type CouncilRound } from '@/data/council';
+import { council, voteToFillSec, type CouncilBallot, type CouncilRound } from '@/data/council';
 import { CHAIN_KEY, onMonad } from '@/chain';
 import { useNow } from '@/state/useNow';
 
@@ -213,6 +213,12 @@ function RoundCard({ round, roster, latest = false }: { round: CouncilRound; ros
         <>
           <Text variant="footnote" color={colors.ink65} style={{ marginTop: space.s10 }}>
             {outcomeLine(round)}
+            {/* The whole round, measured: from convening the desks to the trade confirmed (ROADMAP-WIN F1). */}
+            {voteToFillSec(round) !== null ? (
+              <Text variant="footnote" color={colors.accentHi} testID="council-vote-to-fill">
+                {` · vote to fill in ${voteToFillSec(round)!.toLocaleString('en-US', { maximumFractionDigits: 1 })} s`}
+              </Text>
+            ) : null}
           </Text>
           <TxLine round={round} />
         </>,

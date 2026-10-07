@@ -19,6 +19,7 @@ import { one, query, tx } from '../db/index.js';
 import { append } from '../audit/log.js';
 import { log } from '../http/request-id.js';
 import { evaluate, recordSpend } from '../rules/engine.js';
+import { confirmTimed, fillGas } from '../monad/speed.js';
 import { closeAsDelegate, readPolicy, spendAsDelegate, usdToUnits, waitForTx } from '../evm/delegation.js';
 import { erc20Abi, formatUnits } from 'viem';
 import { publicClient } from '../evm/client.js';
@@ -791,6 +792,9 @@ async function runStrategyInner(
      * guard existed is the balance READ, which a direct leg has no counterpart for; that part
      * stays conditional and the wait does not.
      */
+    // Measured beside the wait, not by it: the wait decides success; this times the receipt to 100 ms (monad/speed.ts).
+    const sentAt = Date.now();
+    const timed = confirmTimed(signature, sentAt);
     const settled = await waitForTx(signature).catch(() => false);
     if (!settled) throw new Error(`transaction ${signature} did not confirm`);
 
@@ -836,6 +840,15 @@ async function runStrategyInner(
      * transaction and the push is deliberately outside it.
      */
     let auditSeq: string | undefined;
+
+    // The speed receipt: best-effort, after the fill is certain, and never a reason to fail it.
+    void (async () => {
+      const [ms, gas] = await Promise.all([timed, fillGas(signature)]);
+      await query(
+        `UPDATE strategy_runs SET tx_ms = $2, tx_block = $3, tx_gas_used = $4, tx_gas_limit = $5, tx_gas_price = $6 WHERE id = $1`,
+        [runId, ms ?? null, gas?.block.toString() ?? null, gas?.gasUsed.toString() ?? null, gas?.gasLimit.toString() ?? null, gas?.gasPriceWei.toString() ?? null],
+      );
+    })().catch((e) => console.warn(`[speed] ${runId}: ${e instanceof Error ? e.message.split('\n')[0] : e}`));
 
     await tx(async (client) => {
       await client.query(

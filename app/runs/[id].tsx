@@ -31,6 +31,7 @@ import { kindLabel, labelFigure } from '@/strategies/ladder';
 import { FillReceipt } from '@/ui/FillReceipt';
 import { routingLine } from '@/ui/fillVenue';
 import { RoutingBars } from '@/ui/RoutingBars';
+import { SpeedReceipt } from '@/speed/SpeedReceipt';
 import { Glow } from '@/ui/Aurora';
 import { Icon } from '@/design/Icon';
 import { api } from '@/data/api';
@@ -154,6 +155,8 @@ export default function RunDetail() {
             {run.signature ? (
               <FillReceipt signature={run.signature} venue={run.venue} animate={false} />
             ) : null}
+            {/* What this fill proves about Monad: its time to confirm, its gas, its cost against Ethereum (ROADMAP-WIN F1). */}
+            {run.signature && run.status === 'filled' ? <SpeedReceipt tx={run.signature} /> : null}
 
             {/* A note only the owner's passkey opens (Mera: a second key from the same passkey, `auth/mera/notes.ts`). */}
             <PrivateNote runId={run.id} />
