@@ -9,6 +9,10 @@ row each, PASS), 6 contract rows (5 PASS), 10 integrations (6 PASS). Eight failu
 root, and one apparent failure was a timing artifact (§7). The six UNTESTED rows each name the one dependency they wait on: the testnet go (F25), `cre login` (C5, X8),
 `MOONSHOT_API_KEY` (X7), `mm login` and a funded agent wallet (X9), the passkey domain and a development build (X10).
 
+**Re-run on 7 Oct, on the redesigned UI** (`docs/evidence/*-2026-10-07.txt`): the journey 9 steps with 0 console errors,
+the flows 9 of 9, email sign-in, and the crawl — 116 screens, 0 failures, 0 accessibility faults. Every status below holds.
+On that fork MON was falling, and the council turned the flows' rounds down 2–2 — correctly, and nothing was sent.
+
 **Where it ran.** The local stack (`sh infra/monad-fork/local-stack.sh up`): an anvil fork of Monad mainnet with Perpl's,
 Kuru's, Uniswap's, Chainlink's and Agora's real contracts; our contracts deployed on it; the executor with its real
 Postgres; the Envio indexer; the web app. Every on-chain step is a real signed transaction on that chain. Monad testnet

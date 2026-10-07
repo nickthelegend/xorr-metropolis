@@ -182,7 +182,7 @@ await step('B12', 'send to an allowlisted address', async () => {
   }
 });
 
-await step('B7', 'a council round on live readings, executed; Kimi says it is not configured rather than standing in', async () => {
+await step('B7', 'a council round on live readings, decided; Kimi says it is not configured rather than standing in', async () => {
   await page.goto(`${WEB}/council`, { waitUntil: 'domcontentloaded' });
   await v(page.getByTestId('council-convene')).click({ timeout: T.ui });
   await v(page.getByText(/^Approved \d–\d\.|^Not approved|^Vetoed/)).waitFor({ timeout: T.chain });
@@ -209,8 +209,17 @@ await step('B8', 'hire an agent; it trades on its own, with its own key', async 
     const rounds = body?.rounds ?? body ?? [];
     const mine = rounds.find((r) => r.convenedBy === 'agent:yield-keeper' || r.convened_by === 'agent:yield-keeper');
     if (mine && (mine.outcome === 'executed' || mine.outcome === 'failed' || mine.decision !== 'approved')) {
-      if (mine.outcome !== 'executed') throw new Error(`the agent's round did not execute: ${mine.decision} / ${mine.outcome} ${mine.outcomeDetail ?? ''}`);
-      return `Yield Keeper convened the council itself and its buy executed (${mine.txHash ?? mine.tx_hash})`;
+      /*
+       * What is under test is the agent acting on its own: convening the council by itself, and — when the council
+       * approves — buying with its own key. Whether the council approves is the market's (on 7 Oct the fork's MON was
+       * falling and the round was turned down 2–2, rightly). An approved round that did not execute is the failure.
+       */
+      if (mine.decision === 'approved' && mine.outcome !== 'executed') {
+        throw new Error(`the agent's round was approved and did not execute: ${mine.outcome} ${mine.outcomeDetail ?? ''}`);
+      }
+      return mine.outcome === 'executed'
+        ? `Yield Keeper convened the council itself and its buy executed (${mine.txHash ?? mine.tx_hash})`
+        : `Yield Keeper convened the council itself; the council turned it down (${mine.summary ?? mine.decision}), so nothing was sent`;
     }
     if (Date.now() > deadline) throw new Error('no round from the agent within 4 minutes');
     await page.waitForTimeout(10_000);

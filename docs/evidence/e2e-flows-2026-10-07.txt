@@ -1,0 +1,22 @@
+# e2e/web/flows.mjs on the redesigned UI, 2026-10-07 — 375 px, the local fork of Monad mainnet; every step fails on a console error or an API response >= 400.
+# B7/B8: the fork's MON was falling, and the council turned both rounds down 2-2 (Trend Reader and Perps Desk against), so nothing was sent — the agent still convened it by itself. B7's title said "executed" in this run; it says "decided" from now on, which is what it checks.
+
+PASS E2 a zero amount cannot be sent (1.8 s)
+     button: "Buy $0 of WMON", disabled
+PASS E1 more than the wallet holds is refused before anything is sent (1.7 s)
+     "You have $1,000.00." — button disabled (the day's cap itself is proved on chain by prove-monad.ts: DailyCapExceeded)
+PASS B6 close a holding from its position screen (4.5 s)
+     position closed; balance 995.0328559948448 → 995.0328559948448
+PASS B15 a private note sealed with the passkey’s second key, reopened after a reload (4.9 s)
+     sealed on save (server holds ciphertext), reopened by the passkey
+PASS B12 send to an allowlisted address (4.4 s)
+     5 USDC arrived at 0xE7aD716A4F078D6A999D29D8CF02fF38826b5d0e (read on chain)
+PASS B7 a council round on live readings, executed; Kimi says it is not configured rather than standing in (1.7 s)
+     Not approved: 2 yes, 2 no. see screen; four desks voted; Kimi: not configured (MOONSHOT_API_KEY)
+PASS B8 hire an agent; it trades on its own, with its own key (42.5 s)
+     Yield Keeper convened the council itself; the council turned it down (Not approved: 2 yes, 2 no.), so nothing was sent
+PASS B16 lock the signing window; the next signature asks the passkey and reopens it (10.2 s)
+     on load: locked; a revoke asked the passkey and opened the window; Lock closed it; the next revoke asked again and reopened it
+PASS E3 the executor unreachable: an error state with a retry, which recovers (1.2 s)
+     while unreachable: "That did not load. · Can’t reach xorr. Your funds and your permission are on chain and unaffected. · Try again"; after Retry the history loaded
+9 items: 9 PASS, 0 FAIL

@@ -1,0 +1,23 @@
+# e2e/web/fork-journey.mjs on the redesigned UI, 2026-10-07
+
+=== fork
+  account 0xf27d6D6e45CC01e46583b08bFaeBd37D3f3194A6 (derived from the passkey; nothing that signs is stored)
+✓ create a passkey account (3.0 s)
+✓ fund from the fork faucet (2.3 s)
+✓ sign the trading permission (Mera signing session, no popup) (4.0 s)
+  time to first transaction: 7.7 s from opening the app to a confirmed permission
+  0xf27d6D6e45CC01e46583b08bFaeBd37D3f3194A6: the same account, from the passkey alone
+✓ the stateless test: storage cleared, the passkey rebuilds the same account (1.8 s)
+  Uniswap v3 measured 636.02 WMON; Kuru would have delivered 635.99 — level to within 0.01%.
+✓ buy $20 of MON, and see where it filled (42.4 s)
+  ON CHAIN · INDEXED BY ENVIO | $20.00 spent over 1 order. | Today: $20.00 of the $1,600.00 cap. | Across every wallet here, fills went 48 on Uniswap v3 ($1,250.00 bought), 13 on Kuru ($180.00 bought). | HyperIndex, read to block 110,902,455 (295 events since block 110,874,062).
+✓ history: the on-chain record, indexed by Envio (2.1 s)
+  AUSD in the wallet: 350.00; desk open on Perpl
+✓ perps: test MON and AUSD, then open a Perpl desk (7.2 s)
+  position: open
+✓ long MON on Perpl, then close it (1.7 s)
+  Trading stopped · The permission is revoked on-chain. No agent, strategy or stop-loss can place an order. Your funds never left your wallet. · Nothing was running when you stopped it.
+  desk operator active: false; delegation: {"delegatePubkey":"0xfaf84A0357A88F9792e150CC32db3b841F6c6B1d","delegateName":null,"delegateIsCurrent":true,"ownerPubkey
+✓ hold to stop: permission revoked, desk operator removed (4.4 s)
+console errors: 0
+=== fork exit 0

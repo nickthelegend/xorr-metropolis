@@ -1,0 +1,6 @@
+# e2e/web/email-signin.mjs on the redesigned UI, 2026-10-07
+
+=== email
+✓ email sign-in: t…@privy.io → a Privy session and its embedded wallet; the executor accepted it
+console errors and API responses ≥ 400: 0
+=== email exit 0

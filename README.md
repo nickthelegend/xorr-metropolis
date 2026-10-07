@@ -10,10 +10,21 @@ Nobody can watch a market all night. xorr lets a council of AI agents do it for 
 vote shown beside the transaction it produced, and none of it able to touch more than you allowed, because the chain
 enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 400 ms.
 
-**Demo (1:39, 6 Oct):** [`docs/demo/xorr-monad-fork-demo.mp4`](docs/demo/xorr-monad-fork-demo.mp4) — the current
-product recorded live on a fork of Monad mainnet by `npm run demo:record`: passkey account, permission, stateless sign-in,
-a buy routed between Kuru and Uniswap, a council round, a Perpl desk long and close, the risk screen, History indexed by
-Envio, and the stop. The 24 Sep cut with Perpl on Monad testnet: [`docs/demo/xorr-monad-demo.mp4`](docs/demo/xorr-monad-demo.mp4) (2:59).
+**Demo — the full tour (1:50, 7 Oct):** [`docs/demo/flows/00-full-tour.mp4`](docs/demo/flows/00-full-tour.mp4), recorded live
+on a fork of Monad mainnet by `npm run demo:record`, captioned, waits cut. And each flow on its own, cut from the same run:
+[onboarding and the passkey](docs/demo/flows/01-onboarding-passkey.mp4) ·
+[funding](docs/demo/flows/02-funding.mp4) ·
+[the permission and the council](docs/demo/flows/03-permission-and-council.mp4) ·
+[a buy routed Kuru or Uniswap](docs/demo/flows/04-buy-kuru-or-uniswap.mp4) ·
+[the Perpl desk, long and close](docs/demo/flows/05-perpl-desk-long-and-close.mp4) ·
+[History, indexed by Envio](docs/demo/flows/06-history-envio.mp4) ·
+[hold to stop](docs/demo/flows/07-stop.mp4). The 24 Sep cut with Perpl on Monad testnet:
+[`docs/demo/xorr-monad-demo.mp4`](docs/demo/xorr-monad-demo.mp4) (2:59).
+
+**Every screen** — 103 of them at phone and desktop size, with real data — in [`docs/screens/`](docs/screens/index.html):
+contact sheets per area in [`docs/screens/sheets/`](docs/screens/sheets/), each scored in
+[`docs/screens/REVIEW.md`](docs/screens/REVIEW.md), and the UI before the 6–7 Oct redesign beside today's in
+[`then-and-now.png`](docs/screens/sheets/then-and-now.png).
 **For judges:** per bounty, with the portal's fields and a 3-minute script — [`docs/SUBMISSION.md`](docs/SUBMISSION.md);
 every component's status from a real run — [`docs/TEST-PLAN-ZERO-MOCK.md`](docs/TEST-PLAN-ZERO-MOCK.md).
 

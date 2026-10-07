@@ -215,7 +215,8 @@ rebuild:fork`. A second web build with `XORR_WEB_API=<fork executor>` and `EXPO_
 ## 10. Video shot list (≤ 3:00, real Monad)
 
 `npm run demo:record` (`e2e/web/record-demo.mjs`) already records beats 1–9 and 11 from the fork, captioned, with the
-waits cut (`docs/demo/xorr-monad-fork-demo.mp4`, 1:39); pointed at the hosted testnet build it records the same there.
+waits cut (`docs/demo/flows/00-full-tour.mp4`, 1:50, and each flow beside it); pointed at the hosted testnet build it
+records the same there.
 Recorded on the hosted testnet app (and the local or hosted fork for the Kuru beat), 1080 × 1920 phone frame or
 1280 × 800 browser, captions in the frame, no music needed. The script with words is in `SUBMISSION.md`.
 

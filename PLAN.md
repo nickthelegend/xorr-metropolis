@@ -101,12 +101,29 @@ Each: *objective* — *acceptance* — *verify* — status.
 - F1 **DONE** README: one-command demo, new-in-window vs base, AI disclosure, why Monad, architecture diagram, sponsors (`051a345`).
 - F2 **DONE** SUBMISSION.md: track and pitch, the portal's fields per bounty, testnet transactions, evidence, a 3-minute script with timestamps.
 - F3 **DONE** `docs/DEPLOY-LATER.md`: ordered runbook, addresses and MON, keys and where set, deploy/verify/host commands, smoke test, video shot list, executor host options (Railway recommended).
-- F4 **DONE** A demo video recorded from the local fork: `docs/demo/xorr-monad-fork-demo.mp4`, 1:39, 0 console errors, by `npm run demo:record` (every frame the real app; waits and blank page loads cut). The final testnet cut follows the go (DEPLOY-LATER §10).
+- F4 **DONE** A demo video recorded from the local fork: `docs/demo/flows/00-full-tour.mp4` (1:50) and a video per flow beside it, 0 console errors, by `npm run demo:record` (every frame the real app; waits and blank page loads cut). The final testnet cut follows the go (DEPLOY-LATER §10).
 
 ### P-G — Go live (awaiting the owner's go)
 - G-1 **BLOCKED** MON for the testnet keys; testnet runs of B4/B8/B9 and the CRE broadcast.
 - G-2 **BLOCKED** Hosting (executor + web) per DEPLOY-LATER.md.
 - G-3 **BLOCKED** Registration (Oct 6 23:59 UTC) and submission on hackathon.monad.xyz.
+
+### P-H — Alive, every screen, on film (6–7 Oct; the owner: "the UI is stale … the best UI for all the screens, black theme only")
+- H1 **DONE** The living redesign, at the system level so all 116 routes take it: one violet accent (never an outcome),
+  light instead of grey (`Aurora`, lit cards, `tone="accent"`, `Glow`), black only (the ticket's white sheet and the
+  lavender Messages room gone), motion that answers the thumb (`Press`, `Screen` arrival, `LiveDot`, `RoutingBars`), the
+  primary action lit; Home's quick actions, the Run receipt's routing bars, the Council's bench, the desktop stage.
+  `src/ui/README.md` "2026-10-06 — alive"; design-system tests restated for the new policy (53 pass).
+- H2 **DONE** Every screen photographed on the fork with real data, 390 × 844 and 1440 × 900: 103 screens incl. empty,
+  offline and stopped states (`docs/screens/<area>/`, `e2e/web/capture.mjs`); the 38 key screens also on the UI before
+  the redesign (`docs/screens/before/`, `sheets/then-and-now.png`).
+- H3 **DONE** `docs/screens/REVIEW.md`: every screen scored 1–5 against a written rubric; the 14 at 3 or less polished in
+  code and re-captured (before/after in `docs/screens/polish/`, `sheets/polished.png`); average 3.91 → 4.09, none ≤ 3.
+- H4 **DONE** Contact sheets per area (`docs/screens/sheets/`) and the gallery (`docs/screens/index.html`).
+- H5 **DONE** A video per flow and the full tour, cut from one real run on the fork (`docs/demo/flows/`, `npm run demo:record`).
+- Found and fixed on the way: the executor crashed when Postgres dropped a connection (now it reconnects); resizing a
+  browser window across 402 px remounted the whole app (`PhoneFrame`); a passkey account was told its email was its way
+  back; unlimited allowances printed as 78 digits; "Trade stocks" offered on Monad; venues unnamed; the browser's focus box.
 
 ## 4. Gaps (audit from the code, 6 Oct)
 
