@@ -32,7 +32,7 @@ page.on('console', (m) => m.type() === 'error' && errors.push(m.text().slice(0, 
 page.on('pageerror', (e) => errors.push(`pageerror ${e.message.slice(0, 200)}`));
 page.on('response', (r) => r.url().startsWith(API) && r.status() >= 400 && errors.push(`${r.status()} ${r.url().slice(API.length)}`));
 const v = (l) => l.filter({ visible: true }).first();
-const go = (r) => page.goto(`${WEB}${r}`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+const go = (r) => page.goto(`${WEB}${r}`, { waitUntil: 'domcontentloaded', timeout: 300_000 });
 
 /** Both sizes of what is on screen; `scrollTo` (a test id) is brought into view at each size first. */
 async function shot(name, scrollTo) {
@@ -94,6 +94,37 @@ if (FEATURES.includes('f1')) {
   await v(page.getByTestId('council-convene')).click({ timeout: T.ui });
   await v(page.getByText(/^Approved \d–\d\.|^Not approved|^Vetoed/)).waitFor({ timeout: T.chain });
   await shot('f1-council');
+}
+
+if (FEATURES.includes('f3')) {
+  // A round that filled shows the whole replay, the transaction and its speed included; the council is asked about MON,
+  // then ETH, then BTC, until one is approved and fills (each is a real vote on the fork's live inputs).
+  await go('/council');
+  await v(page.getByTestId('council-convene')).waitFor({ timeout: T.ui });
+  for (const sym of ['MON', 'ETH', 'BTC']) {
+    const rounds = await page.getByTestId('council-replay').filter({ visible: true }).count();
+    const fills = await page.getByTestId('council-vote-to-fill').filter({ visible: true }).count();
+    await v(page.getByText(sym, { exact: true })).click();
+    await v(page.getByTestId('council-convene')).click();
+    for (let i = 0; i < 240 && (await page.getByTestId('council-replay').filter({ visible: true }).count()) <= rounds; i++) await page.waitForTimeout(1_000);
+    await page.waitForTimeout(1_500);
+    const filled = (await page.getByTestId('council-vote-to-fill').filter({ visible: true }).count()) > fills;
+    console.log(`  council on ${sym}: ${filled ? 'approved and filled' : 'not filled'}`);
+    if (filled) break;
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await shot('f3-council');
+  await v(page.getByTestId('council-replay')).click();
+  await v(page.getByTestId('replay-seat-risk-keeper')).waitFor({ timeout: T.ui });
+  await v(page.getByTestId('replay-pause')).click();
+  await shot('f3-replay-playing', 'replay-seat-risk-keeper');
+  await v(page.getByTestId('replay-all')).click();
+  await v(page.getByTestId('replay-outcome')).waitFor({ timeout: T.ui });
+  await shot('f3-replay-verdict', 'replay-verdict');
+  if (/Executed/.test(await v(page.getByTestId('replay-outcome')).innerText())) {
+    await v(page.getByTestId('speed-receipt')).waitFor({ timeout: T.ui });
+    await shot('f3-replay-fill', 'speed-receipt');
+  }
 }
 
 console.log(`console errors and API responses ≥ 400: ${errors.length}${errors.length ? `\n  ${[...new Set(errors)].slice(0, 8).join('\n  ')}` : ''}`);

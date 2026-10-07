@@ -26,6 +26,8 @@ export type CouncilRound = {
   /** When the round was settled — sent and confirmed, or decided not to send. Absent while pending. */
   settledAt?: string | null;
   votes: CouncilBallot[];
+  /** What the seats read when the round convened, keyed by what a ballot cites (`price`, `permission`, …). */
+  inputs?: Record<string, unknown> & { readAt?: string };
 };
 
 /** Seconds from the council convening to its trade confirmed, for an executed round; null otherwise. */
@@ -43,6 +45,8 @@ export const council = {
   strategist: () =>
     api.get<{ strategist: { configured: boolean; needs: string | null } | null }>('/council/seats').then((r) => r.strategist),
   rounds: () => api.get<{ rounds: CouncilRound[] }>('/council/rounds').then((r) => r.rounds),
+  /** One of this wallet's rounds, with the inputs its votes rest on (the replay, ROADMAP-WIN F3). */
+  round: (id: string) => api.get<{ round: CouncilRound }>(`/council/rounds/${encodeURIComponent(id)}`).then((r) => r.round),
   convene: (p: { side: 'buy' | 'sell'; symbol: string; usd: number }) =>
     api.post<{ round: CouncilRound }>('/council/convene', p).then((r) => r.round),
 };

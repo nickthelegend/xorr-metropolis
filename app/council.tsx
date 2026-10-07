@@ -9,6 +9,7 @@
  */
 import React, { useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
 import { Rise } from '@/ui/Rise';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +23,7 @@ import {
   LoadingRows,
   Pill,
   PillRow,
+  Press,
   Screen,
   SheetCard,
   Tag,
@@ -32,8 +34,6 @@ import {
   radius,
   size,
   space,
-  type Gradient,
-  type TagTone,
 } from '@/ui';
 import { shortAddress, when } from '@/format';
 import { repos } from '@/data';
@@ -43,45 +43,15 @@ import { useAsync } from '@/data/useAsync';
 import { apiProse } from '@/data/apiError';
 import { council, voteToFillSec, type CouncilBallot, type CouncilRound } from '@/data/council';
 import { CHAIN_KEY, onMonad } from '@/chain';
+import { SEAT_GRADIENT, SEAT_NAMES, SEAT_SHORT, decisionBg, decisionTone, outcomeLine, voteColor, voteTone } from '@/council/seats';
+import { SEAT_ORDER, seated } from '@/council/replay';
 import { useNow } from '@/state/useNow';
 
-const SEAT_NAMES: Record<CouncilBallot['persona'], string> = onMonad
-  ? { 'session-desk': 'Price Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Perps Desk', strategist: 'Strategist (Kimi)' }
-  : { 'session-desk': 'Session Desk', 'risk-keeper': 'Risk Keeper', 'trend-reader': 'Trend Reader', 'macro-desk': 'Macro Desk', strategist: 'Strategist' };
 // What the executor's council can be asked about here (`/council/seats`): Stock Tokens, or on Monad MON, ETH and BTC.
 const SYMBOLS: readonly string[] = onMonad ? ['MON', 'ETH', 'BTC'] : ['NVDA', 'TSLA', 'AAPL', 'SPY'];
 const SIZES = [25, 50, 100] as const;
 
-function voteTone(v: CouncilBallot['vote']): TagTone {
-  if (v === 'yes') return 'up';
-  if (v === 'veto') return 'solidDown';
-  if (v === 'no') return 'down';
-  return 'neutral';
-}
-
-function decisionTone(d: CouncilRound['decision']): string {
-  return d === 'approved' ? colors.up : d === 'vetoed' ? colors.down : colors.ink55;
-}
-
-/**
- * Each seat's face (2026-10-06). The council was four names in a list; it is four characters now, each in one of the
- * agent identity gradients, the same on the bench at the top and beside every vote it casts.
- */
-const SEAT_GRADIENT: Record<CouncilBallot['persona'], Gradient> = {
-  'session-desk': colors.agent.momentum,
-  'risk-keeper': colors.agent.drawdown,
-  'trend-reader': colors.agent.earnings,
-  'macro-desk': colors.agent.yield,
-  strategist: colors.agent.strategist,
-};
-const SEAT_SHORT: Record<CouncilBallot['persona'], string> = onMonad
-  ? { 'session-desk': 'Price', 'risk-keeper': 'Risk', 'trend-reader': 'Trend', 'macro-desk': 'Perps', strategist: 'Kimi' }
-  : { 'session-desk': 'Session', 'risk-keeper': 'Risk', 'trend-reader': 'Trend', 'macro-desk': 'Macro', strategist: 'Strategist' };
-const SEATS: readonly CouncilBallot['persona'][] = ['session-desk', 'risk-keeper', 'trend-reader', 'macro-desk', 'strategist'];
-
-function voteColor(v: CouncilBallot['vote']): string {
-  return v === 'yes' ? colors.up : v === 'no' || v === 'veto' ? colors.down : colors.ink28;
-}
+const SEATS = SEAT_ORDER;
 
 /** The bench: every seat's face, the Strategist dimmed when it has no key to sit with. */
 function Bench({ strategistOff }: { strategistOff: boolean }) {
@@ -110,14 +80,6 @@ function SeatDot({ seat }: { seat: CouncilBallot['persona'] }) {
       <LinearGradient colors={[g.c1, g.c2]} start={{ x: 0.2, y: 0.1 }} end={{ x: 0.9, y: 1 }} style={{ flex: 1, borderRadius: 9 }} />
     </View>
   );
-}
-
-function outcomeLine(r: CouncilRound): string {
-  if (r.outcome === 'executed') return 'Executed';
-  if (r.outcome === 'pending') return 'Sending';
-  if (r.outcome === 'refused') return `Refused: ${r.outcomeDetail ?? ''}`;
-  if (r.outcome === 'failed') return `Failed: ${r.outcomeDetail ?? ''}`;
-  return r.decision === 'approved' ? (r.outcomeDetail ?? 'Not sent') : 'Not sent';
 }
 
 function TxLine({ round }: { round: CouncilRound }) {
@@ -158,6 +120,7 @@ function RoundCard({ round, roster, latest = false }: { round: CouncilRound; ros
     );
   // An executed agent round was signed by that agent's own wallet (individual agents, 2026-09-23).
   const signer = round.outcome === 'executed' && round.txHash ? roundSigner(round.convenedBy, roster) : undefined;
+  const router = useRouter();
   return (
     <SheetCard bordered borderRadius={radius.panel} padding={space.s16} tone={latest ? 'accent' : 'default'}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.s8 }}>
@@ -170,7 +133,7 @@ function RoundCard({ round, roster, latest = false }: { round: CouncilRound; ros
             paddingHorizontal: space.s10,
             paddingVertical: space.s4,
             borderRadius: radius.card,
-            backgroundColor: round.decision === 'approved' ? colors.upBg : round.decision === 'vetoed' ? colors.downBg : colors.neutralBg,
+            backgroundColor: decisionBg(round.decision),
             boxShadow: round.decision === 'approved' ? glow.up : undefined,
           }}
         >
@@ -181,12 +144,12 @@ function RoundCard({ round, roster, latest = false }: { round: CouncilRound; ros
       </View>
       {/* The tally, one segment per seat in the order they sat. */}
       <View style={{ flexDirection: 'row', gap: space.s4, marginTop: space.s12 }}>
-        {round.votes.map((v) => (
+        {seated(round.votes).map((v) => (
           <View key={v.persona} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: voteColor(v.vote), opacity: v.vote === 'abstain' ? 1 : 0.9 }} />
         ))}
       </View>
       <View style={{ marginTop: space.s14, gap: space.s10 }}>
-        {round.votes.map((v, i) =>
+        {seated(round.votes).map((v, i) =>
           beat(
             i + 1,
             v.persona,
@@ -228,9 +191,38 @@ function RoundCard({ round, roster, latest = false }: { round: CouncilRound; ros
           signed by {shortAddress(signer)}
         </Text>
       ) : null}
-      <Text variant="footnoteSm" color={colors.ink40} style={{ marginTop: space.s6 }}>
-        {when(new Date(round.createdAt).getTime())} · {convenedByLabel(round.convenedBy, roster)}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s10, marginTop: space.s6 }}>
+        <Text variant="footnoteSm" color={colors.ink40} style={{ flexShrink: 1 }}>
+          {when(new Date(round.createdAt).getTime())} · {convenedByLabel(round.convenedBy, roster)}
+        </Text>
+        {/* The round played back seat by seat, with what each desk read (ROADMAP-WIN F3). */}
+        <Press
+          onPress={() => router.push({ pathname: '/council/[id]', params: { id: round.id } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Replay the vote on ${p.side === 'buy' ? 'buying' : 'selling'} ${money(p.usd)} ${p.symbol}`}
+          hitHeight={size.hit}
+          testID="council-replay"
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: space.s6,
+              paddingHorizontal: space.s12,
+              paddingVertical: space.s6,
+              borderRadius: radius.card,
+              backgroundColor: colors.accentSoft,
+              borderWidth: 1,
+              borderColor: colors.accentLine,
+            }}
+          >
+            <View style={{ width: 0, height: 0, borderTopWidth: 5, borderBottomWidth: 5, borderLeftWidth: 8, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: colors.accentHi }} />
+            <Text variant="control" color={colors.accentHi}>
+              Replay
+            </Text>
+          </View>
+        </Press>
+      </View>
     </SheetCard>
   );
 }

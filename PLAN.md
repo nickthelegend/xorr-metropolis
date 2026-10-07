@@ -134,7 +134,11 @@ Each: *objective* — *acceptance* — *verify* — status.
   the permission the chain enforces, and the stop with Monad mainnet's cadence read live. Skippable at every step, shown
   once per device (`howSeen`), and "How xorr works" in Settings opens it again and returns there. `e2e:explainer`;
   `docs/screens/wave/f2-*`.
-- I3 **NOT STARTED** F3 Council replay — `/council/<id>`: readings and votes seat by seat, the verdict, the fill and its speed.
+- I3 **DONE** F3 Council replay — "Replay" on every round opens `/council/<id>`: the proposal, then each desk with what it
+  read when the round convened (Chainlink and its age, the fill's quote, Kuru's book and the gap; the cap left; the trend;
+  Perpl funding — from the round's stored inputs, never re-read) and its vote, then the verdict and the rule it followed,
+  then the transaction with its vote-to-fill time and speed receipt. The bench lights each seat as it speaks; pause, show
+  all, play again; under reduced motion it is shown whole. `e2e:replay`; `docs/screens/wave/f3-*`.
 - I4 **NOT STARTED** F4 Built on Monad — every sponsor integration with a live reading, named for its bounty.
 - I5 **NOT STARTED** F5 The strategy gauntlet — the library as a page: tested vs survived, out-of-sample numbers, filters.
 - Each: real fork data, unit + e2e tests, console and network clean, before/after at 1440 and 390 in `docs/screens/wave/`,
