@@ -92,6 +92,14 @@ const [runs, agents, activity, strategies, positions, library] = await Promise.a
   get('/strategies/library'),
 ]);
 const first = (x, key) => (Array.isArray(x) ? x : (x?.[key] ?? []))[0];
+// A council round to replay (`/council/[id]`): a dry run, so it is recorded and voted on but trades nothing.
+const round = await fetch(`${API}/council/convene`, {
+  method: 'POST',
+  headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+  body: JSON.stringify({ side: 'buy', symbol: 'MON', usd: 25, dryRun: true }),
+})
+  .then((r) => (r.ok ? r.json() : null))
+  .catch(() => null);
 const sample = {
   id: runs?.[0]?.id,
   symbol: 'MON',
@@ -101,11 +109,13 @@ const sample = {
   strategy: first(strategies, 'strategies')?.id,
   position: first(positions, 'positions')?.id,
   library: first(library, 'items')?.id ?? first(library, 'strategies')?.id,
+  round: round?.round?.id,
 };
 console.log('sample ids', JSON.stringify(sample));
 const fill = (r) =>
   r
     .replace('/runs/[id]', `/runs/${sample.id ?? 'none'}`)
+    .replace('/council/[id]', `/council/${sample.round ?? 'none'}`)
     .replace('/agent/[id]', `/agent/${sample.agent ?? 'none'}`)
     .replace('/strategy/[id]', `/strategy/${sample.strategy ?? 'none'}`)
     .replace('/auto-close/[id]', `/auto-close/${sample.position ?? 'none'}`)

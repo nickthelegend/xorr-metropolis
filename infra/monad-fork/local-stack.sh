@@ -76,8 +76,22 @@ up() {
   echo "up: fork $RPC · executor http://localhost:$API_PORT · web http://localhost:$WEB_PORT"
 }
 
+# An anvil whose wrapper shell is gone is no longer under any PID this script kept (it was re-parented to launchd), and
+# `stop fork` cannot reach it: twice on 7 Oct one kept :8561 after `down`. It is found by the port, and stopped by that
+# PID only if its own command line names this stack's state file. TERM, then a wait for it to save the chain: a KILL
+# mid-save once truncated fork-state.json and forced a re-fork.
+stop_orphan_fork() {
+  for pid in $(lsof -ti "tcp:$FORK_PORT" -sTCP:LISTEN 2>/dev/null); do
+    ps -o command= -p "$pid" 2>/dev/null | grep -qF -- "--state $STATE/fork-state.json" || continue
+    kill -TERM "$pid" 2>/dev/null || continue
+    i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 60 ]; do i=$((i + 1)); sleep 1; done
+    echo "fork: stopped an anvil left without its wrapper ($pid)"
+  done
+}
+
 down() {
   for s in web indexer executor keeper fork; do stop "$s"; done
+  stop_orphan_fork
 }
 
 case "${1:-up}" in
