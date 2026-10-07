@@ -30,6 +30,14 @@ contact sheets per area in [`docs/screens/sheets/`](docs/screens/sheets/), each 
 **For judges:** per bounty, with the portal's fields and a 3-minute script — [`docs/SUBMISSION.md`](docs/SUBMISSION.md);
 every component's status from a real run — [`docs/TEST-PLAN-ZERO-MOCK.md`](docs/TEST-PLAN-ZERO-MOCK.md).
 
+**New on 7 Oct — what a judge sees in the first minute:** a three-step explainer before sign-up with Monad mainnet's
+blocks going final live ([`/how`](app/(onboarding)/how.tsx)); every fill's **speed receipt** — executed in ms with its
+receipt returned by `eth_sendRawTransactionSync`, its gas on Monad against the same gas on Ethereum
+([`SpeedReceipt.tsx`](src/speed/SpeedReceipt.tsx)); a **council replay** that plays each round seat by seat with what
+every desk read ([`/council/<id>`](app/council/[id].tsx)); and **Built on Monad** ([`/monad`](app/monad.tsx)), every
+Monad-native integration and sponsor read live, each saying where it runs. Before/after shots in
+[`docs/screens/wave/`](docs/screens/wave/); the plan and the review behind them in [`docs/ROADMAP-WIN.md`](docs/ROADMAP-WIN.md).
+
 **Try it in one command** (needs Node 20+, Node 22 for the indexer, Foundry, Postgres):
 
 ```bash
@@ -51,6 +59,22 @@ sh infra/monad-fork/local-stack.sh refork   # fork Monad mainnet, deploy, grant,
 - **EVM, unchanged.** `XorrDelegation` and the executor came across from the Arbitrum build without a line of contract
   change; Foundry, viem and Sourcify (MonadVision) work as they do everywhere. One Monad-specific detail shaped the code:
   Monad bills the gas *limit*, so estimates are padded 10%, not 30%.
+
+## Monad-native, and where each runs
+
+What xorr uses of Monad itself, beyond plain EVM. Each is on the **Built on Monad** screen with a reading made now, and
+says where it runs; the full table with evidence is in [`docs/ROADMAP-WIN.md`](docs/ROADMAP-WIN.md#monad-native-coverage-7-oct-the-user-all-monad-tech-in-every-project).
+
+| | What | Where it runs | Code |
+|---|---|---|---|
+| 1 | **Commit states, live** (`monadNewHeads`): each block Proposed → Voted → Final → Verified, timed (~290 / ~560 / ~1,500 ms on 7 Oct) | Monad mainnet | [`monad/commits.ts`](server/src/monad/commits.ts), [`CommitStrip.tsx`](src/speed/CommitStrip.tsx) |
+| 2 | **Receipts with the send** (`eth_sendRawTransactionSync`): every fill timed to executed, and to final on a Monad network | the fork now; final on testnet at the go | [`evm/send.ts`](server/src/evm/send.ts) |
+| 3 | **`txpool_statusByHash`**: a pending send told from an absent one (`eth_getTransactionByHash` returns only included ones on Monad) | Monad networks; anvil has none | [`monad/txpool.ts`](server/src/monad/txpool.ts) |
+| 4 | **Your passkey, checked by `0x0100`**: the Mera passkey signs a challenge and Monad's P256VERIFY verifies it | `eth_call` on mainnet and the fork | [`monad/passkey-p256.ts`](server/src/monad/passkey-p256.ts) |
+| 5 | **Native staking** at `0x1000`: epoch, the proposing validator, its stake and commission | Monad mainnet (delegating at the go) | [`monad/native.ts`](server/src/monad/native.ts) via `@monad-crypto/viem` |
+| 6 | **Gas billed on the limit, the 10 MON reserve**: 10% head-room (−15% billed per Kuru fill), fees in MON on the limit, reserve checked before MON moves | the executor; `0x1001` read on mainnet | [`evm/gas-limit.ts`](server/src/evm/gas-limit.ts), [`monad/reserve.ts`](server/src/monad/reserve.ts), [`docs/MONAD-GAS.md`](docs/MONAD-GAS.md) |
+| 7 | **x402 through Monad's facilitator**: other agents pay $0.01 USDC per call for the council's market read | Monad testnet (settling at the go) | [`monad/x402.ts`](server/src/monad/x402.ts), [`evidence`](docs/evidence/x402-live-2026-10-07.txt) |
+| 8 | **Canonical contracts**: WMON, USDC, Multicall3 used; our own Sourcify-verified on MonadVision | mainnet and the fork | [`monad/native.ts`](server/src/monad/native.ts) |
 
 ## Architecture
 

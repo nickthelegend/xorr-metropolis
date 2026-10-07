@@ -31,6 +31,7 @@ go through Perpl's own DelegatedAccount: the agent can trade there but never wit
 | Contracts (Monad testnet, 10143) | `XorrDelegation` [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) (Sourcify-verified) · `XorrAuditAnchor` [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
 | Transactions (Monad testnet) | the table under [Evidence on Monad testnet](#evidence-on-monad-testnet) |
 | Why Monad | 300 ms blocks, final two blocks later (~600 ms), let the council deliberate and still fill at the price it voted on; Kuru is a real on-chain order book to route against; Perpl's DelegatedAccount is the agent permission built in; gas is cheap enough to check the cap on chain on every spend. README → "Why Monad" |
+| Monad-native | All eight of Monad's own: commit states live (`monadNewHeads`), receipts with the send (`eth_sendRawTransactionSync`), `txpool_statusByHash`, the passkey checked by P256VERIFY `0x0100`, staking at `0x1000`, gas billed on the limit and the 10 MON reserve, x402 through Monad's facilitator, the canonical contracts — each on the app's Built on Monad screen, read live, saying where it runs. [Below](#monad-native) |
 | Pre-existing code | Yes: the earlier xorr builds (Base, Solana, X Layer, Arbitrum; September 2026). The root commit `5681467` is the Arbitrum build. The 100 commits since are the Monad work, listed in README → "Disclosures" |
 | AI tools | Claude Code (Anthropic), credited as co-author on its commits; README → "Disclosures" |
 | Team | nickthelegend |
@@ -236,6 +237,24 @@ left. The portal shows each bounty's own form only to registered teams, so these
   stand-in answer (flows B7).
 - **Live step left:** `MOONSHOT_API_KEY`.
 
+## Monad-native
+
+The app's **Built on Monad** screen (`/monad`, from Home's live Monad line) reads each of these now and says where it runs;
+README → "Monad-native, and where each runs" has the code, and [`ROADMAP-WIN.md`](ROADMAP-WIN.md#monad-native-coverage-7-oct-the-user-all-monad-tech-in-every-project)
+the evidence. What a judge can check without trusting us:
+
+- **Blocks going final, live**: Monad mainnet's `monadNewHeads` stream on the explainer, every fill's speed card and
+  `/monad` — on 7 Oct a block voted in ~290 ms, final in ~560 ms, verified in ~1.5 s ([shots](screens/wave/)).
+- **A fill's receipt with the send**: every fill goes out with `eth_sendRawTransactionSync`; the card says it executed
+  in N ms on the fork and why the fork's time is not Monad's.
+- **The passkey checked by Monad**: "Check my passkey on Monad" has the passkey sign a challenge and Monad's `0x0100`
+  verify it by `eth_call`, on mainnet and the fork, and refuse the same signature over another message.
+- **Agents pay per call**: `POST /x402/council` returns a 402 for $0.01 of Monad-testnet USDC; Monad's facilitator itself
+  refused an unfunded signed payment ([evidence](evidence/x402-live-2026-10-07.txt)).
+- **Gas on Monad's terms**: 10% head-room, because Monad bills the limit (a Kuru fill now declares 424,989 gas, not
+  502,260); the fee before an order is in MON on the limit; the 10 MON reserve is checked before MON moves
+  ([`MONAD-GAS.md`](MONAD-GAS.md)).
+
 ---
 
 ## 3-minute demo script
@@ -247,18 +266,16 @@ beats (0:00–1:50, captions in the frame, recorded by `npm run demo:record`), a
 
 | Time | On screen | Words |
 |---|---|---|
-| 0:00 | Home | "Nobody can watch a market all night. xorr is a council of AI agents that trades for you on Monad — inside a limit the chain enforces." |
-| 0:12 | Create a passkey account; the address appears | "One passkey — Mera. No email, no seed phrase. The wallet comes from the passkey itself." |
-| 0:30 | Test funds; the permission: $ a day, an end date, the venues; signed, no popup; the timer | "I give the agents a daily limit and an end date. Mera's signing session signs it — no wallet popup. Under six seconds to my first transaction." |
-| 0:50 | Clear storage → "Sign in with a passkey" → same address | "Nothing is stored. Wipe the browser, and the passkey brings back the same account." |
-| 1:02 | (fork) Buy $20 of MON; the run screen | "Every order measures Kuru's order book against Uniswap and fills on the better one — and says what routing was worth." |
-| 1:22 | Council round: four desks, the vote, "Executed"; the Strategist seat | "Before an agent trades, four desks vote on Monad's own numbers — Chainlink, Kuru, Perpl funding, my limit. Kimi breaks ties. On Monad the vote and the fill land in the same second." |
-| 1:42 | Perps: AUSD balance; the Perpl desk; long MON 1x; position with liquidation distance | "Perps run on Perpl through Perpl's own delegated account, with AUSD as margin. The agent can trade it — it can never withdraw." |
-| 2:02 | Exit rules on the desk; `/perpl` risk screen | "Every 30 seconds, standing exits — liquidation buffer, stop-loss, a funding-aware exit. And a risk view of every Perpl market." |
-| 2:20 | History: "Indexed by Envio" | "The on-chain record — every grant, spend and desk — indexed by Envio." |
-| 2:30 | Terminal: `mm perpl markets`; the CRE report on MonadVision | "The same Perpl trading as a MetaMask Agent Wallet plugin, and a Chainlink CRE workflow that brings MON/USD to testnet." |
-| 2:42 | Hold to stop; the explorer shows the revoke and `removeOperator` | "And one hold stops everything: the permission is revoked and the operator removed — on chain, where I can check it." |
-| 2:55 | Repo URL; "MIT · built with Claude Code" | "xorr. The agents trade; the chain keeps the limit." |
+| 0:00 | Welcome → Get started → the explainer's Monad step: blocks going Proposed → Voted → Final, live | "Nobody can watch a market all night. xorr is a council of AI agents that trades for you on Monad, inside a limit the chain enforces. That's Monad mainnet right now: a block every 300 ms, final in about half a second." |
+| 0:18 | Create a passkey account; the address appears | "One passkey — Mera. No email, no seed phrase. The wallet comes from the passkey itself." |
+| 0:30 | Test funds; the permission: $ a day, an end date, the venues; signed, no popup | "I give the agents a daily limit and an end date. It's signed without a popup, and the contract refuses anything past it." |
+| 0:45 | Buy $20 of MON; the run screen: routing, then the speed receipt | "Every order measures Kuru's order book against Uniswap and fills on the better one. Its receipt came back with the send — eth_sendRawTransactionSync — and its gas cost a fraction of a cent: hundreds of times less than the same gas on Ethereum." |
+| 1:08 | Council: put $50 to the council; the verdict; Replay, seat by seat | "Before an agent trades, four desks vote on Monad's own numbers — Chainlink, Kuru, Perpl funding, my limit. Replay shows exactly what each desk read when it voted." |
+| 1:35 | Perps: the Perpl desk; long MON 1x; close | "Perps run on Perpl through Perpl's own delegated account, with AUSD as margin. The agent can trade it — never withdraw." |
+| 1:52 | Built on Monad: the commit strip; "Check my passkey on Monad"; staking; x402 | "Everything xorr uses of Monad itself, read live: my passkey's own signature, verified by Monad's P256 precompile; native staking; and other agents paying per call for the council's read, through Monad's x402 facilitator." |
+| 2:22 | History: "Indexed by Envio"; terminal: `mm perpl markets` | "The on-chain record, indexed by Envio — and the same Perpl desk as a MetaMask agent-wallet plugin." |
+| 2:38 | Hold to stop; the revoke and `removeOperator` | "And one hold stops everything: the permission is revoked and the operator removed — on chain, where I can check it." |
+| 2:52 | Repo URL; "MIT · built with Claude Code" | "xorr. The agents trade; the chain keeps the limit." |
 
 ---
 

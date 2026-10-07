@@ -83,6 +83,28 @@ build plus tests plus screenshots.
 Each feature: real fork data, unit and e2e tests, console and network clean, before and after at 1440 and 390 in
 `docs/screens/wave/`, one commit, pushed, CI green.
 
+## Monad-native coverage (7 Oct, the user: "all Monad tech in every project")
+
+One line per item of `MONAD-TECH.md`. Where it runs is said the same way in the app (`/monad`, "Built on Monad"): live
+on Monad mainnet or testnet, the local fork, or awaiting the testnet go. A fork's timing is never shown as Monad's.
+
+| # | Item | Status | Where it runs | In xorr | Evidence |
+|---|---|---|---|---|---|
+| 1 | Commit states (`monadNewHeads`) | **built · live read** | Monad mainnet's WebSocket, one lazily opened subscription | [`server/src/monad/commits.ts`](../server/src/monad/commits.ts), [`src/speed/CommitStrip.tsx`](../src/speed/CommitStrip.tsx): the explainer's Monad step, every fill's speed card, `/monad` | voted ~290 ms, final ~560 ms, verified ~1.5 s (medians, 7 Oct); `e2e:explainer` requires live finalized blocks; `screens/wave/m1-*` |
+| 2 | Two-timer receipts (`eth_sendRawTransactionSync`) | **built · fork now; final timer awaiting testnet go** | every fill on the executor's chain (anvil implements the method); "final" only means something on a Monad network | [`server/src/evm/send.ts`](../server/src/evm/send.ts), `delegation.ts` `sendCall`, `executor/run.ts`, the speed card | fork fills executed in 150–971 ms with the receipt returned by the send; `e2e:fork`; `screens/wave/m2-*` |
+| 3 | `txpool_statusByHash` | **built · live read on mainnet; none on the fork** | the executor's "is this hash pending or absent" check on Monad networks; `/monad/txpool/:hash` | [`server/src/monad/txpool.ts`](../server/src/monad/txpool.ts), `evm/delegation.ts` `waitForReceipt` | mainnet answers; anvil "method does not exist"; on `/monad` |
+| 4 | Passkeys on chain (Mera + P256 `0x0100`) | **built · live `eth_call` on mainnet and the fork** | "Check my passkey on Monad" on `/monad` (web) | [`server/src/monad/passkey-p256.ts`](../server/src/monad/passkey-p256.ts), [`src/monad/passkeyCheck.ts`](../src/monad/passkeyCheck.ts) | `e2e:monad`: a passkey's own signature valid on mainnet's and the fork's `0x0100`, the same signature over another message refused; `screens/wave/f4-monad-passkey-*` |
+| 5 | Native staking (`0x1000`) | **live read · delegating awaits testnet go** | Monad mainnet, through `@monad-crypto/viem` | [`server/src/monad/native.ts`](../server/src/monad/native.ts) | epoch, delay period, the proposing validator, its stake and commission, on `/monad` |
+| 6 | Gas correctness | **built · measured on the fork; `0x1001` live read** | the executor's limits and fees; the reserve rule before any MON moves | [`server/src/evm/gas-limit.ts`](../server/src/evm/gas-limit.ts), [`gas-price.ts`](../server/src/evm/gas-price.ts), [`monad/reserve.ts`](../server/src/monad/reserve.ts), [`docs/MONAD-GAS.md`](MONAD-GAS.md) | a Kuru fill declares 424,989 gas, not 502,260 (−15% billed); the fee before an order in MON on the declared limit (it was priced as ETH, ~100,000× high); reserve rules unit-tested; 128 KB and storage notes |
+| 7 | Payments (x402 via Monad's facilitator) | **built · facilitator read live; settlement awaits testnet go** | Monad testnet (`eip155:10143`), Circle's testnet USDC | [`server/src/monad/x402.ts`](../server/src/monad/x402.ts): `POST /x402/council`, the council's market read at $0.01 | [`evidence/x402-live-2026-10-07.txt`](evidence/x402-live-2026-10-07.txt): Monad's facilitator refused an unfunded signed payment (`insufficient_funds`); the paid path tested with the official client |
+| 8 | Canonical contracts | **built · checked live on mainnet and the fork** | WMON, USDC and Multicall3 used; Permit2, EntryPoint and CreateX present, unused, and said why | [`server/src/monad/native.ts`](../server/src/monad/native.ts) `CANONICAL`; `monad/mainnet.ts` batches through Multicall3 | code present on both; `XorrDelegation` and `XorrAuditAnchor` Sourcify-verified on MonadVision; `screens/wave/f4-monad-contracts-*` |
+
+Not taken, and why: `@monad-crypto/mpp` (x402 is the one payments rail, through Monad's own facilitator; a second rail
+would be the same feature twice); EIP-7702 gasless onboarding (the agents already sign as their own EOAs under the
+delegation contract, and on Monad a 7702-delegated account's transactions revert when they leave it under 10 MON, where
+the agents hold ~0.05 MON for gas);
+the Execution Events SDK and Monad Solonet (both need a Linux Monad node on the machine).
+
 ## Status
 
-Tracked in `PLAN.md` (phase P-I) as each lands.
+Tracked in `PLAN.md` (phase P-I) as each lands. F1–F4 done (7 Oct), with the Monad-native items above; F5 next.
