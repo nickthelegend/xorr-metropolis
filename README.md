@@ -8,7 +8,8 @@
 
 Nobody can watch a market all night. xorr lets a council of AI agents do it for you — every trade voted on first, every
 vote shown beside the transaction it produced, and none of it able to touch more than you allowed, because the chain
-enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 400 ms.
+enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 300 ms and are final two
+blocks later, about 600 ms.
 
 **Demo — the full tour (1:50, 7 Oct):** [`docs/demo/flows/00-full-tour.mp4`](docs/demo/flows/00-full-tour.mp4), recorded live
 on a fork of Monad mainnet by `npm run demo:record`, captioned, waits cut. And each flow on its own, cut from the same run:
@@ -38,7 +39,7 @@ sh infra/monad-fork/local-stack.sh refork   # fork Monad mainnet, deploy, grant,
 ## Why Monad
 
 - **A council can deliberate and still fill at the price it voted on.** Four desks read Chainlink, Kuru's book, Uniswap
-  and Perpl funding, vote, and the order lands in the next 400 ms block — so the gate that refuses a fill more than
+  and Perpl funding, vote, and the order lands in the next 300 ms block — so the gate that refuses a fill more than
   150 bps from Chainlink holds, instead of refusing every round that took a few seconds to decide.
 - **A real on-chain order book to route against.** Kuru is a central-limit order book on chain, which only works with
   fast, cheap blocks; every xorr order measures Kuru against Uniswap v3 through the contract and takes the better one.

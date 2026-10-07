@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { cadenceMs, confirmTimed, costUsd, speedReceipt, type Pulse } from './speed.js';
 
 describe('cadenceMs — the block interval measured between two blocks', () => {
-  it('a hundred blocks over forty seconds is 400 ms', () => {
-    expect(cadenceMs(1_791_300_040, 1_791_300_000, 100)).toBe(400);
+  it('a hundred blocks over thirty seconds is 300 ms', () => {
+    expect(cadenceMs(1_791_300_030, 1_791_300_000, 100)).toBe(300);
   });
   it('refuses a span it cannot use', () => {
     expect(cadenceMs(100, 200, 100)).toBeNull();

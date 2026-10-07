@@ -30,7 +30,7 @@ go through Perpl's own DelegatedAccount: the agent can trade there but never wit
 | Live app | after the go (DEPLOY-LATER §6); locally: `sh infra/monad-fork/local-stack.sh refork` |
 | Contracts (Monad testnet, 10143) | `XorrDelegation` [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) (Sourcify-verified) · `XorrAuditAnchor` [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
 | Transactions (Monad testnet) | the table under [Evidence on Monad testnet](#evidence-on-monad-testnet) |
-| Why Monad | 400 ms blocks let the council deliberate and still fill at the price it voted on; Kuru is a real on-chain order book to route against; Perpl's DelegatedAccount is the agent permission built in; gas is cheap enough to check the cap on chain on every spend. README → "Why Monad" |
+| Why Monad | 300 ms blocks, final two blocks later (~600 ms), let the council deliberate and still fill at the price it voted on; Kuru is a real on-chain order book to route against; Perpl's DelegatedAccount is the agent permission built in; gas is cheap enough to check the cap on chain on every spend. README → "Why Monad" |
 | Pre-existing code | Yes: the earlier xorr builds (Base, Solana, X Layer, Arbitrum; September 2026). The root commit `5681467` is the Arbitrum build. The 100 commits since are the Monad work, listed in README → "Disclosures" |
 | AI tools | Claude Code (Anthropic), credited as co-author on its commits; README → "Disclosures" |
 | Team | nickthelegend |

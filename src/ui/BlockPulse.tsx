@@ -1,7 +1,7 @@
 /**
  * BlockPulse.tsx — the chain's clock, read from the chain (FEATURES-100 #24, 2026-09-24).
  *
- * Monad makes a block every 400 ms. This asks the node for its head once a second and shows the number, with a dot that
+ * Monad makes a block every 300 ms. This asks the node for its head once a second and shows the number, with a dot that
  * brightens each time the number moves — so a desk that trades on-chain says, quietly, that the chain under it is live.
  * A read that fails shows nothing rather than a stale number: a counter frozen on its last good value would claim a
  * chain that had stopped was still moving.

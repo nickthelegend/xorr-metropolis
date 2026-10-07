@@ -7,7 +7,7 @@
 # Chain id 143: the executor and the app refuse a fork that answers anything else.
 #
 # Unlike Robinhood Chain (whose public RPC keeps ~10 minutes of state, so that fork serves a snapshot), Monad's public
-# RPC answered `totalSupply()` on USDC at a block 2,000,000 back (~9 days at 400 ms) on 2026-09-24. So a pinned fork
+# RPC answered `totalSupply()` on USDC at a block 2,000,000 back (~7 days at 300 ms) on 2026-09-24. So a pinned fork
 # block stays readable across ordinary restarts; a fork left for weeks may outlive it, and then a new REFORKED_AT takes
 # the fork again at Monad's head. Set MONAD_RPC to an archive endpoint (QuickNode, Alchemy, Chainstack) to remove the
 # limit. Then rebuild it — `cd server && npm run rebuild:fork` (docs/RUNBOOK.md).
@@ -40,7 +40,7 @@ else
   echo "fork: forking Monad mainnet at block $BLOCK"
 fi
 
-# A block every second, so the chain's clock moves like a real one. (Monad itself makes one every 400 ms; a second is
+# A block every second, so the chain's clock moves like a real one. (Monad itself makes one every 300 ms; a second is
 # close enough for every time-based rule in the contract, and keeps the saved state small.)
 #
 # anvil mines only when something is sent, so an idle fork's `block.timestamp` stands still — and every time-based

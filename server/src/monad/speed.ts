@@ -1,7 +1,7 @@
 /**
  * The Monad speed receipt (2026-10-07; docs/ROADMAP-WIN.md F1).
  *
- * "400 ms blocks" was a sentence in the README; nothing in the app showed it. A judge with five minutes saw a receipt with
+ * The block time was a sentence in the README (an out-of-date one: 400 ms, where MIP-12 made it 300); nothing in the app showed it. A judge with five minutes saw a receipt with
  * a hash and no time. So every fill now carries what it can prove about itself, measured, never asserted:
  *
  *   - the time from broadcast to the receipt, polled every 100 ms (`confirmTimed`) — viem's own wait polls on the client's

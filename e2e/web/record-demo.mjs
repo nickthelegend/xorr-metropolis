@@ -257,7 +257,7 @@ await beat('council', async () => {
   await caption(
     'The council',
     /Executed/.test(outcome)
-      ? `${verdict} ${outcome}. The vote and the fill land within a second — Monad’s 400 ms blocks.`
+      ? `${verdict} ${outcome}. The vote and the fill land within a second — Monad makes a block every 300 ms.`
       : `${verdict.replace(/\.$/, '')} — so nothing was sent. The council is the brake as well as the trigger.`,
   );
   await hold(4);

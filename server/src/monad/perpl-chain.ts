@@ -14,7 +14,7 @@
  *   - order types 0 OpenLong · 1 OpenShort · 2 CloseLong · 3 CloseShort · 4 Cancel · 5 IncreasePositionCollateral · 6 Change
  *   - price in the market's `priceDecimals`, size in its `lotDecimals`, collateral in 6 decimals (AUSD)
  *   - leverage in hundredths (200 = 2x); `maxMatches` in 1..1000; `lastExecutionBlock` a few blocks ahead (the order is
- *     void after it — Monad makes a block every 400 ms)
+ *     void after it — Monad makes a block every 300 ms)
  *   - `maxNegPnlCollatBPS`: how much of the collateral an order may start underwater by. 0 refuses any fill above the mark
  *     (a taker buy at the ask always is), which is what `TakerOrderSettlementFailed(…, 14)` was on the first attempt.
  *   - `getMarginFractions` returns leverages in hundredths: MON on testnet 300 (3x to open) / 500 (liquidated at 5x = 20%
@@ -189,7 +189,7 @@ export type PerpOrderPlan = {
 export const IOC_TOLERANCE = 0.01;
 export const MAX_NEG_PNL_BPS = 300n;
 export const MAX_MATCHES = 16n;
-/** Blocks ahead the order stays executable: ~7 s at Monad's 400 ms. */
+/** Blocks ahead the order stays executable: ~5.4 s at Monad's 300 ms. */
 export const EXEC_WINDOW_BLOCKS = 18n;
 
 /**

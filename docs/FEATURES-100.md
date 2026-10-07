@@ -33,7 +33,7 @@ Buckets: F functional · S sponsor depth · D design/motion · P production-read
 | 21 | Per-agent identity keys from PRF namespaces (Mera) | S | 4 | 2 | 4 | 32 | TODO |
 | 22 | Encrypted agent memory in Postgres, key from the passkey (Mera) | S | 4 | 2 | 3 | 24 | PARTIAL `d5239c1` — a second PRF key (own salt) encrypts private notes per run, server stores ciphertext only; per-agent memory not built |
 | 23 | Liquidation-distance meter on each position — a bar that fills toward the liq price | D | 4 | 4 | 4 | 64 | BUILT ✓ `9b84ce2` — LiqMeter on each Perpl position |
-| 24 | Monad block pulse — the block number ticks visibly on the desk (400 ms) | D | 3 | 5 | 4 | 60 | BUILT ✓ `2d6297c` — BlockPulse on the desk: the head each second, a dot that brightens on each block |
+| 24 | Monad block pulse — the block number ticks visibly on the desk (300 ms) | D | 3 | 5 | 4 | 60 | BUILT ✓ `2d6297c` — BlockPulse on the desk: the head each second, a dot that brightens on each block |
 | 25 | Council vote reveal — seats resolve one by one, then the tx hash slides in | D | 4 | 4 | 4 | 64 | BUILT ✓ `b405872` — a round convened in the last minute reveals seat by seat, then outcome and tx |
 | 26 | Fill confirmation with the explorer link (testnet.monadvision.com) on every agent trade | D | 4 | 5 | 4 | 80 | PARTIAL — Perpl orders link testnet.monadvision.com; spot fills on the fork have no public explorer |
 | 27 | Toasts never cover the primary action (the Buy button bug) | P | 3 | 5 | 3 | 45 | TODO |

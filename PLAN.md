@@ -13,7 +13,8 @@ deployers and says go; everything on-chain runs as real signed transactions on a
 **Pitch.** xorr is a non-custodial AI trading desk on Monad. You sign in with a passkey (Mera), grant a council of agents
 a capped, revocable, on-chain permission, and they trade for you — spot through Kuru's order book or Uniswap, whichever
 delivers more, perps on Perpl through Perpl's own DelegatedAccount — each vote shown beside the transaction it produced.
-Monad's 400 ms blocks are why a council can deliberate and still fill at the price it voted on.
+Monad's 300 ms blocks, final two blocks later (about 600 ms), are why a council can deliberate and still fill at the
+price it voted on.
 
 **Done** (for Metropolis, track 01 Onchain Finance & Trading, deadline 2026-10-13 23:59 ET):
 - every flow a judge would try works end to end with real signed transactions, verified in a real browser with console and

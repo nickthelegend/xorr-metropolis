@@ -132,7 +132,7 @@ export const IOC_TOLERANCE = 0.01;
 export const MAX_NEG_PNL_BPS = 300n;
 export const MAX_MATCHES = 16n;
 /**
- * Blocks the order stays executable. xorr's executor signs at once and uses 18 (~7 s at 400 ms blocks); an agent wallet
+ * Blocks the order stays executable. xorr's executor signs at once and uses 18 (~5.4 s at 300 ms blocks); an agent wallet
  * may wait on its owner's approval, so the plugin allows ~60 s. The IOC limit still bounds the price.
  */
 export const EXEC_WINDOW_BLOCKS = 150n;
