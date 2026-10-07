@@ -25,6 +25,7 @@
     "e2e:explainer": "node e2e/web/explainer.mjs",
     "e2e:replay": "node e2e/web/replay.mjs",
     "e2e:monad": "node e2e/web/monad.mjs",
+    "e2e:gauntlet": "node e2e/web/gauntlet.mjs",
     "demo:record": "node e2e/web/record-demo.mjs"
   },
   "dependencies": {

@@ -145,7 +145,11 @@ Each: *objective* — *acceptance* — *verify* — status.
   P256 precompile on mainnet and the fork; staking at 0x1000; gas and the reserve; the canonical contracts and xorr's
   Sourcify-verified testnet contracts), then the sponsors' tech on Monad (Kuru, Uniswap and Chainlink pricing MON three
   ways, Perpl, AUSD's peg, Envio's index, Mera, Kimi, CRE, MetaMask). `e2e:monad`; `docs/screens/wave/f4-*`.
-- I5 **NOT STARTED** F5 The strategy gauntlet — the library as a page: tested vs survived, out-of-sample numbers, filters.
+- I5 **DONE** F5 The strategy gauntlet — `/gauntlet`, from Home's Strategies tab and Explore: the funnel counted from the
+  book's own failures (313 backtested → 16 profitable on unseen data with enough trades → 16 through the parameter sweep
+  → 15 at double commission → 10 across assets, which is exactly the survivors), the book by family with each strategy's
+  out-of-sample numbers, and for the cut the reason in words ("lost on BTC out of sample" beside a portfolio profit).
+  `e2e:gauntlet`; `docs/screens/wave/f5-*`.
 - Each: real fork data, unit + e2e tests, console and network clean, before/after at 1440 and 390 in `docs/screens/wave/`,
   one commit, pushed, CI green.
 

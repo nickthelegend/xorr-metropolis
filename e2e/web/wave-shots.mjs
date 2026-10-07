@@ -35,17 +35,17 @@ const v = (l) => l.filter({ visible: true }).first();
 const go = (r) => page.goto(`${WEB}${r}`, { waitUntil: 'domcontentloaded', timeout: 300_000 });
 
 /** Both sizes of what is on screen; `scrollTo` (a test id) is brought into view at each size first. */
-async function shot(name, scrollTo) {
+async function shot(name, scrollTo, phase = 'after') {
   for (const [vp, size] of Object.entries(SIZES)) {
     await page.setViewportSize(size);
     await page.waitForTimeout(1_500);
     if (scrollTo) await v(page.getByTestId(scrollTo)).scrollIntoViewIfNeeded().catch(() => undefined);
     await page.waitForTimeout(600);
-    await page.screenshot({ path: join(OUT, `${name}-after-${vp}.png`) });
+    await page.screenshot({ path: join(OUT, `${name}-${phase}-${vp}.png`) });
   }
   await page.setViewportSize(SIZES.mobile);
   await page.waitForTimeout(1_500);
-  console.log(`wave/${name}-after-{mobile,desktop}.png`);
+  console.log(`wave/${name}-${phase}-{mobile,desktop}.png`);
 }
 
 for (let ok = 0, i = 0; ok < 3 && i < 180; i++) {
@@ -98,6 +98,25 @@ if (FEATURES.some((f) => f !== 'f2' && f !== 'm1')) {
   }
   await page.getByRole('button', { name: 'Buy $20 of WMON' }).click({ timeout: T.ui });
   await v(page.getByText(/^Bought /)).waitFor({ timeout: T.chain });
+}
+
+// The strategy gauntlet (F5): Home's Strategies tab, before and after, and the gauntlet page itself.
+if (FEATURES.includes('f5') || FEATURES.includes('f5before')) {
+  const phase = FEATURES.includes('f5before') ? 'before' : 'after';
+  await go('/');
+  await v(page.getByText('Strategies', { exact: true })).click({ timeout: T.ui });
+  await v(page.getByText(/tested against a walk-forward gauntlet/)).waitFor({ timeout: T.ui });
+  await shot('f5-home-strategies', undefined, phase);
+  if (phase === 'after') {
+    await go('/gauntlet');
+    await v(page.getByTestId('gauntlet-funnel')).waitFor({ timeout: T.ui });
+    await page.waitForTimeout(1_500);
+    await shot('f5-gauntlet');
+    await shot('f5-gauntlet-survivors', 'gauntlet-list');
+    await v(page.getByTestId('gauntlet-show-all')).click();
+    await v(page.getByTestId('gauntlet-first-cut')).waitFor({ timeout: T.ui });
+    await shot('f5-gauntlet-all', 'gauntlet-first-cut');
+  }
 }
 
 // Built on Monad (F4 and MONAD-TECH items 1–8): Home's live line, the native items, a passkey checked by 0x0100, sponsors.

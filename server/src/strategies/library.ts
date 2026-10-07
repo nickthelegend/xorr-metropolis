@@ -89,7 +89,62 @@ export type StrategySummary = {
   maxDdPct: number | null;
   trades: number | null;
   hasDetail: boolean;
+  /** The first stage of the gauntlet it did not get through; null for a survivor. */
+  failedStage: GauntletStage | null;
+  /** Why, in words, from the first failure at that stage: "lost on BTC out of sample", not just the stage's name. */
+  failedReason: string | null;
 };
+
+/**
+ * The gauntlet, as stages (docs/ROADMAP-WIN.md F5): each strategy went through them in this order, and `failedOn`
+ * records every test it failed. Out of sample first — a profit on data it never saw, with enough trades to mean
+ * something — then the five-point parameter sweep, then double commission, then the other assets. A strategy passing all
+ * four is exactly one the engine marked `survives`, which the test checks.
+ */
+export const GAUNTLET = [
+  { key: 'oos', label: 'Profitable on unseen data, with enough trades', fails: ['OOS', 'unseen return <= 0', 'too few trades anywhere'] },
+  { key: 'sweep', label: 'Holds through the parameter sweep', fails: ['Sens'] },
+  { key: 'commission', label: 'Survives double commission', fails: ['comm2x'] },
+  { key: 'assets', label: 'Holds across assets', fails: ['Multi'] },
+] as const;
+export type GauntletStage = (typeof GAUNTLET)[number]['key'];
+
+/** The first stage a strategy fell at, by its own `failedOn`; null when it fell at none. */
+export function failedStage(failedOn: readonly string[]): GauntletStage | null {
+  for (const st of GAUNTLET) if (failedOn.some((f) => (st.fails as readonly string[]).includes(f))) return st.key;
+  return null;
+}
+
+/**
+ * A failure in words. `OOS` is the BTC-only out-of-sample run losing — a strategy can make money on the portfolio's unseen
+ * data and still fail it, so "failed out of sample" beside a positive return would read as a contradiction.
+ */
+const REASON: Record<string, string> = {
+  OOS: 'lost on BTC out of sample',
+  'unseen return <= 0': 'lost on unseen data',
+  'too few trades anywhere': 'too few trades to judge',
+  Sens: 'broke in the parameter sweep',
+  comm2x: 'broke at double commission',
+  Multi: 'failed on other assets',
+};
+
+export function failedReason(failedOn: readonly string[]): string | null {
+  const stage = failedStage(failedOn);
+  if (!stage) return null;
+  const st = GAUNTLET.find((g) => g.key === stage)!;
+  const first = failedOn.find((f) => (st.fails as readonly string[]).includes(f))!;
+  return REASON[first] ?? first;
+}
+
+/** How many of the book got through each stage, in order, from all of it. */
+export function gauntlet(): { tested: number; stages: { key: GauntletStage; label: string; passed: number }[] } {
+  let alive = book.strategies;
+  const stages = GAUNTLET.map((st) => {
+    alive = alive.filter((s) => !s.failedOn.some((f) => (st.fails as readonly string[]).includes(f)));
+    return { key: st.key, label: st.label, passed: alive.length };
+  });
+  return { tested: book.strategies.length, stages };
+}
 
 function summarise(s: StrategyEntry): StrategySummary {
   const o = s.portfolio.outOfSample;
@@ -105,6 +160,8 @@ function summarise(s: StrategyEntry): StrategySummary {
     maxDdPct: o.maxDdPct,
     trades: o.trades,
     hasDetail: s.detail !== null,
+    failedStage: failedStage(s.failedOn),
+    failedReason: failedReason(s.failedOn),
   };
 }
 

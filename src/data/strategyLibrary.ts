@@ -42,7 +42,15 @@ export type StrategySummary = {
   maxDdPct: number | null;
   trades: number | null;
   hasDetail: boolean;
+  /** The first gauntlet stage it did not get through; null for a survivor (absent from an older executor). */
+  failedStage?: GauntletStage | null;
+  /** Why it was cut, in words ("lost on BTC out of sample"); null for a survivor. */
+  failedReason?: string | null;
 };
+
+export type GauntletStage = 'oos' | 'sweep' | 'commission' | 'assets';
+/** How many of the book got through each stage of the gauntlet, in order (`server/src/strategies/library.ts`). */
+export type Gauntlet = { tested: number; stages: { key: GauntletStage; label: string; passed: number }[] };
 
 export type StrategyProvenance = {
   source: string;
@@ -86,6 +94,7 @@ export type StrategyDetail = {
 export type LibraryPage = {
   provenance: StrategyProvenance;
   counts: { total: number; survivors: number; withDetail: number };
+  gauntlet?: Gauntlet;
   families: { name: string; count: number; survivors: number }[];
   filtered: { survivorsOnly: boolean; q: string | null; family: string | null };
   strategies: StrategySummary[];

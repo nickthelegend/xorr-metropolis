@@ -956,6 +956,12 @@ export default function Home() {
                       </Text>
                       . Backtests, not a live record.
                     </Text>
+                    {/* The research behind that line, as a page: the funnel, the families, where each fell (ROADMAP-WIN F5). */}
+                    <Press onPress={() => router.push('/gauntlet')} accessibilityRole="link" accessibilityLabel="See the gauntlet" testID="home-gauntlet" style={{ marginBottom: space.s8 }}>
+                      <Text variant="control" color={colors.accentHi}>
+                        See the gauntlet: what they had to get through ›
+                      </Text>
+                    </Press>
                     <StrategyRows
                       rows={library.data.strategies}
                       from={ROWS_FROM}

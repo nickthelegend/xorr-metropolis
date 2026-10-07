@@ -62,6 +62,7 @@ const GROUPS: Group[] = [
     items: [
       // The one place a strategy can be paused, and it had no row: only agent pages and strategy alerts led there.
       { route: '/strategies', title: 'Strategies', detail: 'What runs, and pausing it' },
+      { route: '/gauntlet', title: 'The gauntlet', detail: '313 strategies tested, 10 survived' },
       { route: '/runs', title: 'Runs', detail: 'Fills and refusals' },
       { route: '/council', title: 'Council', detail: 'Every vote, beside its transaction' },
       { route: '/hedge', title: 'Hedge', detail: 'GMX perps, funding and your positions' },

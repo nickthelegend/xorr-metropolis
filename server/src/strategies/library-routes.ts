@@ -9,7 +9,7 @@
  * this server — the caller's own live strategies, which are private and scoped to their wallet.
  */
 import { Hono } from 'hono';
-import { families, getStrategy, libraryCounts, libraryProvenance, listStrategies } from './library.js';
+import { families, gauntlet, getStrategy, libraryCounts, libraryProvenance, listStrategies } from './library.js';
 
 export const libraryRoutes = new Hono();
 
@@ -27,6 +27,7 @@ libraryRoutes.get('/strategies/library', (c) => {
   return c.json({
     provenance: libraryProvenance(),
     counts: libraryCounts(),
+    gauntlet: gauntlet(),
     families: families(),
     filtered: { survivorsOnly, q: q ?? null, family: family ?? null },
     strategies: listStrategies({ survivorsOnly, q, family }),
