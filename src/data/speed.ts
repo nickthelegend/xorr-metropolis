@@ -25,6 +25,10 @@ export type SpeedReceipt = {
   fork: boolean;
   /** The measured block interval of the chain the fill was on — the local fork's on a fork. */
   chainBlockMs: number | null;
+  /** ms from broadcast until the fill's block was final; null when not measured (fills before 7 Oct). */
+  finalMs?: number | null;
+  /** The receipt came back with the send (`eth_sendRawTransactionSync`): `confirmMs` is that call's duration. */
+  sync?: boolean;
   pulse: Pulse;
 };
 

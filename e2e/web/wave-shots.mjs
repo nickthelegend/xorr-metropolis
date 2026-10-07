@@ -95,6 +95,15 @@ if (FEATURES.some((f) => f !== 'f2' && f !== 'm1')) {
   await v(page.getByText(/^Bought /)).waitFor({ timeout: T.chain });
 }
 
+// The fill's two timers and Monad's own pipeline under them (MONAD-TECH items 1 and 2).
+if (FEATURES.includes('m2')) {
+  await go('/runs');
+  await v(page.getByText(/^W?MON$/)).click({ timeout: T.ui });
+  await v(page.getByTestId('speed-ms')).waitFor({ timeout: T.ui });
+  await v(page.getByTestId('commit-stats')).waitFor({ timeout: T.ui });
+  await shot('m2-run-two-timers', 'commit-strip');
+}
+
 if (FEATURES.includes('f1')) {
   await go('/runs');
   await v(page.getByText(/^W?MON$/)).click({ timeout: T.ui });

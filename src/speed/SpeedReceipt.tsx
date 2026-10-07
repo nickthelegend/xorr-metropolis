@@ -73,16 +73,22 @@ export function SpeedReceipt({ tx }: { tx: string }) {
           ) : null}
           {d.confirmMs !== null ? (
             <Text variant="secondarySm" color={colors.ink70} style={{ marginTop: space.s6 }} testID="speed-ms">
-              {`This fill: ${d.confirmMs.toLocaleString('en-US')} ms from sending to confirmed — on the local fork, which mines a block every ${(d.chainBlockMs ?? 1000).toLocaleString('en-US')} ms.`}
+              {`This fill, on the local fork: executed in ${d.confirmMs.toLocaleString('en-US')} ms${d.sync ? ' (its receipt came back with the send)' : ''}. The fork mines a block every ${(d.chainBlockMs ?? 1000).toLocaleString('en-US')} ms and has no consensus, so nothing on it is final in Monad’s sense; Monad mainnet’s own blocks going final are below.`}
             </Text>
           ) : null}
         </>
       ) : d.confirmMs !== null ? (
+        // Two timers, because a Monad receipt is speculative until its block is final two slots later (MONAD-TECH item 2).
         <View style={{ marginTop: space.s8 }}>
           <Text variant="heroBalance" testID="speed-ms">{`${d.confirmMs.toLocaleString('en-US')} ms`}</Text>
           <Text variant="secondarySm" color={colors.ink55}>
-            from sending to confirmed
+            {d.sync ? 'to executed: the receipt came back with the send (eth_sendRawTransactionSync)' : 'from sending to confirmed'}
           </Text>
+          {d.finalMs != null ? (
+            <Text variant="rowPrimary" color={colors.up} style={{ marginTop: space.s6 }} testID="speed-final">
+              {`final in ${d.finalMs.toLocaleString('en-US')} ms`}
+            </Text>
+          ) : null}
         </View>
       ) : null}
       {block || gasUsed ? (

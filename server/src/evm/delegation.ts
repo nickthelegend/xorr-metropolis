@@ -5,6 +5,7 @@
  * and every enforcement decision re-reads the contract rather than trusting that cache.
  */
 import {
+  encodeFunctionData,
   parseUnits,
   formatUnits,
   parseEventLogs,
@@ -17,7 +18,8 @@ import {
 import { publicClient, delegateAccount } from './client.js';
 import { actingAccount, actingWalletClient } from './agents.js';
 import { markBroadcast } from '../http/request-id.js';
-import { ADDRESSES, SETTLEMENT_VENUES } from './chains.js';
+import { ADDRESSES, IS_MONAD, SETTLEMENT_VENUES } from './chains.js';
+import { broadcast } from './send.js';
 import 'dotenv/config';
 
 export const DELEGATION_ADDRESS = (process.env.DELEGATION_ADDRESS ??
@@ -425,7 +427,21 @@ export async function spendAsDelegate(
   const gas = withHeadroom(await publicClient.estimateContractGas(call));
   // Recorded before it is signed: from here on, a retry of the request that asked for this must replay, never send.
   await markBroadcast();
-  return actingWalletClient().writeContract({ ...request, gas } as never);
+  return sendCall(request, gas);
+}
+
+/**
+ * The delegate's call, sent (MONAD-TECH item 2). On Monad, signed here and sent with `eth_sendRawTransactionSync`, so the
+ * receipt comes back with the send and the fill is timed to "executed" and then to "final" (`send.ts`); the run reads
+ * both back by hash (`sentOf`). Elsewhere, or for a wallet that does not sign locally, the plain `writeContract`.
+ */
+async function sendCall(request: { address: Address; abi: readonly unknown[]; functionName: string; args?: readonly unknown[] }, gas: bigint): Promise<Hex> {
+  const wallet = actingWalletClient();
+  if (IS_MONAD && wallet.account?.type === 'local') {
+    const data = encodeFunctionData({ abi: request.abi, functionName: request.functionName, args: request.args } as never);
+    return (await broadcast(wallet, { to: request.address, data, gas } as never, { useSync: true })).hash;
+  }
+  return wallet.writeContract({ ...request, gas } as never);
 }
 
 /**
@@ -677,5 +693,5 @@ export async function closeAsDelegate(
   const gas = withHeadroom(await publicClient.estimateContractGas(call));
   // Recorded before it is signed, as a spend is: a close that answers 502 after this is replayed, never sold twice.
   await markBroadcast();
-  return actingWalletClient().writeContract({ ...request, gas } as never);
+  return sendCall(request, gas);
 }

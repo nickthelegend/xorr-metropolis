@@ -45,7 +45,7 @@ export function costUsd(gas: bigint | null, priceWei: bigint | null, usdPerNativ
   return (Number(wei / 1_000_000_000n) / 1e9) * usdPerNative;
 }
 
-export type FillGas = { block: bigint; gasUsed: bigint; gasLimit: bigint; gasPriceWei: bigint };
+export type FillGas = { block: bigint; blockHash: Hex; gasUsed: bigint; gasLimit: bigint; gasPriceWei: bigint };
 
 /** The block, gas and price of a mined transaction, from its own receipt. Undefined when either read fails. */
 export async function fillGas(hash: Hex, client: PublicClient = publicClient): Promise<FillGas | undefined> {
@@ -53,6 +53,7 @@ export async function fillGas(hash: Hex, client: PublicClient = publicClient): P
     const [receipt, tx] = await Promise.all([client.getTransactionReceipt({ hash }), client.getTransaction({ hash })]);
     return {
       block: receipt.blockNumber,
+      blockHash: receipt.blockHash,
       gasUsed: receipt.gasUsed,
       gasLimit: tx.gas,
       gasPriceWei: receipt.effectiveGasPrice ?? tx.gasPrice ?? 0n,
@@ -155,12 +156,25 @@ export type SpeedReceipt = {
   fork: boolean;
   /** The block interval of the chain this fill was on, measured — the fork's on a fork. */
   chainBlockMs: number | null;
+  /** ms from broadcast until the fill's block was final (the chain's `finalized` block); null when not measured. */
+  finalMs: number | null;
+  /** The receipt came back with the send (`eth_sendRawTransactionSync`), so `confirmMs` is that call's duration. */
+  sync: boolean;
   pulse: Pulse;
 };
 
 /** A fill's speed receipt from what was recorded when it confirmed, priced at the pulse's rates. */
 export function speedReceipt(
-  row: { signature: string; tx_ms: number | null; tx_block: string | null; tx_gas_used: string | null; tx_gas_limit: string | null; tx_gas_price: string | null },
+  row: {
+    signature: string;
+    tx_ms: number | null;
+    tx_block: string | null;
+    tx_gas_used: string | null;
+    tx_gas_limit: string | null;
+    tx_gas_price: string | null;
+    tx_final_ms?: number | null;
+    tx_sync?: boolean | null;
+  },
   pulse: Pulse,
   fork: boolean,
   chainBlockMs: number | null = null,
@@ -185,6 +199,8 @@ export function speedReceipt(
     ethereumUsd: costUsd(gasUsed, ethPriceWei, pulse.ethereum?.ethUsd ?? null),
     fork,
     chainBlockMs,
+    finalMs: row.tx_final_ms ?? null,
+    sync: row.tx_sync === true,
     pulse,
   };
 }

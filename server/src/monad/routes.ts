@@ -72,8 +72,8 @@ monadRoutes.get('/speed/:tx', async (c) => {
   if (!w) return c.json({ error: 'not_signed_in' }, 401);
   const hash = c.req.param('tx');
   if (!/^0x[0-9a-fA-F]{64}$/.test(hash)) return c.json({ error: 'bad_hash', detail: 'A transaction hash is 0x and 64 hex characters.' }, 400);
-  const row = await one<{ signature: string; tx_ms: number | null; tx_block: string | null; tx_gas_used: string | null; tx_gas_limit: string | null; tx_gas_price: string | null }>(
-    `SELECT r.signature, r.tx_ms, r.tx_block::text, r.tx_gas_used::text, r.tx_gas_limit::text, r.tx_gas_price::text
+  const row = await one<Parameters<typeof speedReceipt>[0]>(
+    `SELECT r.signature, r.tx_ms, r.tx_block::text, r.tx_gas_used::text, r.tx_gas_limit::text, r.tx_gas_price::text, r.tx_final_ms, r.tx_sync
        FROM strategy_runs r JOIN strategies s ON s.id = r.strategy_id
       WHERE lower(r.signature) = lower($1) AND s.wallet_id = $2 AND r.chain = current_setting('xorr.chain_key')`,
     [hash, w.id],

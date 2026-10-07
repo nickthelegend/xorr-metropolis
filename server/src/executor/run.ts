@@ -20,13 +20,14 @@ import { append } from '../audit/log.js';
 import { log } from '../http/request-id.js';
 import { evaluate, recordSpend } from '../rules/engine.js';
 import { confirmTimed, fillGas } from '../monad/speed.js';
+import { finalTimed, sentOf } from '../evm/send.js';
 import { closeAsDelegate, readPolicy, spendAsDelegate, usdToUnits, waitForTx } from '../evm/delegation.js';
 import { erc20Abi, formatUnits } from 'viem';
 import { publicClient } from '../evm/client.js';
 import { gasStatus } from '../evm/gas.js';
 import { explorerTx, ADDRESSES } from '../evm/chains.js';
 import { SETTLEMENT_SYMBOL, TOKENS, ensureRegistry } from '../venues/tokens.js';
-import { IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD } from '../evm/chains.js';
+import { CHAIN_KEY, IS_ARBITRUM, IS_MONAD, IS_ROBINHOOD } from '../evm/chains.js';
 import { stockGuard } from './stock-guard.js';
 import { decide } from '../graph/decide.js';
 import type { Address } from 'viem';
@@ -793,8 +794,10 @@ async function runStrategyInner(
      * stays conditional and the wait does not.
      */
     // Measured beside the wait, not by it: the wait decides success; this times the receipt to 100 ms (monad/speed.ts).
-    const sentAt = Date.now();
-    const timed = confirmTimed(signature, sentAt);
+    // A fill sent with eth_sendRawTransactionSync (evm/send.ts) already holds its receipt and the call's duration.
+    const broadcastAs = sentOf(signature);
+    const sentAt = broadcastAs?.sentAt ?? Date.now();
+    const timed = broadcastAs?.sync ? Promise.resolve(broadcastAs.sync.ms) : confirmTimed(signature, sentAt);
     const settled = await waitForTx(signature).catch(() => false);
     if (!settled) throw new Error(`transaction ${signature} did not confirm`);
 
@@ -845,9 +848,18 @@ async function runStrategyInner(
     void (async () => {
       const [ms, gas] = await Promise.all([timed, fillGas(signature)]);
       await query(
-        `UPDATE strategy_runs SET tx_ms = $2, tx_block = $3, tx_gas_used = $4, tx_gas_limit = $5, tx_gas_price = $6 WHERE id = $1`,
-        [runId, ms ?? null, gas?.block.toString() ?? null, gas?.gasUsed.toString() ?? null, gas?.gasLimit.toString() ?? null, gas?.gasPriceWei.toString() ?? null],
+        `UPDATE strategy_runs SET tx_ms = $2, tx_block = $3, tx_gas_used = $4, tx_gas_limit = $5, tx_gas_price = $6, tx_sync = $7 WHERE id = $1`,
+        [runId, ms ?? null, gas?.block.toString() ?? null, gas?.gasUsed.toString() ?? null, gas?.gasLimit.toString() ?? null, gas?.gasPriceWei.toString() ?? null, Boolean(broadcastAs?.sync)],
       );
+      /*
+       * And to final: the chain's finalized block at the fill's, the same block (MONAD-TECH item 2), written after, so the
+       * card never waits on it. Not on the local fork: anvil has no consensus, and its `finalized` is an Ethereum
+       * convention (64 blocks behind, a minute at the fork's pace) that says nothing about Monad.
+       */
+      if (gas && CHAIN_KEY !== 'monad-fork') {
+        const finalMs = await finalTimed(publicClient, { blockNumber: gas.block, blockHash: gas.blockHash }, sentAt);
+        if (finalMs !== undefined) await query(`UPDATE strategy_runs SET tx_final_ms = $2 WHERE id = $1`, [runId, finalMs]);
+      }
     })().catch((e) => console.warn(`[speed] ${runId}: ${e instanceof Error ? e.message.split('\n')[0] : e}`));
 
     await tx(async (client) => {
