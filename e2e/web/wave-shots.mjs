@@ -113,6 +113,7 @@ if (FEATURES.includes('f4')) {
   await v(page.getByTestId('monad-passkey-result')).waitFor({ timeout: T.ui });
   await shot('f4-monad-passkey', 'monad-passkey-result');
   await shot('f4-monad-staking-gas', 'monad-item-gas');
+  await shot('f4-monad-x402', 'monad-item-x402');
   await shot('f4-monad-contracts', 'monad-item-contracts');
   await shot('f4-monad-sponsors', 'monad-sponsor-envio');
 }

@@ -24,6 +24,7 @@ export type MonadNative = {
   reserve: { mainnet: ReserveProbe; executor: ReserveProbe };
   contracts: { name: string; address: string; use: string; used: boolean; mainnet: boolean | null; executor: boolean | null }[];
   deployed: { name: string; address: string; deployTx: string; explorer: string }[];
+  x402?: { route: string; price: string; network: string; asset: string; facilitator: string; supported: Read<{ kinds: string[] }> };
 };
 
 export type SponsorsLive = {

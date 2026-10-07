@@ -95,7 +95,7 @@ const PUBLIC_PATHS = new Set([
  * under `/strategies`, which is NOT public: that one is the caller's own live strategies.
  */
 // `/monad/feed/` — a public Chainlink price by symbol, like the rest of `/monad/*`.
-const PUBLIC_PREFIXES = ['/perp/', '/strategies/library', '/monad/feed/', '/monad/txpool/'];
+const PUBLIC_PREFIXES = ['/perp/', '/strategies/library', '/monad/feed/', '/monad/txpool/', '/x402'];
 
 /**
  * The public surface, published.

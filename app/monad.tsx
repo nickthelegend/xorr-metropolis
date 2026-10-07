@@ -24,9 +24,10 @@ import { CommitStrip } from '@/speed/CommitStrip';
 import { useAuth } from '@/auth/useAuth';
 import { checkPasskeyOnMonad, passkeyCheckSupported } from '@/monad/passkeyCheck';
 
-type Where = 'mainnet' | 'fork' | 'awaiting' | 'app';
+type Where = 'mainnet' | 'testnet' | 'fork' | 'awaiting' | 'app';
 const WHERE: Record<Where, { label: string; fg: string; bg: string }> = {
   mainnet: { label: 'Live · Monad mainnet', fg: colors.up, bg: colors.upBg },
+  testnet: { label: 'Live read · Monad testnet', fg: colors.up, bg: colors.upBg },
   fork: { label: 'Local fork', fg: colors.accentHi, bg: colors.accentSoft },
   awaiting: { label: 'Awaiting testnet go', fg: colors.ink70, bg: colors.neutralBg },
   app: { label: 'In the app', fg: colors.ink70, bg: colors.neutralBg },
@@ -176,6 +177,21 @@ function NativeList({ d }: { d: MonadNative }) {
         <Reading label="0x1001 on Monad mainnet" value={d.reserve.mainnet.ok ? yes(d.reserve.mainnet.answers, `answers (dipped: ${d.reserve.mainnet.dipped ? 'yes' : 'no'})`, 'no answer') : 'could not read'} />
         <Reading label="0x1001 on the fork" value={d.reserve.executor.ok ? yes(d.reserve.executor.answers, 'answers', 'none: anvil has no precompile') : 'could not read'} />
         <Note>The fee before an order is the limit times Monad’s price, in MON. A top-up that would take the desk under its reserve is refused before it is sent; fees in flight are kept within what consensus allows.</Note>
+      </Item>
+
+      <Item n="7 · x402" title="Other agents pay per call for the council’s read" where={['testnet', 'awaiting']} testID="monad-item-x402">
+        {d.x402 ? (
+          <>
+            <Reading label="The endpoint" value={`${d.x402.route} · ${d.x402.price} USDC`} />
+            <Reading label="Settles on" value={d.x402.network === 'eip155:10143' ? 'Monad testnet (eip155:10143)' : d.x402.network} />
+            <Reading
+              label="Monad’s facilitator, now"
+              value={d.x402.supported.ok ? (d.x402.supported.kinds.includes(`exact on ${d.x402.network}`) ? 'settles exact here ✓' : 'does not list this network') : 'could not read'}
+              bad={!d.x402.supported.ok}
+            />
+          </>
+        ) : null}
+        <Note>No account, no key: a 402 names the price, the agent signs a USDC authorization, Monad’s facilitator verifies it and settles. On 7 Oct an unfunded key’s signed payment was refused by the facilitator itself (insufficient_funds); a funded payer waits for the testnet go.</Note>
       </Item>
 
       <Item n="8 · Canonical contracts" title="Monad’s own, not copies" where={['mainnet', 'fork']} testID="monad-item-contracts">

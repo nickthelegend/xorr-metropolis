@@ -335,6 +335,16 @@ async function holdingNow(owner: Address, symbol: (typeof MONAD_COUNCIL_SYMBOLS)
   return { source: `${token} balanceOf on ${chainWords()} (evm/balances.ts)`, shares: held?.units ?? 0, valueUsd: held?.usd ?? 0 };
 }
 
+/**
+ * The market half of a round: price, trend and Perpl funding, which need no owner (the paid market read, x402.ts). The
+ * permission and holding are an owner's, so they are not read; the desks that vote on them do not sit.
+ */
+export async function readMonadMarketInputs(proposal: Proposal, client: PublicClient = monadMainnet()): Promise<Pick<MonadCouncilInputs, 'venue' | 'readAt' | 'proposal' | 'price' | 'trend' | 'perps'>> {
+  const symbol = assertMonadSymbol(proposal.symbol);
+  const [price, trend, perps] = await Promise.all([read(() => priceOf(symbol, proposal, client)), read(() => monadTrend(symbol, client)), read(() => perpsNow())]);
+  return { venue: 'monad', readAt: new Date().toISOString(), proposal: { ...proposal, symbol }, price, trend, perps };
+}
+
 export async function readMonadCouncilInputs(owner: Address, proposal: Proposal, agentId?: string, client: PublicClient = monadMainnet()): Promise<MonadCouncilInputs> {
   const symbol = assertMonadSymbol(proposal.symbol);
   const [price, trend, perps, permission, holding] = await Promise.all([

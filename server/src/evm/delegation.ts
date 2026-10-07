@@ -21,7 +21,7 @@ import { markBroadcast } from '../http/request-id.js';
 import { ADDRESSES, IS_MONAD, SETTLEMENT_VENUES } from './chains.js';
 import { broadcast } from './send.js';
 import { withHeadroom } from './gas-limit.js';
-import { txpoolStatus } from '../monad/native.js';
+import { txpoolStatus } from '../monad/txpool.js';
 
 /** Whether Monad's txpool holds `hash`: any status but unknown. False on a node without the method. */
 async function inMonadTxpool(hash: Hex): Promise<boolean> {

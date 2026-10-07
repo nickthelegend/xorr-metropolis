@@ -25,6 +25,10 @@ import { monadMainnet } from './mainnet.js';
 import { publicClient } from '../evm/client.js';
 import { CHAIN_KEY } from '../evm/chains.js';
 import { RESERVE_PRECOMPILE } from './reserve.js';
+import { txpoolStatus } from './txpool.js';
+
+export { txpoolStatus };
+import { COUNCIL_ROUTE, MONAD_TESTNET_USDC, X402_FACILITATOR, X402_NETWORK, X402_PRICE } from './x402.js';
 
 export const P256_PRECOMPILE: Address = '0x0000000000000000000000000000000000000100';
 export const STAKING_PRECOMPILE: Address = '0x0000000000000000000000000000000000001000';
@@ -99,17 +103,6 @@ async function stakingNow(client: PublicClient): Promise<StakingNow> {
 
 // ── txpool, sync send, reserve ──────────────────────────────────────────────────────────────────────────────────────
 
-/** Monad's status for a hash: `{status, reason?}`, or the RPC's refusal (anvil has no txpool_status methods). */
-export async function txpoolStatus(client: Pick<PublicClient, 'request'>, hash: Hex): Promise<Read<{ status: string; reason: string | null }>> {
-  try {
-    const r = (await client.request({ method: 'txpool_statusByHash' as never, params: [hash] as never })) as { status?: string; reason?: string } | string | null;
-    if (r && typeof r === 'object') return { ok: true, status: String(r.status ?? 'unknown'), reason: r.reason ?? null };
-    return { ok: true, status: String(r ?? 'unknown'), reason: null };
-  } catch (e) {
-    return { ok: false, error: why(e) };
-  }
-}
-
 /** Whether a node answers a method at all: a refusal for the input is support; "method not found" is not. */
 async function supports(client: Pick<PublicClient, 'request'>, method: string, params: unknown[]): Promise<Read<{ supported: boolean; answer: string }>> {
   try {
@@ -175,7 +168,21 @@ export type MonadNative = {
   reserve: { mainnet: Awaited<ReturnType<typeof reserveAnswers>>; executor: Awaited<ReturnType<typeof reserveAnswers>> };
   contracts: (Canonical & { mainnet: boolean | null; executor: boolean | null })[];
   deployed: { name: string; address: Address; deployTx: Hex; explorer: string }[];
+  /** The paid market read (x402.ts) and what Monad's facilitator says it supports, read now. */
+  x402: { route: string; price: string; network: string; asset: Address; facilitator: string; supported: Read<{ kinds: string[] }> };
 };
+
+/** Monad's x402 facilitator's own list of what it settles: `scheme on network`. */
+async function facilitatorKinds(): Promise<Read<{ kinds: string[] }>> {
+  try {
+    const r = await fetch(`${X402_FACILITATOR}/supported`, { signal: AbortSignal.timeout(6_000) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = (await r.json()) as { kinds?: { scheme: string; network: string }[] };
+    return { ok: true, kinds: (j.kinds ?? []).map((k) => `${k.scheme} on ${k.network}`) };
+  } catch (e) {
+    return { ok: false, error: why(e) };
+  }
+}
 
 let cached: { at: number; v: MonadNative } | undefined;
 
@@ -185,7 +192,7 @@ export async function monadNative(opts: { mainnet?: PublicClient; executor?: Pub
   const m = opts.mainnet ?? monadMainnet();
   const x = opts.executor ?? publicClient;
   const probeHash = `0x${'0'.repeat(64)}` as Hex;
-  const [staking, p256M, p256X, poolM, poolX, syncX, resM, resX, contracts] = await Promise.all([
+  const [staking, p256M, p256X, poolM, poolX, syncX, resM, resX, contracts, x402Kinds] = await Promise.all([
     stakingNow(m),
     p256Probe(m),
     p256Probe(x),
@@ -196,6 +203,7 @@ export async function monadNative(opts: { mainnet?: PublicClient; executor?: Pub
     reserveAnswers(m),
     reserveAnswers(x),
     Promise.all(CANONICAL.map(async (c) => ({ ...c, mainnet: await hasCode(m, c.address), executor: await hasCode(x, c.address) }))),
+    facilitatorKinds(),
   ]);
   const v: MonadNative = {
     at: new Date().toISOString(),
@@ -207,6 +215,7 @@ export async function monadNative(opts: { mainnet?: PublicClient; executor?: Pub
     reserve: { mainnet: resM, executor: resX },
     contracts,
     deployed: DEPLOYED_TESTNET.map((d) => ({ ...d, explorer: `https://testnet.monadvision.com/address/${d.address}` })),
+    x402: { route: COUNCIL_ROUTE, price: X402_PRICE, network: X402_NETWORK, asset: MONAD_TESTNET_USDC, facilitator: X402_FACILITATOR, supported: x402Kinds },
   };
   if (!opts.mainnet) cached = { at: Date.now(), v };
   return v;

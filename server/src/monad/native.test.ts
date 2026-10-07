@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('../evm/client.js', () => ({ publicClient: {} }));
-vi.mock('../evm/chains.js', () => ({ CHAIN_KEY: 'monad-fork' }));
+vi.mock('../evm/client.js', async (orig) => ({ ...(await orig<typeof import('../evm/client.js')>()), publicClient: {} }));
+vi.mock('../evm/chains.js', async (orig) => ({ ...(await orig<typeof import('../evm/chains.js')>()), CHAIN_KEY: 'monad-fork' }));
 const { CANONICAL, p256Input, p256Verify, txpoolStatus } = await import('./native.js');
 
 describe('the P256VERIFY input', () => {

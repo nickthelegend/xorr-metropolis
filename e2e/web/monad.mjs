@@ -60,6 +60,7 @@ const expectations = [
   ['monad-item-p256', /mainnet · valid ✓ · tampered refused ✓/],
   ['monad-item-staking', /Epoch · [\d,]+.*Proposing now · validator #\d+/],
   ['monad-item-gas', /0x1001 on Monad mainnet · answers/],
+  ['monad-item-x402', /POST \/x402\/council · \$0\.01 USDC.*settles exact here ✓/],
   ['monad-item-contracts', /WMON .*mainnet ✓ · fork ✓/],
 ];
 for (const [id, re] of expectations) {

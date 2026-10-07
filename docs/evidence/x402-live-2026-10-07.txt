@@ -1,0 +1,21 @@
+x402 through Monad's facilitator — live probe, 7 Oct 2026 (MONAD-TECH item 7). Nothing was spent.
+
+Server: xorr's executor app (server/src/monad/x402.ts), POST /x402/council, x402 v2 via @x402/hono 2.28.0.
+Facilitator: https://x402-facilitator.molandak.org (GET /supported lists exact, upto and batch-settlement on
+eip155:10143 and eip155:143).
+
+1. POST /x402/council without payment → 402
+   accepts[0] = {"scheme":"exact","network":"eip155:10143","amount":"10000",
+                 "asset":"0x534b2f3A21130d7a60830c2Df862319e593943A3","payTo":"0x0A62d9Be432D1a7AFeF2384158399A1c02d2E8c7",
+                 "maxTimeoutSeconds":300,"extra":{"name":"USDC","version":"2"}}
+   ($0.01 of Circle's Monad-testnet USDC, to the executor's address.)
+
+2. A fresh, unfunded key signs the EIP-3009 authorization the official client builds from that 402, and the request is
+   sent again with PAYMENT-SIGNATURE → 402, with
+   {"x402Version":2,"error":"insufficient_funds", ...}
+   The verdict is Monad's facilitator's: it checked the signature and the payer's balance and refused. The read was not
+   served and nothing was settled.
+
+A funded payer gets the read and the facilitator settles the transfer on Monad testnet — that waits for the testnet go
+(it needs Circle's testnet USDC in a payer). The full paid path is unit-tested with the official client and a stood-in
+facilitator: server/src/monad/x402.test.ts.

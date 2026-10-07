@@ -22,6 +22,7 @@ import { privyRoutes } from './routes/privy.js';
 import { crosschainRoutes } from './routes/crosschain.js';
 import { gmxRoutes } from './venues/gmx/routes.js';
 import { monadRoutes } from './monad/routes.js';
+import { x402Routes } from './monad/x402.js';
 import { passkeyRoutes } from './auth/passkey-session.js';
 import { privateNotes } from './routes/private-notes.js';
 import { perplRoutes } from './monad/perpl-routes.js';
@@ -188,6 +189,8 @@ app.route('/', privyRoutes);
 app.route('/', crosschainRoutes);
 app.route('/', gmxRoutes);
 app.route('/', monadRoutes);
+// Agents pay per call for the council's market read: x402 through Monad's facilitator (MONAD-TECH item 7).
+app.route('/', x402Routes());
 app.route('/', perplRoutes);
 app.route('/', councilRoutes);
 app.route('/', tokenRoutes);
