@@ -5,12 +5,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StillFetching } from '../http/deadline.js';
 
-const h = vi.hoisted(() => ({ chain: 'base-fork' }));
+const h = vi.hoisted(() => ({ chain: 'base-fork', mainnetGas: vi.fn(), feed: vi.fn() }));
 vi.mock('./chains.js', () => ({
   get CHAIN_KEY() {
     return h.chain;
   },
+  get IS_MONAD() {
+    return h.chain.startsWith('monad');
+  },
 }));
+vi.mock('../monad/mainnet.js', () => ({ monadMainnet: () => ({ getGasPrice: h.mainnetGas }) }));
+vi.mock('../monad/chainlink.js', () => ({ readFeed: h.feed }));
 vi.mock('./client.js', () => ({ publicClient: { getGasPrice: vi.fn() } }));
 vi.mock('../venues/oneinch.js', () => ({
   oneinchApi: vi.fn(),
@@ -73,5 +78,35 @@ describe('what a route costs to send', () => {
     expect(cost).toMatchObject({ priceGwei: 1, source: 'chain', units: 200_000 });
     expect(cost.feeUsd).toBeCloseTo(0.5, 10);
     expect(publicClient.getGasPrice).not.toHaveBeenCalled();
+  });
+});
+
+describe('what a route costs to send on Monad (MONAD-TECH item 6)', () => {
+  beforeEach(() => {
+    h.mainnetGas.mockReset().mockResolvedValue(102_000_000_000n);
+    h.feed.mockReset().mockResolvedValue({ price: 0.026 });
+  });
+
+  it('is the declared LIMIT times the price, in MON at Chainlink MON/USD — not gas used, not ETH', async () => {
+    h.chain = 'monad';
+    vi.mocked(publicClient.getGasPrice).mockResolvedValue(100_000_000_000n);
+    const cost = await networkCost(200_000);
+    // 200,000 estimated → 220,000 declared; at 100 gwei that is 0.022 MON, which at $0.026 is $0.000572.
+    expect(cost).toMatchObject({ priceGwei: 100, source: 'chain', units: 200_000, limitUnits: 220_000, billedOn: 'limit' });
+    expect(cost.feeUsd).toBeCloseTo(0.000572, 9);
+    expect(priceOf).not.toHaveBeenCalled();
+  });
+
+  it('on the local fork, at Monad mainnet’s gas price rather than anvil’s', async () => {
+    h.chain = 'monad-fork';
+    const cost = await networkCost(200_000);
+    expect(cost).toMatchObject({ priceGwei: 102, source: 'monad-mainnet', limitUnits: 220_000 });
+    expect(cost.feeUsd).toBeCloseTo(220_000 * 102e-9 * 0.026, 9);
+  });
+
+  it('without MON’s price, no fee rather than a guess', async () => {
+    h.chain = 'monad';
+    h.feed.mockRejectedValue(new Error('feed down'));
+    expect((await networkCost(200_000)).feeUsd).toBeNull();
   });
 });

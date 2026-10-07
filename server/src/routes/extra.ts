@@ -17,7 +17,7 @@ import { propose } from '../bot/propose.js';
 import { send } from '../notifications/push.js';
 import { canonicalSymbol, TOKENS as VENUE_TOKENS } from '../venues/tokens.js';
 import { quote } from '../venues/uniswap.js';
-import { ADDRESSES } from '../evm/chains.js';
+import { ADDRESSES, IS_MONAD } from '../evm/chains.js';
 import { gasPrice, networkCost } from '../evm/gas-price.js';
 import { estimateOutUnits } from '../executor/fill-measure.js';
 import { compareVenues } from '../venues/compare.js';
@@ -664,8 +664,18 @@ extra.get('/swap/quote', async (c) => {
        */
       beforeDeadline(gasPrice(), patience.chainReadMs, () => new StillFetching('the gas price')).catch(() => null),
     ]);
-    const gas = price && (await networkCost(q.estimatedGas, { price, priceMs: patience.priceMs }).catch(() => null));
-    return c.json({ ...q, gas: gas && { ...gas, paidBy: 'executor' as const } });
+    /*
+     * On Monad the fill runs the delegation contract around the swap, and the limit it declares is what is billed, so
+     * the router's estimate for the swap alone (~81k on a $20 MON buy) understated it four times over: the gas the last
+     * fills here actually used is the size, when there are any (MONAD-TECH item 6).
+     */
+    const measured = IS_MONAD ? await recentFillGas().catch(() => null) : null;
+    const units = measured?.median ?? q.estimatedGas;
+    const gas = price && (await networkCost(units, { price, priceMs: patience.priceMs }).catch(() => null));
+    return c.json({
+      ...q,
+      gas: gas && { ...gas, paidBy: 'executor' as const, unitsFrom: measured ? ('fills' as const) : ('quote' as const), samples: measured?.samples ?? null },
+    });
   } catch (e) {
     // Late is not failed: the error handler answers it as `warming`, which the app waits out.
     if (e instanceof StillFetching) throw e;
@@ -673,6 +683,21 @@ extra.get('/swap/quote', async (c) => {
     return c.json({ error: e instanceof Error ? e.message : String(e) }, 502);
   }
 });
+
+let fillGasCache: { at: number; v: { median: number; samples: number } | null } | undefined;
+/** The median gas the last twenty fills on this chain used, cached a minute. Null with none recorded. */
+async function recentFillGas(): Promise<{ median: number; samples: number } | null> {
+  if (fillGasCache && Date.now() - fillGasCache.at < 60_000) return fillGasCache.v;
+  const r = await one<{ median: string | null; samples: string }>(
+    `SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY tx_gas_used)::text AS median, count(*)::text AS samples
+       FROM (SELECT tx_gas_used FROM strategy_runs
+              WHERE tx_gas_used IS NOT NULL AND chain = current_setting('xorr.chain_key')
+              ORDER BY finished_at DESC NULLS LAST LIMIT 20) recent`,
+  );
+  const v = r?.median ? { median: Math.round(Number(r.median)), samples: Number(r.samples) } : null;
+  fillGasCache = { at: Date.now(), v };
+  return v;
+}
 
 /**
  * What every venue would give for the same trade.

@@ -14,7 +14,8 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { createWalletClient, formatEther, http, parseEther, type Address, type PrivateKeyAccount, type WalletClient } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { chain, rpcUrl, CHAIN_KEY } from './chains.js';
+import { chain, rpcUrl, CHAIN_KEY, IS_MONAD } from './chains.js';
+import { reserveLedger, valueSpendCheck } from '../monad/reserve.js';
 import { moneyOn } from './money.js';
 import { agentPrivateKey, delegateAccount, publicClient, walletClient } from './client.js';
 import { anvil } from '../fork/anvil.js';
@@ -83,7 +84,19 @@ export async function ensureAgentGas(agentId: string): Promise<{ address: Addres
     return { address, balanceEth: formatEther(AGENT_GAS_TARGET), toppedUp: 'fork balance set' };
   }
   if (money === 'test') {
-    const hash = await walletClient.sendTransaction({ account: delegateAccount, chain, to: address, value: AGENT_GAS_TARGET - before });
+    const value = AGENT_GAS_TARGET - before;
+    // On Monad a transfer that would take the desk under its 10 MON reserve reverts and still pays gas: refuse it first.
+    if (IS_MONAD) {
+      const [balance, code] = await Promise.all([publicClient.getBalance({ address: delegateAccount.address }), publicClient.getCode({ address: delegateAccount.address })]);
+      const check = valueSpendCheck({
+        balanceWei: balance,
+        valueWei: value,
+        delegated: (code ?? '0x').toLowerCase().startsWith('0xef0100'),
+        sentWithinWindow: reserveLedger.recent(delegateAccount.address, Date.now()),
+      });
+      if (!check.ok) throw new Error(`The desk cannot top up this agent's gas: ${check.reason}.`);
+    }
+    const hash = await walletClient.sendTransaction({ account: delegateAccount, chain, to: address, value });
     await publicClient.waitForTransactionReceipt({ hash });
     return { address, balanceEth: formatEther(AGENT_GAS_TARGET), toppedUp: hash };
   }

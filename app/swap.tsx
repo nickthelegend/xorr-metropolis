@@ -54,6 +54,7 @@ import { useIntentKeys } from '@/data/useIntentKeys';
 import { apiReason } from '@/data/api';
 import { errorText } from '@/data/apiError';
 import { logoProps, useLogos } from '@/data/useLogos';
+import { tinyUsd } from '@/data/speed';
 import { useSwapQuote, type SwapQuoteResult } from '@/data/useSwapQuote';
 import { system, type SwapOutcome } from '@/data/system';
 
@@ -397,7 +398,7 @@ const units = (n: number) => quantity(n, n >= 1 ? 2 : 4);
 /** The route's gas, which the executor pays — in dollars when ETH has a price. */
 function networkFee(gas: SwapQuoteResult['gas']): string {
   if (!gas) return '—';
-  return gas.feeUsd !== null ? `On us · ≈ ${money(gas.feeUsd)}` : 'On us';
+  return gas.feeUsd !== null ? `On us · ≈ ${tinyUsd(gas.feeUsd)}` : 'On us';
 }
 
 /** The one line under the button, only when something is wrong. */

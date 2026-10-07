@@ -20,6 +20,7 @@ import { actingAccount, actingWalletClient } from './agents.js';
 import { markBroadcast } from '../http/request-id.js';
 import { ADDRESSES, IS_MONAD, SETTLEMENT_VENUES } from './chains.js';
 import { broadcast } from './send.js';
+import { withHeadroom } from './gas-limit.js';
 import 'dotenv/config';
 
 export const DELEGATION_ADDRESS = (process.env.DELEGATION_ADDRESS ??
@@ -375,24 +376,7 @@ export async function isVenueAllowed(owner: Address, venue: Address): Promise<bo
  * Spend as the delegate. This is the ONLY thing the executor's key can do with user capital, and
  * the contract rejects it the moment it breaches the cap, the expiry or the venue allowlist.
  */
-/**
- * Head-room on the gas limit for a delegated call.
- *
- * The estimate is taken against the state as it is NOW, and the transaction executes at least one
- * block later. That gap is not free: a lending pool accrues interest on the way through and writes
- * a slot the estimate never priced, and a router's route can touch a pool whose tick has since
- * moved. Measured on a Base fork, an Aave withdraw estimated at 172,488 and used 177,503 — a 3%
- * shortfall, which is an out-of-gas revert, not a slow trade.
- *
- * An out-of-gas revert is the worst failure this executor can have, because it looks exactly like
- * the venue refusing the trade and tells the user nothing true. Gas is refunded when unused, so
- * the only cost of the head-room is a slightly higher balance requirement on the bot's own wallet.
- */
-const GAS_HEADROOM_PCT = 30n;
-
-function withHeadroom(estimate: bigint): bigint {
-  return (estimate * (100n + GAS_HEADROOM_PCT)) / 100n;
-}
+// The gas limit a delegated call declares: the estimate with head-room, 10% on Monad (it bills the limit), 30% elsewhere.
 
 /** What a trade must deliver to the owner: the token, and the least of it, in raw units. */
 export type OutputFloor = { tokenOut: Address; minOut: bigint };

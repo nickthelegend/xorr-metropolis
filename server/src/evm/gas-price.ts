@@ -7,7 +7,10 @@
  */
 import { formatEther, formatGwei } from 'viem';
 import { publicClient } from './client.js';
-import { CHAIN_KEY } from './chains.js';
+import { CHAIN_KEY, IS_MONAD } from './chains.js';
+import { withHeadroom } from './gas-limit.js';
+import { monadMainnet } from '../monad/mainnet.js';
+import { readFeed } from '../monad/chainlink.js';
 import { oneinchApi } from '../venues/oneinch.js';
 import { priceOf } from '../market/prices.js';
 
@@ -27,10 +30,35 @@ export async function gasPrice(): Promise<GasPrice> {
 
 export type NetworkCost = {
   priceGwei: number;
-  source: GasPrice['source'];
+  source: GasPrice['source'] | 'monad-mainnet';
   units: number | null;
+  /** On Monad, the gas LIMIT the executor declares for these units — what is billed. */
+  limitUnits?: number | null;
+  /** What the fee is charged on: the gas used (refunded above it), or on Monad the declared limit. */
+  billedOn?: 'used' | 'limit';
   feeUsd: number | null;
 };
+
+/** A read that answers within `ms` or not at all. */
+const within = <T>(p: Promise<T>, ms: number | undefined): Promise<T | undefined> =>
+  ms === undefined ? p.catch(() => undefined) : Promise.race([p.catch(() => undefined), new Promise<undefined>((r) => setTimeout(() => r(undefined), ms))]);
+
+/**
+ * On Monad (MONAD-TECH item 6): the fee is the declared LIMIT times the price, in MON at Chainlink's MON/USD. Priced as
+ * ETH it was off by the ratio of the two (~100,000×). On the local fork the price is Monad mainnet's, not the price
+ * anvil charges, so the figure is what the fill costs on Monad.
+ */
+async function monadCost(units: number | undefined, price: GasPrice, priceMs?: number): Promise<NetworkCost> {
+  const mainnetPrice = CHAIN_KEY === 'monad-fork' ? await within(monadMainnet().getGasPrice(), priceMs) : undefined;
+  const wei = mainnetPrice ?? price.wei;
+  const source = mainnetPrice !== undefined ? ('monad-mainnet' as const) : price.source;
+  const priceGwei = Number(formatGwei(wei));
+  if (!units || !(units > 0)) return { priceGwei, source, units: null, limitUnits: null, billedOn: 'limit', feeUsd: null };
+  const limit = withHeadroom(BigInt(Math.round(units)), true);
+  const mon = await within(readFeed('MON'), priceMs);
+  const feeMon = Number(formatEther(wei * limit));
+  return { priceGwei, source, units, limitUnits: Number(limit), billedOn: 'limit', feeUsd: mon ? feeMon * mon.price : null };
+}
 
 /**
  * The price, and — when the size is known and ETH can be priced — what `units` of gas cost in dollars.
@@ -44,6 +72,7 @@ export async function networkCost(
   opts: { price?: GasPrice; priceMs?: number } = {},
 ): Promise<NetworkCost> {
   const price = opts.price ?? (await gasPrice());
+  if (IS_MONAD) return monadCost(units, price, opts.priceMs);
   const priceGwei = Number(formatGwei(price.wei));
   if (!units || !(units > 0)) return { priceGwei, source: price.source, units: null, feeUsd: null };
   const ethUsd = await priceOf('WETH', opts.priceMs).catch(() => undefined);

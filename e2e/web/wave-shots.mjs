@@ -91,6 +91,11 @@ if (FEATURES.some((f) => f !== 'f2' && f !== 'm1')) {
   for (let i = 0; i < 7; i++) await v(page.getByLabel('Delete', { exact: true })).click();
   await v(page.getByLabel('2', { exact: true })).click();
   await v(page.getByLabel('0', { exact: true })).click();
+  // What the order costs to send on Monad, billed on the limit (MONAD-TECH item 6).
+  if (FEATURES.includes('m6')) {
+    await v(page.getByTestId('order-gas-limit')).waitFor({ timeout: T.ui });
+    await shot('m6-order-fee', 'order-gas-limit');
+  }
   await page.getByRole('button', { name: 'Buy $20 of WMON' }).click({ timeout: T.ui });
   await v(page.getByText(/^Bought /)).waitFor({ timeout: T.chain });
 }

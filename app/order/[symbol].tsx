@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
+import { tinyUsd } from '@/data/speed';
 import {
   Button,
   CloseButton,
@@ -27,7 +28,6 @@ import {
   Segmented,
   Text,
   colors,
-  money,
   quantity,
   size,
   space,
@@ -384,10 +384,16 @@ export default function OrderTicket() {
           {routeQuote.loading
             ? '…'
             : typeof routeQuote.data?.gas?.feeUsd === 'number'
-              ? `On us · ≈ ${money(routeQuote.data.gas.feeUsd)}`
+              ? `On us · ≈ ${tinyUsd(routeQuote.data.gas.feeUsd)}`
               : '—'}
         </Price>
       </View>
+      {routeQuote.data?.gas?.billedOn === 'limit' && routeQuote.data.gas.limitUnits ? (
+        // Monad bills the limit a transaction declares, not the gas it uses (MONAD-TECH item 6): say what is declared.
+        <Text variant="footnote" color={colors.sheet.muted} style={{ marginTop: -space.s8, paddingBottom: space.s12 }} testID="order-gas-limit">
+          {`Monad bills the gas a fill declares, used or not: ~${routeQuote.data.gas.limitUnits.toLocaleString('en-US')} at ${routeQuote.data.gas.priceGwei.toLocaleString('en-US', { maximumSignificantDigits: 3 })} gwei${routeQuote.data.gas.source === 'monad-mainnet' ? ' (mainnet’s price)' : ''} — ${routeQuote.data.gas.unitsFrom === 'fills' ? `what the last ${routeQuote.data.gas.samples ?? ''} fills here used` : 'the router’s estimate for the swap'}, plus 10%.`}
+        </Text>
+      ) : null}
 
       {signedOut ? (
         <SignInButton

@@ -17,7 +17,8 @@
  * every block is final when mined. The speed card says so rather than letting a fork's numbers stand for Monad's.
  */
 import { keccak256, type Hex, type PublicClient, type TransactionReceipt, type WalletClient } from 'viem';
-import { sendRawTransaction, sendRawTransactionSync } from 'viem/actions';
+import { getBalance, sendRawTransaction, sendRawTransactionSync } from 'viem/actions';
+import { inFlightCheck, reserveLedger, type ReserveLedger } from '../monad/reserve.js';
 
 export type Sent = {
   hash: Hex;
@@ -64,7 +65,7 @@ function alreadyKnown(e: unknown): boolean {
 export async function broadcast(
   wallet: WalletClient,
   request: Parameters<WalletClient['prepareTransactionRequest']>[0],
-  opts: { useSync: boolean; now?: () => number },
+  opts: { useSync: boolean; now?: () => number; ledger?: ReserveLedger },
 ): Promise<Sent> {
   const now = opts.now ?? Date.now;
   const account = wallet.account;
@@ -72,7 +73,22 @@ export async function broadcast(
   const prepared = await wallet.prepareTransactionRequest({ ...request, account, chain: wallet.chain } as never);
   const serializedTransaction = (await account.signTransaction(prepared as never)) as Hex;
   const hash = keccak256(serializedTransaction);
+  /*
+   * Monad's reserve rule at consensus (monad/reserve.ts, MONAD-TECH item 6): the fees this sender has in flight must fit
+   * within min(10 MON, its balance three blocks ago), or a later transaction is not included. Only asked when something
+   * is in flight, so the common send costs no extra read; when it would not fit, the window is waited out once.
+   */
+  const ledger = opts.ledger ?? reserveLedger;
+  const p = prepared as { gas?: bigint; maxFeePerGas?: bigint; gasPrice?: bigint };
+  const feeWei = (p.gas ?? 0n) * (p.maxFeePerGas ?? p.gasPrice ?? 0n);
+  if (opts.useSync && ledger.inFlight(account.address, now()) > 0n) {
+    const balance = await getBalance(wallet, { address: account.address }).catch(() => undefined);
+    if (balance !== undefined && !inFlightCheck({ laggedBalanceWei: balance, inFlightFeesWei: ledger.inFlight(account.address, now()), feeWei }).ok) {
+      await new Promise((r) => setTimeout(r, ledger.waitMs(account.address, now())));
+    }
+  }
   const sentAt = now();
+  if (opts.useSync) ledger.record(account.address, feeWei, sentAt);
   if (opts.useSync) {
     try {
       const receipt = await sendRawTransactionSync(wallet, { serializedTransaction });

@@ -94,6 +94,8 @@ export const CHAIN_KEY = ASKED as ChainKey;
 
 /** Monad mainnet, testnet or a fork of it: crypto spot and Perpl perps, no Stock Tokens. */
 export const onMonad = CHAIN_KEY.startsWith('monad');
+/** The token gas is paid in, as the price feed names it: MON on Monad (priced as WMON), ETH everywhere else. */
+export const gasSymbol: 'WMON' | 'WETH' = onMonad ? 'WMON' : 'WETH';
 
 /**
  * Whether this build trades a Perpl desk: Monad mainnet and testnet, and a fork of mainnet while its local keeper posts

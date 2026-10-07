@@ -30,8 +30,15 @@ export type SwapQuoteResult = {
    */
   gas?: {
     priceGwei: number;
-    source: '1inch' | 'chain';
+    /** `monad-mainnet` on the local fork: the fee is priced at Monad mainnet's gas price, not anvil's. */
+    source: '1inch' | 'chain' | 'monad-mainnet';
     units: number | null;
+    /** On Monad, the gas limit declared for these units: what is billed (MONAD-TECH item 6). */
+    limitUnits?: number | null;
+    billedOn?: 'used' | 'limit';
+    /** Where the size came from: the gas recent fills here used (`fills`, with how many), or the router's estimate. */
+    unitsFrom?: 'fills' | 'quote';
+    samples?: number | null;
     feeUsd: number | null;
     paidBy: 'executor';
   } | null;

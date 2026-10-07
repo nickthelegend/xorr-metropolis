@@ -16,6 +16,7 @@
  */
 import React, { useMemo, useState } from 'react';
 import { TextInput, View } from 'react-native';
+import { tinyUsd } from '@/data/speed';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
 import {
@@ -32,7 +33,6 @@ import {
   Text,
   border,
   colors,
-  money,
   quantity,
   radius,
   space,
@@ -53,7 +53,7 @@ import { useGrantDelegation } from '@/auth/useGrantDelegation';
 import { formatEther, type Address } from 'viem';
 import { shortAddress } from '@/format';
 import { NetworkChip } from '@/networks/NetworkChip';
-import { settlementSymbol } from '@/chain';
+import { gasSymbol, settlementSymbol } from '@/chain';
 
 const FIELD_H = 52;
 
@@ -129,7 +129,8 @@ export default function Send() {
     }
     return estimateFee(call.to, call.data);
   }, [feeFor]);
-  const { quote: ethPrice } = usePrice('WETH');
+  // Gas is paid in the chain's own token: MON on Monad, which priced as ETH read ~100,000× too high (MONAD-TECH item 6).
+  const { quote: ethPrice } = usePrice(gasSymbol);
   const feeUsd =
     fee.data && ethPrice?.price !== undefined
       ? Number(formatEther(fee.data.gas * fee.data.gasPrice)) * ethPrice.price
@@ -296,7 +297,7 @@ export default function Send() {
             {/* A dash for a fee nobody could estimate. U+2212 is a minus, and a fee is never negative. */}
             {/* The network's price for sending, not the person's money: it stays while balances are hidden. */}
             <Price variant="footnote" figure="market">
-              {feeUsd !== undefined ? `≈ ${money(feeUsd)}` : fee.loading ? '· · ·' : '—'}
+              {feeUsd !== undefined ? `≈ ${tinyUsd(feeUsd)}` : fee.loading ? '· · ·' : '—'}
             </Price>
           </View>
         </View>
