@@ -21,7 +21,8 @@ on a fork of Monad mainnet by `npm run demo:record`, captioned, waits cut. And e
 [hold to stop](docs/demo/flows/07-stop.mp4). The 24 Sep cut with Perpl on Monad testnet:
 [`docs/demo/xorr-monad-demo.mp4`](docs/demo/xorr-monad-demo.mp4) (2:59).
 
-**Every screen** — 103 of them at phone and desktop size, with real data — in [`docs/screens/`](docs/screens/index.html):
+**Every screen** — 103 of them at phone and desktop size, with real data — in [`docs/screens/`](docs/screens/) (the gallery,
+`docs/screens/index.html`, opens from a checkout):
 contact sheets per area in [`docs/screens/sheets/`](docs/screens/sheets/), each scored in
 [`docs/screens/REVIEW.md`](docs/screens/REVIEW.md), and the UI before the 6–7 Oct redesign beside today's in
 [`then-and-now.png`](docs/screens/sheets/then-and-now.png).

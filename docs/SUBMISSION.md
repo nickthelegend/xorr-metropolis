@@ -26,7 +26,7 @@ go through Perpl's own DelegatedAccount: the agent can trade there but never wit
 | Track | 01 — Onchain Finance & Trading |
 | Repository | https://github.com/nickthelegend/xorr-metropolis (public, MIT) |
 | Demo video (≤ 3 min) | [`docs/demo/flows/00-full-tour.mp4`](demo/flows/00-full-tour.mp4) (1:50, 7 Oct, the current product on a fork of Monad mainnet), with each flow on its own in [`docs/demo/flows/`](demo/flows/); [`docs/demo/xorr-monad-demo.mp4`](demo/xorr-monad-demo.mp4) (2:59, 24 Sep, with Perpl on Monad testnet); the final cut on testnet follows the go ([script below](#3-minute-demo-script)) |
-| Every screen | [`docs/screens/index.html`](screens/index.html) — 103 screens at phone and desktop size, scored in [`screens/REVIEW.md`](screens/REVIEW.md) |
+| Every screen | [`docs/screens/`](screens/) — 103 screens at phone and desktop size, scored in [`screens/REVIEW.md`](screens/REVIEW.md), contact sheets in [`screens/sheets/`](screens/sheets/); `index.html` there is the gallery from a checkout |
 | Live app | after the go (DEPLOY-LATER §6); locally: `sh infra/monad-fork/local-stack.sh refork` |
 | Contracts (Monad testnet, 10143) | `XorrDelegation` [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) (Sourcify-verified) · `XorrAuditAnchor` [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
 | Transactions (Monad testnet) | the table under [Evidence on Monad testnet](#evidence-on-monad-testnet) |
