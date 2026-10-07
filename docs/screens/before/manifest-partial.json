@@ -1,0 +1,409 @@
+{
+  "taken": "2026-10-07T12:13:15.600Z",
+  "viewports": [
+    "mobile",
+    "desktop"
+  ],
+  "sizes": {
+    "mobile": {
+      "width": 390,
+      "height": 844
+    },
+    "desktop": {
+      "width": 1440,
+      "height": 900
+    }
+  },
+  "screens": [
+    {
+      "area": "onboarding",
+      "name": "welcome",
+      "route": "/welcome",
+      "note": "",
+      "files": {
+        "mobile": "onboarding/01-welcome-mobile.png",
+        "desktop": "onboarding/01-welcome-desktop.png"
+      }
+    },
+    {
+      "area": "onboarding",
+      "name": "wallet",
+      "route": "/wallet",
+      "note": "signed out",
+      "files": {
+        "mobile": "onboarding/02-wallet-mobile.png",
+        "desktop": "onboarding/02-wallet-desktop.png"
+      }
+    },
+    {
+      "area": "onboarding",
+      "name": "wallet-created",
+      "route": "/wallet",
+      "note": "passkey account made",
+      "files": {
+        "mobile": "onboarding/03-wallet-created-mobile.png",
+        "desktop": "onboarding/03-wallet-created-desktop.png"
+      }
+    },
+    {
+      "area": "onboarding",
+      "name": "fund",
+      "route": "/fund",
+      "note": "",
+      "files": {
+        "mobile": "onboarding/04-fund-mobile.png",
+        "desktop": "onboarding/04-fund-desktop.png"
+      }
+    },
+    {
+      "area": "onboarding",
+      "name": "fund-added",
+      "route": "/fund",
+      "note": "test funds arrived",
+      "files": {
+        "mobile": "onboarding/05-fund-added-mobile.png",
+        "desktop": "onboarding/05-fund-added-desktop.png"
+      }
+    },
+    {
+      "area": "onboarding",
+      "name": "delegate",
+      "route": "/delegate",
+      "note": "",
+      "files": {
+        "mobile": "onboarding/06-delegate-mobile.png",
+        "desktop": "onboarding/06-delegate-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "history-empty",
+      "route": "/history",
+      "note": "a new account, nothing traded yet",
+      "files": {
+        "mobile": "states/01-history-empty-mobile.png",
+        "desktop": "states/01-history-empty-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "activity-empty",
+      "route": "/activity",
+      "note": "a new account, nothing traded yet",
+      "files": {
+        "mobile": "states/02-activity-empty-mobile.png",
+        "desktop": "states/02-activity-empty-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "runs-empty",
+      "route": "/runs",
+      "note": "a new account, nothing traded yet",
+      "files": {
+        "mobile": "states/03-runs-empty-mobile.png",
+        "desktop": "states/03-runs-empty-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "council-empty",
+      "route": "/council",
+      "note": "a new account, nothing traded yet",
+      "files": {
+        "mobile": "states/04-council-empty-mobile.png",
+        "desktop": "states/04-council-empty-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "portfolio-empty",
+      "route": "/portfolio",
+      "note": "a new account, nothing traded yet",
+      "files": {
+        "mobile": "states/05-portfolio-empty-mobile.png",
+        "desktop": "states/05-portfolio-empty-desktop.png"
+      }
+    },
+    {
+      "area": "trade",
+      "name": "order-ticket",
+      "route": "/order/WMON",
+      "note": "$20 entered",
+      "files": {
+        "mobile": "trade/01-order-ticket-mobile.png",
+        "desktop": "trade/01-order-ticket-desktop.png"
+      }
+    },
+    {
+      "area": "home",
+      "name": "/",
+      "route": "/",
+      "note": "",
+      "files": {
+        "mobile": "home/01-home-mobile.png",
+        "desktop": "home/01-home-desktop.png"
+      }
+    },
+    {
+      "area": "history",
+      "name": "/activity",
+      "route": "/activity",
+      "note": "",
+      "files": {
+        "mobile": "history/01-activity-mobile.png",
+        "desktop": "history/01-activity-desktop.png"
+      }
+    },
+    {
+      "area": "agents",
+      "name": "/agent/momentum-scout",
+      "route": "/agent/momentum-scout",
+      "note": "",
+      "files": {
+        "mobile": "agents/01-agent-momentum-scout-mobile.png",
+        "desktop": "agents/01-agent-momentum-scout-desktop.png"
+      }
+    },
+    {
+      "area": "agents",
+      "name": "/bot",
+      "route": "/bot",
+      "note": "",
+      "files": {
+        "mobile": "agents/02-bot-mobile.png",
+        "desktop": "agents/02-bot-desktop.png"
+      }
+    },
+    {
+      "area": "agents",
+      "name": "/bot/momentum-scout/backtest",
+      "route": "/bot/momentum-scout/backtest",
+      "note": "",
+      "files": {
+        "mobile": "agents/03-bot-momentum-scout-backtest-mobile.png",
+        "desktop": "agents/03-bot-momentum-scout-backtest-desktop.png"
+      }
+    },
+    {
+      "area": "agents",
+      "name": "/bot/momentum-scout/intro",
+      "route": "/bot/momentum-scout/intro",
+      "note": "",
+      "files": {
+        "mobile": "agents/04-bot-momentum-scout-intro-mobile.png",
+        "desktop": "agents/04-bot-momentum-scout-intro-desktop.png"
+      }
+    },
+    {
+      "area": "agents",
+      "name": "/bot/momentum-scout/settings",
+      "route": "/bot/momentum-scout/settings",
+      "note": "",
+      "files": {
+        "mobile": "agents/05-bot-momentum-scout-settings-mobile.png",
+        "desktop": "agents/05-bot-momentum-scout-settings-desktop.png"
+      }
+    },
+    {
+      "area": "agents",
+      "name": "/bot/leaderboard",
+      "route": "/bot/leaderboard",
+      "note": "",
+      "files": {
+        "mobile": "agents/06-bot-leaderboard-mobile.png",
+        "desktop": "agents/06-bot-leaderboard-desktop.png"
+      }
+    },
+    {
+      "area": "agents",
+      "name": "/bot/roster",
+      "route": "/bot/roster",
+      "note": "",
+      "files": {
+        "mobile": "agents/07-bot-roster-mobile.png",
+        "desktop": "agents/07-bot-roster-desktop.png"
+      }
+    },
+    {
+      "area": "council",
+      "name": "/council",
+      "route": "/council",
+      "note": "",
+      "files": {
+        "mobile": "council/01-council-mobile.png",
+        "desktop": "council/01-council-desktop.png"
+      }
+    },
+    {
+      "area": "money",
+      "name": "/deposit",
+      "route": "/deposit",
+      "note": "",
+      "files": {
+        "mobile": "money/01-deposit-mobile.png",
+        "desktop": "money/01-deposit-desktop.png"
+      }
+    },
+    {
+      "area": "history",
+      "name": "/history",
+      "route": "/history",
+      "note": "",
+      "files": {
+        "mobile": "history/02-history-mobile.png",
+        "desktop": "history/02-history-desktop.png"
+      }
+    },
+    {
+      "area": "money",
+      "name": "/holdings",
+      "route": "/holdings",
+      "note": "",
+      "files": {
+        "mobile": "money/02-holdings-mobile.png",
+        "desktop": "money/02-holdings-desktop.png"
+      }
+    },
+    {
+      "area": "trade",
+      "name": "/markets",
+      "route": "/markets",
+      "note": "",
+      "files": {
+        "mobile": "trade/02-markets-mobile.png",
+        "desktop": "trade/02-markets-desktop.png"
+      }
+    },
+    {
+      "area": "trade",
+      "name": "/markets/crypto",
+      "route": "/markets/crypto",
+      "note": "",
+      "files": {
+        "mobile": "trade/03-markets-crypto-mobile.png",
+        "desktop": "trade/03-markets-crypto-desktop.png"
+      }
+    },
+    {
+      "area": "perps",
+      "name": "/perpl",
+      "route": "/perpl",
+      "note": "",
+      "files": {
+        "mobile": "perps/01-perpl-mobile.png",
+        "desktop": "perps/01-perpl-desktop.png"
+      }
+    },
+    {
+      "area": "perps",
+      "name": "/perps",
+      "route": "/perps",
+      "note": "",
+      "files": {
+        "mobile": "perps/02-perps-mobile.png",
+        "desktop": "perps/02-perps-desktop.png"
+      }
+    },
+    {
+      "area": "money",
+      "name": "/portfolio",
+      "route": "/portfolio",
+      "note": "",
+      "files": {
+        "mobile": "money/03-portfolio-mobile.png",
+        "desktop": "money/03-portfolio-desktop.png"
+      }
+    },
+    {
+      "area": "history",
+      "name": "/runs",
+      "route": "/runs",
+      "note": "",
+      "files": {
+        "mobile": "history/03-runs-mobile.png",
+        "desktop": "history/03-runs-desktop.png"
+      }
+    },
+    {
+      "area": "history",
+      "name": "/runs/15294897-b86e-4966-9842-c331415ef099",
+      "route": "/runs/15294897-b86e-4966-9842-c331415ef099",
+      "note": "",
+      "files": {
+        "mobile": "history/04-runs-15294897-b86e-4966-9842-c331415ef099-mobile.png",
+        "desktop": "history/04-runs-15294897-b86e-4966-9842-c331415ef099-desktop.png"
+      }
+    },
+    {
+      "area": "safety",
+      "name": "/safety",
+      "route": "/safety",
+      "note": "",
+      "files": {
+        "mobile": "safety/01-safety-mobile.png",
+        "desktop": "safety/01-safety-desktop.png"
+      }
+    },
+    {
+      "area": "money",
+      "name": "/send",
+      "route": "/send",
+      "note": "",
+      "files": {
+        "mobile": "money/04-send-mobile.png",
+        "desktop": "money/04-send-desktop.png"
+      }
+    },
+    {
+      "area": "safety",
+      "name": "/settings",
+      "route": "/settings",
+      "note": "",
+      "files": {
+        "mobile": "safety/02-settings-mobile.png",
+        "desktop": "safety/02-settings-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "home-offline",
+      "route": "/",
+      "note": "the executor unreachable",
+      "files": {
+        "mobile": "states/06-home-offline-mobile.png",
+        "desktop": "states/06-home-offline-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "portfolio-offline",
+      "route": "/portfolio",
+      "note": "the executor unreachable",
+      "files": {
+        "mobile": "states/07-portfolio-offline-mobile.png",
+        "desktop": "states/07-portfolio-offline-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "safety-live",
+      "route": "/safety",
+      "note": "before the stop",
+      "files": {
+        "mobile": "states/08-safety-live-mobile.png",
+        "desktop": "states/08-safety-live-desktop.png"
+      }
+    },
+    {
+      "area": "states",
+      "name": "safety-stopped",
+      "route": "/safety",
+      "note": "after hold-to-stop, read back from the chain",
+      "files": {
+        "mobile": "states/09-safety-stopped-mobile.png",
+        "desktop": "states/09-safety-stopped-desktop.png"
+      }
+    }
+  ]
+}
