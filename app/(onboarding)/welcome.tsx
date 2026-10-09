@@ -81,6 +81,12 @@ export default function Splash() {
             style={{ marginTop: space.s4 }}
             testID="welcome-see-market"
           />
+          {/* For whoever is judging it: each bounty and the screen that meets it, without signing up (ROADMAP-WIN W4). */}
+          <Press onPress={() => router.push('/judges')} accessibilityRole="link" accessibilityLabel="For judges" hitHeight={size.hit} testID="welcome-judges" style={{ alignSelf: 'center', marginTop: space.s4 }}>
+            <Text variant="footnote" color={colors.ink55}>
+              For judges: each bounty, and where it is met ›
+            </Text>
+          </Press>
           {/*
             The two documents the sentence names, as links. It was plain text, so the first screen asked for agreement
             to documents it gave no way to read. Each link keeps a full-size touch area without growing the line.

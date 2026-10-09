@@ -14,6 +14,7 @@
  */
 import React, { useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
 import { Button, Fill, HeaderBar, LoadingRows, Screen, SheetCard, Text, colors, radius, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
@@ -285,6 +286,7 @@ function SponsorsList({ s }: { s: SponsorsLive }) {
 
 export default function BuiltOnMonad() {
   const goBack = useGoBack();
+  const router = useRouter();
   const native = usePoll(() => monad.native(), 20_000);
   const sponsors = usePoll(() => monad.sponsors(), 20_000);
   return (
@@ -293,6 +295,9 @@ export default function BuiltOnMonad() {
         <HeaderBar onBack={goBack} title={<Text variant="screenTitle">Built on Monad</Text>} />
         <Text variant="secondary" color={colors.ink55} style={{ marginTop: space.s6 }}>
           What xorr uses of Monad itself, and the sponsors’ tech on it — each row read now, each saying where it runs.
+        </Text>
+        <Text variant="footnote" color={colors.accentHi} style={{ marginTop: space.s6 }} onPress={() => router.push('/judges')} testID="monad-judges">
+          Each bounty, and where it is met ›
         </Text>
       </View>
       <Fill style={{ marginTop: space.s12 }}>
