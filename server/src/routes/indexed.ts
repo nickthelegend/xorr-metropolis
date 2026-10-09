@@ -13,6 +13,7 @@ import { Hono } from 'hono';
 import { query } from '../db/index.js';
 import { chain } from '../evm/chains.js';
 import { currentWallet } from './wallet-context.js';
+import { TOKENS } from '../venues/tokens.js';
 
 export const indexedRoutes = new Hono();
 
@@ -60,6 +61,45 @@ indexedRoutes.get('/indexed', async (c) => {
     if (missing) {
       return c.json({ error: 'index_unavailable', detail: 'The Envio indexer has not run against this database (indexer/README.md).' }, 503);
     }
+    throw e;
+  }
+});
+
+/** One of the latest fills on xorr, anyone's, as a person reads it (ROADMAP-WIN W3). */
+export type RecentFill = { kind: 'spent' | 'closed'; owner: string; venue: string; symbol: string; amount: number | null; at: string; block: number; tx: string };
+
+/** A `Fill` row from the index in words: the token by its symbol here, the amount in its own decimals. */
+export function recentFill(r: Row, tokens: Record<string, { address: string; decimals: number }> = TOKENS): RecentFill {
+  const addr = String(r.token ?? '').toLowerCase();
+  const hit = Object.entries(tokens).find(([, t]) => t.address.toLowerCase() === addr);
+  const raw = r.amount === null || r.amount === undefined ? null : String(r.amount);
+  const amount = hit && raw !== null && /^\d+$/.test(raw) ? Number(BigInt(raw) * 10_000n / 10n ** BigInt(hit[1].decimals)) / 10_000 : null;
+  return {
+    kind: r.kind === 'closed' ? 'closed' : 'spent',
+    owner: String(r.owner),
+    venue: String(r.venueName ?? r.venue ?? ''),
+    symbol: hit ? hit[0] : `${addr.slice(0, 6)}…${addr.slice(-4)}`,
+    amount,
+    at: new Date(Number(r.timestamp) * 1000).toISOString(),
+    block: Number(r.block),
+    tx: String(r.txHash),
+  };
+}
+
+/**
+ * The latest fills on xorr, anyone's, from Envio's index (ROADMAP-WIN W3). Public: they are on chain already. A new
+ * account's History and Runs show these until it has its own, so a first look is at real fills rather than an empty list.
+ */
+indexedRoutes.get('/indexed/recent', async (c) => {
+  try {
+    const rows = await query<Row>(
+      `SELECT kind, owner, "venueName", venue, token, amount::text AS amount, timestamp, block, "txHash" FROM ${t('Fill')} WHERE "chainId" = $1 ORDER BY block DESC LIMIT 8`,
+      [chain.id],
+    );
+    return c.json({ fills: rows.map((r) => recentFill(r)) });
+  } catch (e) {
+    const missing = e instanceof Error && /relation .* does not exist|schema .* does not exist/.test(e.message);
+    if (missing) return c.json({ error: 'index_unavailable', detail: 'The Envio indexer has not run against this database (indexer/README.md).' }, 503);
     throw e;
   }
 });

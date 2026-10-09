@@ -17,6 +17,7 @@ import React from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
+import { RecentOnXorr } from '@/indexed/RecentOnXorr';
 import {
   EmptyState,
   ErrorState,
@@ -194,11 +195,15 @@ export default function History() {
         ) : loading && !data ? (
           <LoadingRows count={6} height={size.rowLg} />
         ) : items.length === 0 ? (
-          <EmptyState
-            text={scope ? `No trades ${scope}.` : 'No trades yet.'}
-            actionLabel="See activity"
-            onAction={() => router.push('/activity')}
-          />
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space.s30 }}>
+            <EmptyState
+              text={scope ? `No trades ${scope}.` : 'No trades yet.'}
+              actionLabel="See activity"
+              onAction={() => router.push('/activity')}
+            />
+            {/* Until there are trades of its own, what will appear here — everyone's fills, said so (ROADMAP-WIN W3). */}
+            <RecentOnXorr />
+          </ScrollView>
         ) : (
           <ScrollView
             refreshControl={refresh.control}

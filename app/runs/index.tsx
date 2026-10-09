@@ -14,6 +14,7 @@ import React, { useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
+import { RecentOnXorr } from '@/indexed/RecentOnXorr';
 import {
   EmptyState,
   ErrorState,
@@ -82,13 +83,17 @@ export default function Runs() {
         ) : loading && !data ? (
           <LoadingRows count={7} height={size.rowLg} />
         ) : rows.length === 0 ? (
-          <EmptyState
-            text={
-              filter === 'All'
-                ? 'No strategy has run yet.'
-                : `No ${filter.toLowerCase()} runs.`
-            }
-          />
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space.s30 }}>
+            <EmptyState
+              text={
+                filter === 'All'
+                  ? 'No strategy has run yet.'
+                  : `No ${filter.toLowerCase()} runs.`
+              }
+            />
+            {/* Until it has runs of its own, the latest fills on xorr, said to be everyone's (ROADMAP-WIN W3). */}
+            {filter === 'All' ? <RecentOnXorr /> : null}
+          </ScrollView>
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}

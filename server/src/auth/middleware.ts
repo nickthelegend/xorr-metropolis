@@ -41,6 +41,7 @@ const PUBLIC_PATHS = new Set([
   '/monad/commits',
   '/monad/native',
   '/monad/sponsors',
+  '/indexed/recent',
   '/monad/p256/challenge',
   '/monad/p256/verify',
   // How a signed-out person becomes signed in with a passkey (`auth/passkey-session.ts`).
