@@ -115,13 +115,10 @@ function SeatCard({ ballot, round, speaking }: { ballot: CouncilBallot; round: C
         <View style={{ flex: 1 }}>
           <Text variant="rowPrimary">{SEAT_NAMES[ballot.persona]}</Text>
           <Text variant="footnote" color={colors.ink55}>
-            {model ? `Weighed the four desks’ ballots · ${model}` : groups.length ? `Read ${['one source', 'two sources', 'three sources'][groups.length - 1] ?? `${groups.length} sources`}` : 'Voted on the round'}
+            {`${Math.round(ballot.confidence * 100)}% sure${model ? ` · ${model}` : ''}`}
           </Text>
         </View>
-        <View style={{ alignItems: 'flex-end', gap: space.s4 }}>
-          <Tag label={ballot.vote} tone={voteTone(ballot.vote)} />
-          <Text variant="footnoteSm" color={colors.ink40}>{`${Math.round(ballot.confidence * 100)}% sure`}</Text>
-        </View>
+        <Tag label={ballot.vote} tone={voteTone(ballot.vote)} />
       </View>
       {groups.length ? (
         <View style={{ marginTop: space.s12, gap: space.s10 }}>
@@ -137,11 +134,6 @@ function SeatCard({ ballot, round, speaking }: { ballot: CouncilBallot; round: C
                   </Text>
                 </View>
               ))}
-              {g.source ? (
-                <Text variant="footnoteSm" color={colors.ink40} numberOfLines={2}>
-                  {`from ${g.source}`}
-                </Text>
-              ) : null}
             </View>
           ))}
         </View>

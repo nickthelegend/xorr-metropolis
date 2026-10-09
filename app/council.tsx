@@ -129,6 +129,7 @@ function RoundCard({ round, roster, latest = false }: { round: CouncilRound; ros
   // An executed agent round was signed by that agent's own wallet (individual agents, 2026-09-23).
   const signer = round.outcome === 'executed' && round.txHash ? roundSigner(round.convenedBy, roster) : undefined;
   const router = useRouter();
+  const [why, setWhy] = useState(false);
   return (
     <SheetCard bordered borderRadius={radius.panel} padding={space.s16} tone={latest ? 'accent' : 'default'}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.s8 }}>
@@ -156,28 +157,37 @@ function RoundCard({ round, roster, latest = false }: { round: CouncilRound; ros
           <View key={v.persona} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: voteColor(v.vote), opacity: v.vote === 'abstain' ? 1 : 0.9 }} />
         ))}
       </View>
-      <View style={{ marginTop: space.s14, gap: space.s10 }}>
+      {/* The votes as chips; each desk's reason is one tap away, and in full on the replay (the readability rule). */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s8, marginTop: space.s12 }}>
         {seated(round.votes).map((v, i) =>
           beat(
             i + 1,
             v.persona,
-            <View style={{ flexDirection: 'row', gap: space.s10, alignItems: 'flex-start' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s6 }}>
               <SeatDot seat={v.persona} />
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s8 }}>
-                  <Text variant="secondarySm" color={colors.ink}>
-                    {SEAT_NAMES[v.persona]}
-                  </Text>
-                  <Tag label={v.vote} tone={voteTone(v.vote)} small />
-                </View>
-                <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s2 }}>
-                  {v.reason}
-                </Text>
-              </View>
+              <Text variant="footnote" color={colors.ink70}>
+                {SEAT_SHORT[v.persona]}
+              </Text>
+              <Tag label={v.vote} tone={voteTone(v.vote)} small />
             </View>,
           ),
         )}
       </View>
+      <Press onPress={() => setWhy(!why)} accessibilityRole="button" accessibilityState={{ expanded: why }} hitHeight={size.hit} testID="council-why" style={{ alignSelf: 'flex-start', marginTop: space.s4 }}>
+        <Text variant="footnote" color={colors.ink55}>
+          {why ? 'Hide why' : 'Why'}
+        </Text>
+      </Press>
+      {why ? (
+        <View style={{ gap: space.s8 }}>
+          {seated(round.votes).map((v) => (
+            <Text key={v.persona} variant="footnote" color={colors.ink55}>
+              <Text variant="footnote" color={colors.ink}>{`${SEAT_NAMES[v.persona]}: `}</Text>
+              {v.reason}
+            </Text>
+          ))}
+        </View>
+      ) : null}
       {beat(
         round.votes.length + 1,
         'outcome',

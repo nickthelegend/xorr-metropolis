@@ -16,7 +16,7 @@ import React, { useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
-import { Button, Fill, HeaderBar, LoadingRows, Screen, SheetCard, Text, colors, radius, size, space } from '@/ui';
+import { Button, Fill, HeaderBar, LoadingRows, Press, Screen, SheetCard, Text, colors, radius, size, space } from '@/ui';
 import { Rise } from '@/ui/Rise';
 import { shortAddress } from '@/format';
 import { usePoll } from '@/data/usePoll';
@@ -45,7 +45,11 @@ function WhereChip({ w }: { w: Where }) {
   );
 }
 
+/** Whether the card's explanations are open: they sit behind Details, the readings stay (the readability rule). */
+const NotesOpen = React.createContext(false);
+
 function Item({ n, title, where, children, testID }: { n?: string; title: string; where: Where[]; children: React.ReactNode; testID?: string }) {
+  const [open, setOpen] = useState(false);
   return (
     <SheetCard bordered borderRadius={radius.panel} padding={space.s16} testID={testID}>
       {n ? <Text variant="eyebrow">{n}</Text> : null}
@@ -57,7 +61,14 @@ function Item({ n, title, where, children, testID }: { n?: string; title: string
           <WhereChip key={w} w={w} />
         ))}
       </View>
-      <View style={{ marginTop: space.s10, gap: space.s6 }}>{children}</View>
+      <NotesOpen.Provider value={open}>
+        <View style={{ marginTop: space.s10, gap: space.s6 }}>{children}</View>
+      </NotesOpen.Provider>
+      <Press onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityState={{ expanded: open }} hitHeight={size.hit} style={{ alignSelf: 'flex-start', marginTop: space.s4 }}>
+        <Text variant="footnote" color={colors.ink40}>
+          {open ? 'Hide details' : 'Details'}
+        </Text>
+      </Press>
     </SheetCard>
   );
 }
@@ -77,6 +88,12 @@ function Reading({ label, value, bad }: { label: string; value: string; bad?: bo
 }
 
 function Note({ children }: { children: string }) {
+  if (!React.useContext(NotesOpen)) return null;
+  return <Hint>{children}</Hint>;
+}
+
+/** A line that must always show (what to do next), unlike a Note. */
+function Hint({ children }: { children: string }) {
   return (
     <Text variant="footnote" color={colors.ink55}>
       {children}
@@ -93,8 +110,8 @@ function PasskeyButton() {
   const [busy, setBusy] = useState(false);
   const [r, setR] = useState<PasskeyCheck | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  if (!passkeyCheckSupported()) return <Note>Checking your own passkey needs the web app: the phone’s passkey module does not hand back the signature.</Note>;
-  if (!address) return <Note>Sign in with a passkey to check it on Monad.</Note>;
+  if (!passkeyCheckSupported()) return <Hint>Checking your own passkey needs the web app: the phone’s passkey module does not hand back the signature.</Hint>;
+  if (!address) return <Hint>Sign in with a passkey to check it on Monad.</Hint>;
   return (
     <View style={{ gap: space.s6 }}>
       <Button
@@ -310,7 +327,7 @@ export default function BuiltOnMonad() {
               <NativeList d={native.data} />
             </Rise>
           ) : native.error ? (
-            <Note>{`The executor could not read Monad: ${native.error.message}`}</Note>
+            <Hint>{`The executor could not read Monad: ${native.error.message}`}</Hint>
           ) : (
             <LoadingRows count={3} height={size.rowLg} />
           )}
@@ -322,7 +339,7 @@ export default function BuiltOnMonad() {
               <SponsorsList s={sponsors.data} />
             </Rise>
           ) : sponsors.error ? (
-            <Note>{`The executor could not read them: ${sponsors.error.message}`}</Note>
+            <Hint>{`The executor could not read them: ${sponsors.error.message}`}</Hint>
           ) : (
             <LoadingRows count={3} height={size.rowLg} />
           )}

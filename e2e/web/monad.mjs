@@ -54,7 +54,7 @@ console.log('✓ Home → Built on Monad');
 await v(page.getByTestId('monad-item-staking')).waitFor({ timeout: T.ui }).catch(() => fail('the native readings never arrived'));
 await v(page.getByTestId('commit-stats')).waitFor({ timeout: 30_000 }).catch(() => fail('no live commit states'));
 const expectations = [
-  ['monad-item-commits', /voted in [\d.]+ m?s, final in/],
+  ['monad-item-commits', /Voted in [\d.]+ m?s · final in/],
   ['monad-item-sync', /supported — every fill uses it/],
   ['monad-item-txpool', /Monad mainnet · answers/],
   ['monad-item-p256', /mainnet · valid · tampered: refused/],

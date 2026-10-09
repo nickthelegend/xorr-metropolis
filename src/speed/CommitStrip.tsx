@@ -72,13 +72,13 @@ export function CommitStrip({ count = 5 }: { count?: number }) {
   const c = usePoll(() => speed.commits(), 600).data;
   const blocks = c?.blocks.slice(0, count) ?? [];
   const s = c?.stats;
-  const words = s && s.samples > 0 ? [s.votedMs !== null ? `voted in ${msWords(s.votedMs)}` : null, s.finalizedMs !== null ? `final in ${msWords(s.finalizedMs)}` : null, s.verifiedMs !== null ? `verified in ${msWords(s.verifiedMs)}` : null].filter(Boolean) : [];
+  const words = s && s.samples > 0 ? [s.votedMs !== null ? `Voted in ${msWords(s.votedMs)}` : null, s.finalizedMs !== null ? `final in ${msWords(s.finalizedMs)}` : null, s.verifiedMs !== null ? `verified in ${msWords(s.verifiedMs)}` : null].filter(Boolean) : [];
   return (
     <View testID="commit-strip" style={{ gap: space.s8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s8 }}>
         <LiveDot color={c?.live ? colors.up : colors.ink40} pulse={!!c?.live} />
         <Text variant="secondarySm" color={colors.ink70} style={{ flexShrink: 1 }}>
-          {c ? `${c.network}: each block, Proposed → Voted → Final → Verified` : 'Opening Monad’s commit-state stream…'}
+          {c ? `${c.network} · live` : 'Opening Monad’s stream…'}
         </Text>
       </View>
       {blocks.length ? (
@@ -93,7 +93,7 @@ export function CommitStrip({ count = 5 }: { count?: number }) {
       ) : null}
       {words.length ? (
         <Text variant="footnote" color={colors.ink55} testID="commit-stats">
-          {`A block is ${words.join(', ')} — medians of the last ${s!.samples}, timed from each proposal as Monad’s RPC streams it (monadNewHeads).`}
+          {words.join(' · ')}
         </Text>
       ) : null}
     </View>

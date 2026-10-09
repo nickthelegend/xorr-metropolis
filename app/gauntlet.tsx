@@ -32,7 +32,6 @@ const FELL_AT: Record<GauntletStage, string> = {
 // A real minus, as every other figure in the app (format/toMinus).
 const pct = (n: number | null, signed = true) =>
   n === null ? '—' : toMinus(`${signed && n > 0 ? '+' : ''}${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`);
-const num = (n: number | null, digits = 2) => (n === null ? '—' : toMinus(n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })));
 
 /** Each stage as a bar, its width the share of all tested that got through it; what it cut beside it. */
 function Funnel({ g }: { g: Gauntlet }) {
@@ -121,8 +120,6 @@ function StrategyCard({ s, onOpen }: { s: StrategySummary; onOpen: () => void })
         </View>
         <View style={{ flexDirection: 'row', gap: space.s10, marginTop: space.s10 }}>
           <Metric label="Return (OOS)" value={pct(r)} tone={r === null ? colors.ink55 : r > 0 ? colors.up : r < 0 ? colors.down : colors.ink55} />
-          <Metric label="Drawdown" value={pct(s.maxDdPct === null ? null : -Math.abs(s.maxDdPct), false)} />
-          <Metric label="Sharpe" value={num(s.sharpe)} />
           <Metric label="Trades" value={s.trades === null ? '—' : s.trades.toLocaleString('en-US')} />
         </View>
       </SheetCard>
@@ -135,6 +132,7 @@ export default function GauntletScreen() {
   const router = useRouter();
   const [all, setAll] = useState(false);
   const [family, setFamily] = useState<string | null>(null);
+  const [how, setHow] = useState(false);
   const page = useAsync(() => strategyLibrary.list({ all, family: family ?? undefined }), [all, family]);
   // The families come from the whole book, so the chips do not change under the reader as the filter does.
   const book = useAsync(() => strategyLibrary.list({ all: true }), []);
@@ -162,9 +160,16 @@ export default function GauntletScreen() {
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space.s30, gap: space.s10 }}>
             <View style={{ paddingHorizontal: space.gutter, gap: space.s10 }}>
               {(book.data?.gauntlet ?? d.gauntlet) ? <Funnel g={(book.data?.gauntlet ?? d.gauntlet)!} /> : null}
-              <Text variant="footnote" color={colors.ink55}>
-                {`${d.provenance.method.charAt(0).toUpperCase()}${d.provenance.method.slice(1)}. ${d.provenance.caveat}`}
-              </Text>
+              <Press onPress={() => setHow(!how)} accessibilityRole="button" accessibilityState={{ expanded: how }} hitHeight={size.hit} testID="gauntlet-how" style={{ alignSelf: 'flex-start' }}>
+                <Text variant="footnote" color={colors.ink55}>
+                  {how ? 'Hide how it was tested' : 'How it was tested'}
+                </Text>
+              </Press>
+              {how ? (
+                <Text variant="footnote" color={colors.ink55}>
+                  {`${d.provenance.method.charAt(0).toUpperCase()}${d.provenance.method.slice(1)}. ${d.provenance.caveat}`}
+                </Text>
+              ) : null}
             </View>
             <PillRow contentPadding={space.gutter}>
               <Pill label="Every family" selected={family === null} onPress={() => setFamily(null)} />

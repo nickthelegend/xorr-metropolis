@@ -174,7 +174,7 @@ await beat('explainer', async () => {
   await v(page.getByTestId('how-next-2')).click({ timeout: T.ui });
   await wait(v(page.getByTestId('commit-stats')).waitFor({ timeout: T.ui }));
   const stats = await v(page.getByTestId('commit-stats')).innerText();
-  const m = stats.match(/voted in ([\d.]+ m?s), final in ([\d.]+ m?s)/);
+  const m = stats.match(/Voted in ([\d.]+ m?s) · final in ([\d.]+ m?s)/);
   await caption('Monad mainnet, live', m ? `Each block Proposed → Voted → Final, from Monad’s own stream: voted in ${m[1]}, final in ${m[2]}.` : 'Each block Proposed → Voted → Final, from Monad’s own stream.');
   await hold(5.5);
 });
@@ -267,9 +267,9 @@ await beat('buy and route', async () => {
   await card.scrollIntoViewIfNeeded();
   const ms = await v(page.getByTestId('speed-ms')).innerText().catch(() => '');
   const cost = await v(page.getByTestId('speed-cost')).innerText().catch(() => '');
-  const exec = ms.match(/executed in ([\d,]+ ms)/)?.[1];
-  const usd = cost.match(/(\$[\d.]+) on Monad/)?.[1];
-  const x = cost.match(/([\d,]+)× less/)?.[1];
+  const exec = ms.trim() || undefined;
+  const usd = cost.match(/(\$[\d.]+) fee/)?.[1];
+  const x = cost.match(/([\d,]+)× cheaper/)?.[1];
   await caption(
     'The speed receipt',
     `${exec ? `Executed in ${exec} on the fork, its receipt returned with the send. ` : ''}${usd ? `Its gas: ${usd} on Monad${x ? `, ${x}× less than the same gas on Ethereum` : ''}.` : ''}`.trim() || 'Every fill carries its speed and its cost.',

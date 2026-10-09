@@ -10,10 +10,10 @@
  */
 import React from 'react';
 import { View } from 'react-native';
-import { Glow, LiveDot, SheetCard, Text, colors, radius, space } from '@/ui';
+import { Glow, LiveDot, Press, SheetCard, Text, colors, radius, size, space } from '@/ui';
 import { useAsync } from '@/data/useAsync';
 import { usePoll } from '@/data/usePoll';
-import { cheaperBy, groupDigits, speed, tinyUsd, type Pulse } from '@/data/speed';
+import { cheaperBy, groupDigits, msWords, speed, tinyUsd, type Pulse } from '@/data/speed';
 import { CommitStrip } from './CommitStrip';
 
 /** One line of Monad mainnet, live: head block and measured cadence. Renders nothing until it has both. */
@@ -42,6 +42,7 @@ export function useMonadPulse(): Pulse | undefined {
 export function SpeedReceipt({ tx }: { tx: string }) {
   const r = useAsync(() => speed.forTx(tx), [tx]);
   const live = useMonadPulse();
+  const [open, setOpen] = React.useState(false);
   if (!r.data) return null;
   const d = r.data;
   const pulse = live ?? d.pulse;
@@ -56,82 +57,58 @@ export function SpeedReceipt({ tx }: { tx: string }) {
   return (
     <SheetCard bordered borderRadius={radius.panel} padding={space.s18} tone="accent" testID="speed-receipt">
       <Glow strength={0.22} style={{ top: -30, left: -40, right: 120, bottom: 40 }} />
-      <Text variant="eyebrow">Speed on Monad</Text>
-      {d.fork ? (
-        <>
-          {/*
-            On the local fork the fill moved at the fork's pace (it mines a block a second), so the lead is Monad mainnet's
-            own cadence, measured live; the fill's time follows, with its reason.
-          */}
-          {pulse.monad.blockMs ? (
-            <View style={{ marginTop: space.s8 }}>
-              <Text variant="heroBalance" testID="speed-hero">{`${pulse.monad.blockMs} ms`}</Text>
-              <Text variant="secondarySm" color={colors.ink55}>
-                a block on Monad mainnet, right now
-              </Text>
-            </View>
-          ) : null}
-          {d.confirmMs !== null ? (
-            <Text variant="secondarySm" color={colors.ink70} style={{ marginTop: space.s6 }} testID="speed-ms">
-              {`This fill, on the local fork: executed in ${d.confirmMs.toLocaleString('en-US')} ms${d.sync ? ' (its receipt came back with the send)' : ''}. The fork mines a block every ${(d.chainBlockMs ?? 1000).toLocaleString('en-US')} ms and has no consensus, so nothing on it is final in Monad’s sense; Monad mainnet’s own blocks going final are below.`}
+      {/* One number and one line (the readability rule); everything measured behind it is under Details. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text variant="eyebrow">Speed on Monad</Text>
+        {d.fork ? (
+          <View style={{ paddingHorizontal: space.s8, paddingVertical: 2, borderRadius: radius.card, backgroundColor: colors.accentSoft }}>
+            <Text variant="footnoteSm" color={colors.accentHi}>
+              fork
             </Text>
-          ) : null}
-        </>
-      ) : d.confirmMs !== null ? (
-        // Two timers, because a Monad receipt is speculative until its block is final two slots later (MONAD-TECH item 2).
-        <View style={{ marginTop: space.s8 }}>
-          <Text variant="heroBalance" testID="speed-ms">{`${d.confirmMs.toLocaleString('en-US')} ms`}</Text>
-          <Text variant="secondarySm" color={colors.ink55}>
-            {d.sync ? 'to executed: the receipt came back with the send (eth_sendRawTransactionSync)' : 'from sending to confirmed'}
-          </Text>
-          {d.finalMs != null ? (
-            <Text variant="rowPrimary" color={colors.up} style={{ marginTop: space.s6 }} testID="speed-final">
-              {`final in ${d.finalMs.toLocaleString('en-US')} ms`}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
-      {block || gasUsed ? (
-        <Text variant="secondarySm" color={colors.ink70} style={{ marginTop: space.s10 }}>
-          {[block ? `Block ${block}` : null, gasUsed ? `gas ${gasUsed}${gasLimit ? ` of ${gasLimit} declared` : ''}` : null].filter(Boolean).join(' · ')}
-        </Text>
-      ) : null}
-      {monad ? (
-        <View style={{ marginTop: space.s14, gap: space.s8 }} testID="speed-cost">
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.s10 }}>
-            <Text variant="rowPrimary" style={{ flexShrink: 1 }}>{`${monad} on Monad`}</Text>
-            {x ? (
-              <Text variant="control" color={colors.accentHi} numberOfLines={1}>{`${x.toLocaleString('en-US')}× less`}</Text>
-            ) : null}
           </View>
-          {d.monadGasGwei ? (
-            // The price on its own line: beside the cost it wrapped "gwei" onto a line of its own at desktop width.
-            <Text variant="footnote" color={colors.ink55} style={{ marginTop: -space.s4 }}>
-              {`the gas declared, at ${d.pricedAt === 'mainnet' ? 'Monad mainnet’s ' : ''}${Number(d.monadGasGwei).toLocaleString('en-US', { maximumSignificantDigits: 3 })} gwei`}
-            </Text>
-          ) : null}
+        ) : null}
+      </View>
+      {d.confirmMs !== null ? (
+        <Text variant="heroBalance" style={{ marginTop: space.s8 }} testID="speed-ms">{msWords(d.confirmMs) ?? '—'}</Text>
+      ) : pulse.monad.blockMs ? (
+        <Text variant="heroBalance" style={{ marginTop: space.s8 }} testID="speed-hero">{`${pulse.monad.blockMs} ms`}</Text>
+      ) : null}
+      <Text variant="secondarySm" color={colors.ink70} style={{ marginTop: space.s2 }} testID="speed-cost">
+        {[d.confirmMs !== null ? (d.finalMs != null ? `Final in ${msWords(d.finalMs)}` : 'Executed') : 'A block on Monad, now', monad ? `${monad} fee` : null, x ? `${x.toLocaleString('en-US')}× cheaper than Ethereum` : null]
+          .filter(Boolean)
+          .join(' · ')}
+      </Text>
+      <Press onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityState={{ expanded: open }} hitHeight={size.hit} testID="speed-details" style={{ alignSelf: 'flex-start', marginTop: space.s6 }}>
+        <Text variant="footnote" color={colors.ink55}>
+          {open ? 'Hide details' : 'Details'}
+        </Text>
+      </Press>
+      {open ? (
+        <View style={{ gap: space.s10 }}>
+          <Text variant="footnote" color={colors.ink55}>
+            {[
+              d.sync ? 'Receipt returned with the send (eth_sendRawTransactionSync)' : null,
+              block ? `Block ${block}` : null,
+              gasUsed ? `gas ${gasUsed}${gasLimit ? ` of ${gasLimit} declared` : ''}` : null,
+              d.monadGasGwei ? `${d.pricedAt === 'mainnet' ? 'mainnet ' : ''}${Number(d.monadGasGwei).toLocaleString('en-US', { maximumSignificantDigits: 3 })} gwei` : null,
+              eth ? `Ethereum: ${eth} at ${Number(pulse.ethereum?.gasGwei ?? 0).toLocaleString('en-US', { maximumSignificantDigits: 3 })} gwei` : null,
+              d.fork ? `the fork mines a block every ${(d.chainBlockMs ?? 1000).toLocaleString('en-US')} ms` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </Text>
           {share !== null ? (
             <View style={{ gap: space.s6 }}>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.control }}>
-                <View style={{ width: `${share * 100}%`, height: 6, borderRadius: 3, backgroundColor: colors.accent, boxShadow: `0px 0px 8px ${colors.accentGlow}` }} />
+                <View style={{ width: `${share * 100}%`, height: 6, borderRadius: 3, backgroundColor: colors.accent }} />
               </View>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.ink28 }} />
             </View>
           ) : null}
-          {eth ? (
-            <Text variant="footnote" color={colors.ink55}>
-              {`The same ${gasUsed ?? ''} gas on Ethereum at today's ${Number(pulse.ethereum?.gasGwei ?? 0).toLocaleString('en-US', { maximumSignificantDigits: 3 })} gwei: ${eth}. Monad bills the gas declared; Ethereum the gas used.`}
-            </Text>
-          ) : null}
+          <MonadPulse pulse={pulse} compact />
+          <CommitStrip count={4} />
         </View>
       ) : null}
-      <View style={{ marginTop: space.s14 }}>
-        <MonadPulse pulse={pulse} />
-      </View>
-      {/* Final, not just mined: Monad's own blocks going through consensus, live (MONAD-TECH item 1). */}
-      <View style={{ marginTop: space.s14 }}>
-        <CommitStrip count={4} />
-      </View>
     </SheetCard>
   );
 }

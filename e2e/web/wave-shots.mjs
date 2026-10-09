@@ -142,6 +142,7 @@ if (FEATURES.includes('m2')) {
   await go('/runs');
   await v(page.getByText(/^W?MON$/)).click({ timeout: T.ui });
   await v(page.getByTestId('speed-ms')).waitFor({ timeout: T.ui });
+  await v(page.getByTestId('speed-details')).click();
   await v(page.getByTestId('commit-stats')).waitFor({ timeout: T.ui });
   await shot('m2-run-two-timers', 'commit-strip');
 }
