@@ -15,6 +15,7 @@ import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
 import { RecentOnXorr } from '@/indexed/RecentOnXorr';
+import { SpeedHistory } from '@/speed/SpeedHistory';
 import {
   EmptyState,
   ErrorState,
@@ -99,6 +100,8 @@ export default function Runs() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: space.s30 }}
           >
+            {/* The wallet's recent fills side by side, timed and gas-checked (ROADMAP-WIN W5). */}
+            {filter === 'All' ? <SpeedHistory /> : null}
             {rows.map((r) => (
               <Row
                 key={r.id}

@@ -204,3 +204,48 @@ export function speedReceipt(
     pulse,
   };
 }
+
+export type SpeedHistoryItem = {
+  id: string;
+  tx: string;
+  venue: string | null;
+  symbol: string | null;
+  executedMs: number;
+  sync: boolean;
+  finalMs: number | null;
+  gasUsed: number | null;
+  gasLimit: number | null;
+  at: string | null;
+};
+
+/** A wallet's recent fills as a speed history, oldest first (the rows arrive newest first). */
+export function speedHistory(
+  rows: readonly {
+    id: string;
+    signature: string;
+    venue: string | null;
+    symbol: string | null;
+    tx_ms: number | null;
+    tx_sync: boolean | null;
+    tx_final_ms: number | null;
+    tx_gas_used: string | null;
+    tx_gas_limit: string | null;
+    finished_at: Date | string | null;
+  }[],
+): SpeedHistoryItem[] {
+  return rows
+    .filter((r) => r.tx_ms !== null)
+    .map((r) => ({
+      id: r.id,
+      tx: r.signature,
+      venue: r.venue,
+      symbol: r.symbol,
+      executedMs: r.tx_ms!,
+      sync: r.tx_sync === true,
+      finalMs: r.tx_final_ms,
+      gasUsed: r.tx_gas_used === null ? null : Number(r.tx_gas_used),
+      gasLimit: r.tx_gas_limit === null ? null : Number(r.tx_gas_limit),
+      at: r.finished_at === null ? null : new Date(r.finished_at).toISOString(),
+    }))
+    .reverse();
+}

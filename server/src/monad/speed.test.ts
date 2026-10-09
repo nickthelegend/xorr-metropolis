@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cadenceMs, confirmTimed, costUsd, speedReceipt, type Pulse } from './speed.js';
+import { cadenceMs, confirmTimed, costUsd, speedHistory, speedReceipt, type Pulse } from './speed.js';
 
 describe('cadenceMs — the block interval measured between two blocks', () => {
   it('a hundred blocks over thirty seconds is 300 ms', () => {
@@ -78,5 +78,14 @@ describe('speedReceipt — a fill priced at the pulse', () => {
   });
   it('without Ethereum in the pulse there is no comparison', () => {
     expect(speedReceipt(row, { ...pulse, ethereum: null }, false).ethereumUsd).toBeNull();
+  });
+});
+
+describe('speedHistory — a wallet’s recent fills, oldest first', () => {
+  const row = (id: string, ms: number | null, at: string) => ({ id, signature: `0x${id}`, venue: 'kuru', symbol: 'WMON', tx_ms: ms, tx_sync: true, tx_final_ms: null, tx_gas_used: '309084', tx_gas_limit: '424989', finished_at: at });
+  it('reverses the newest-first rows and keeps only the timed ones', () => {
+    const h = speedHistory([row('b', 150, '2026-10-08T02:00:00Z'), row('x', null, '2026-10-08T01:30:00Z'), row('a', 686, '2026-10-08T01:00:00Z')]);
+    expect(h.map((x) => x.id)).toEqual(['a', 'b']);
+    expect(h[1]).toMatchObject({ executedMs: 150, sync: true, gasUsed: 309084, gasLimit: 424989, at: '2026-10-08T02:00:00.000Z' });
   });
 });

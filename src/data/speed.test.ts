@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { cheaperBy, groupDigits, msWords, tinyUsd } from './speed';
+import { cheaperBy, groupDigits, headroomPct, median, msWords, speedBarHeight, tinyUsd } from './speed';
 import { voteToFillSec } from './council';
 
 // The helpers under test never call the executor; the client and what it imports are left out (vi.mock is hoisted).
@@ -25,6 +25,12 @@ describe('the speed receipt in words', () => {
     expect(cheaperBy(2, 1)).toBeNull();
     expect(cheaperBy(null, 1)).toBeNull();
   });
+  it('keeps very small fee exponents intact', () => {
+    expect(tinyUsd(1e-10)).toBe('$1e-10');
+    expect(tinyUsd(1e-20)).toBe('$1e-20');
+    expect(tinyUsd(1.23e-10)).toBe('$1.2e-10');
+    expect(tinyUsd(0.001)).toBe('$0.001');
+  });
 });
 
 describe('voteToFillSec — a round, convened to confirmed', () => {
@@ -42,5 +48,23 @@ describe('msWords', () => {
     expect(msWords(422)).toBe('422 ms');
     expect(msWords(1337)).toBe('1.3 s');
     expect(msWords(null)).toBeNull();
+  });
+});
+
+describe('the speed history in numbers', () => {
+  it('renders zero-duration fills with a finite visible height', () => {
+    expect(speedBarHeight(0, 0, 64)).toBe(4);
+    expect(speedBarHeight(0, 100, 64)).toBe(4);
+    expect(speedBarHeight(50, 100, 64)).toBe(32);
+    expect(speedBarHeight(100, 100, 64)).toBe(64);
+  });
+  it('a median of an odd and an even count', () => {
+    expect(median([559, 651, 592])).toBe(592);
+    expect(median([150, 686])).toBe(418);
+    expect(median([])).toBeNull();
+  });
+  it('declared over used, as the median percentage, over fills that recorded both', () => {
+    expect(headroomPct([{ gasUsed: 199326, gasLimit: 263038 }, { gasUsed: 165126, gasLimit: 225418 }, { gasUsed: null, gasLimit: 1 }])).toBe(34);
+    expect(headroomPct([])).toBeNull();
   });
 });

@@ -12,7 +12,7 @@ import { crosscheckMon } from './crosscheck.js';
 import { perplContext } from './perpl.js';
 import { perplRisk } from './perpl-risk.js';
 import { CHAINLINK_MONAD, readFeed, type ChainlinkSymbol } from './chainlink.js';
-import { chainCadence, monadPulse, speedReceipt } from './speed.js';
+import { chainCadence, monadPulse, speedHistory, speedReceipt } from './speed.js';
 import { commitStream } from './commits.js';
 import { monadNative, txpoolStatus } from './native.js';
 import { sponsorsLive } from './sponsors-live.js';
@@ -21,7 +21,7 @@ import { monadMainnet } from './mainnet.js';
 import { publicClient } from '../evm/client.js';
 import type { Hex } from 'viem';
 import { currentWallet } from '../routes/wallet-context.js';
-import { one } from '../db/index.js';
+import { one, query } from '../db/index.js';
 import { CHAIN_KEY } from '../evm/chains.js';
 
 export const monadRoutes = new Hono();
@@ -102,6 +102,24 @@ monadRoutes.post('/monad/p256/verify', async (c) => {
     if (e instanceof PasskeyCheckError) return c.json({ error: e.code, detail: e.message }, 400);
     throw e;
   }
+});
+
+/**
+ * A wallet's recent fills, timed (ROADMAP-WIN W5): each one's time to executed, whether its receipt came back with the
+ * send, and the gas it declared against the gas it used — the speed history the Runs screen leads with. Oldest first, so
+ * it reads left to right. Only the caller's own fills.
+ */
+monadRoutes.get('/speed/recent', async (c) => {
+  const w = await currentWallet(c);
+  if (!w) return c.json({ error: 'not_signed_in' }, 401);
+  const rows = await query<{ id: string; signature: string; venue: string | null; symbol: string | null; tx_ms: number | null; tx_sync: boolean | null; tx_final_ms: number | null; tx_gas_used: string | null; tx_gas_limit: string | null; finished_at: Date | null }>(
+    `SELECT r.id, r.signature, r.venue, s.symbol, r.tx_ms, r.tx_sync, r.tx_final_ms, r.tx_gas_used::text, r.tx_gas_limit::text, r.finished_at
+       FROM strategy_runs r JOIN strategies s ON s.id = r.strategy_id
+      WHERE s.wallet_id = $1 AND r.status = 'filled' AND r.tx_ms IS NOT NULL AND r.chain = current_setting('xorr.chain_key')
+      ORDER BY r.finished_at DESC NULLS LAST LIMIT 20`,
+    [w.id],
+  );
+  return c.json({ fills: speedHistory(rows) });
 });
 
 monadRoutes.get('/speed/:tx', async (c) => {

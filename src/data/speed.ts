@@ -51,7 +51,23 @@ export type Commits = {
   stats: { samples: number; votedMs: number | null; finalizedMs: number | null; verifiedMs: number | null };
 };
 
+/** One of the wallet's recent fills, timed (`GET /speed/recent`; ROADMAP-WIN W5). */
+export type SpeedHistoryItem = {
+  id: string;
+  tx: string;
+  venue: string | null;
+  symbol: string | null;
+  executedMs: number;
+  sync: boolean;
+  finalMs: number | null;
+  gasUsed: number | null;
+  gasLimit: number | null;
+  at: string | null;
+};
+
 export const speed = {
+  /** This wallet's last twenty fills, oldest first: time to executed, the sync send, gas declared and used. */
+  history: () => api.get<{ fills: SpeedHistoryItem[] }>('/speed/recent').then((r) => r.fills),
   /** Monad mainnet's newest blocks moving through Proposed → Voted → Finalized → Verified, timed. Public. */
   commits: () => api.get<Commits>('/monad/commits'),
   /** Monad mainnet now: head block, measured block interval, gas; Ethereum's gas for comparison. Public. */
@@ -71,7 +87,9 @@ export function tinyUsd(v: number | null | undefined): string | null {
   if (v === null || v === undefined || !Number.isFinite(v)) return null;
   if (v === 0) return '$0';
   if (v >= 0.01) return `$${v.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
-  return `$${v.toPrecision(2).replace(/\.?0+$/, '')}`;
+  // Normalize insignificant mantissa zeroes without stripping zeroes from
+  // an exponent ("1.0e-10" must never turn into "1.0e-1").
+  return `$${Number(v.toPrecision(2)).toString()}`;
 }
 
 /** How many times cheaper Monad was, rounded to a figure a person reads. Null when either side is missing or Monad is not cheaper. */
@@ -85,4 +103,25 @@ export function cheaperBy(monadUsd: number | null, ethereumUsd: number | null): 
 export function msWords(ms: number | null | undefined): string | null {
   if (ms === null || ms === undefined || !Number.isFinite(ms)) return null;
   return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 })} s`;
+}
+
+/** The middle value, or null for none. */
+export function median(xs: readonly number[]): number | null {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
+}
+
+/** How far the declared gas sat over the gas used, as a percentage, across fills that recorded both. */
+export function headroomPct(fills: readonly Pick<SpeedHistoryItem, 'gasUsed' | 'gasLimit'>[]): number | null {
+  const r = fills.filter((f) => f.gasUsed && f.gasLimit).map((f) => (f.gasLimit! / f.gasUsed! - 1) * 100);
+  const m = median(r);
+  return m === null ? null : Math.round(m);
+}
+
+/** A measured fill may execute in zero ms; keep its bar finite and visible. */
+export function speedBarHeight(executedMs: number, longestMs: number, maxHeight: number): number {
+  if (!Number.isFinite(executedMs) || !Number.isFinite(longestMs) || longestMs <= 0) return 4;
+  return Math.max(4, Math.min(maxHeight, Math.round((executedMs / longestMs) * maxHeight)));
 }
