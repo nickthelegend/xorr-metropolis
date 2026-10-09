@@ -60,11 +60,19 @@ function Bench({ strategistOff }: { strategistOff: boolean }) {
       {SEATS.map((seat, i) => {
         const off = seat === 'strategist' && strategistOff;
         return (
-          <Rise key={seat} index={i} style={{ alignItems: 'center', gap: space.s6, opacity: off ? 0.35 : 1 }}>
-            <AgentOrb gradient={SEAT_GRADIENT[seat]} size={52} face identity={SEAT_NAMES[seat]} bloom={!off} />
+          <Rise key={seat} index={i} style={{ alignItems: 'center', gap: space.s6 }}>
+            <View style={{ opacity: off ? 0.35 : 1 }}>
+              <AgentOrb gradient={SEAT_GRADIENT[seat]} size={52} face identity={SEAT_NAMES[seat]} bloom={!off} />
+            </View>
             <Text variant="secondarySm" color={off ? colors.ink40 : colors.ink70}>
               {SEAT_SHORT[seat]}
             </Text>
+            {/* Said on the seat itself (ROADMAP-WIN W2), where the eye looks for it, rather than as the screen's first line. */}
+            {off ? (
+              <Text variant="footnoteSm" color={colors.ink40} style={{ marginTop: -space.s4 }} testID="council-kimi-seat-off">
+                needs a key
+              </Text>
+            ) : null}
           </Rise>
         );
       })}
@@ -255,16 +263,22 @@ export default function Council() {
     <Screen gutter="none">
       <View style={{ paddingHorizontal: space.gutter }}>
         <HeaderBar onBack={goBack} title={<Text variant="screenTitle">Council</Text>} />
+        {/*
+          What the council is comes first (ROADMAP-WIN W2): the screen used to open on "not configured", which read as
+          unfinished. Kimi's absence is still said, on its seat and in full under the bench, with what it would take.
+        */}
         <Text variant="secondary" color={colors.ink55} style={{ marginTop: space.s6 }}>
-          Every trade is voted on first.
+          {strategist.data?.configured
+            ? 'Five seats vote on every trade first.'
+            : 'Four desks vote on every trade first.'}
         </Text>
+        <Bench strategistOff={strategist.data ? !strategist.data.configured : false} />
         {strategist.data && !strategist.data.configured ? (
-          // Kimi sits only with a key; without one the four desks vote and the screen says why there is no fifth seat.
-          <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }} testID="council-strategist-off">
-            {`The Strategist seat (Kimi) is not configured on this executor — it needs ${strategist.data.needs}. Four desks vote.`}
+          // Kimi sits only with a key; without one the four desks decide, and the screen says so rather than standing one in.
+          <Text variant="footnote" color={colors.ink40} style={{ marginTop: space.s10 }} testID="council-strategist-off">
+            {`Kimi sits when ${strategist.data.needs} is set; a tie is not approved.`}
           </Text>
         ) : null}
-        <Bench strategistOff={strategist.data ? !strategist.data.configured : false} />
         {CHAIN_KEY === 'monad-testnet' ? (
           // No spot venue on Monad testnet: an approved round trades the owner's Perpl desk (`council-executor.ts`).
           <Text variant="footnote" color={colors.ink55} style={{ marginTop: space.s4 }}>
