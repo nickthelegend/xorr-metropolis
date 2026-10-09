@@ -153,6 +153,31 @@ Each: *objective* — *acceptance* — *verify* — status.
 - Each: real fork data, unit + e2e tests, console and network clean, before/after at 1440 and 390 in `docs/screens/wave/`,
   one commit, pushed, CI green.
 
+### P-J — Wave 2 (8 Oct; `docs/ROADMAP-WIN.md` "Wave 2" has the criteria)
+- J1 **NOT STARTED** W1 Explore tells the Monad story first.
+- J2 **NOT STARTED** W2 A friendlier Kimi line on the Council.
+- J3 **NOT STARTED** W3 Empty History and Runs preview real fills from Envio's index.
+- J4 **NOT STARTED** W4 For judges: each bounty's requirement, met where in the app (instead of the testnet re-run).
+- J5 **NOT STARTED** W5 Speed history on Runs (instead of the phone run).
+
+### Codex takeover verification (8 Oct)
+
+The existing uncommitted wave-2 implementation is preserved. Local checks on
+this working tree: 302 test files passed, 1 skipped; 2,954 tests passed, 4
+skipped; TypeScript passed. Targeted speed/recent tests (13) and ESLint on the
+changed speed files also passed after the following fixes:
+
+- Tiny fee formatting preserves scientific-notation exponents (`1e-10` was
+  incorrectly displayed as `1.0e-1`).
+- Speed-history bars remain finite and visible when every measured fill took
+  zero milliseconds.
+- Speed history leads with median execution time and the trade count. Sync-send
+  and gas details remain available under an accessible disclosure control.
+
+These are local code checks. The wave-2 browser/fork walkthrough and screenshots
+still need verification; the five items above are not marked complete on the
+basis of unit tests alone. No deployment or chain transaction was performed.
+
 ## 4. Gaps (audit from the code, 6 Oct)
 
 `git grep -iE "mock|stub|fake|dummy|placeholder|TODO|FIXME|hardcod|fixture"` over `app/`, `src/`, `server/src` (tests,

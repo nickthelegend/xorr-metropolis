@@ -105,6 +105,37 @@ delegation contract, and on Monad a 7702-delegated account's transactions revert
 the agents hold ~0.05 MON for gas);
 the Execution Events SDK and Monad Solonet (both need a Linux Monad node on the machine).
 
+## Wave 2 (8 Oct, the user: "start the next 5 for all of them, keep going")
+
+The "next" rows of the plan above, with the two that need the owner swapped for the next-best items that do not:
+
+| | Improvement | Fixes | Instead of |
+|---|---|---|---|
+| W1 | **Explore tells the Monad story first** | 6 | |
+| W2 | **A friendlier Kimi line** | 7 | |
+| W3 | **Empty screens preview what will appear**, with real fills from Envio's index | 10 | |
+| W4 | **For judges: every bounty's requirement, met where in the app** | 4 | testnet re-run (needs the go and MON) |
+| W5 | **Speed history: a wallet's recent fills, timed and gas-checked** | 1 | phone run (needs the passkey domain and a device) |
+
+Acceptance criteria:
+
+- **W1.** Explore opens on the story — Built on Monad, the council and its replay, the gauntlet, how xorr works — and
+  shows at most twelve links before a tap; every other screen stays one tap away under "Everything else"; no route is
+  removed (the crawl still opens all of them).
+- **W2.** The Council no longer leads with "not configured". The first line under its title is what the council is; the
+  Strategist seat on the bench says, on the seat, that Kimi sits when its key is set, and the full sentence stays on the
+  screen below. `e2e:flows` B7 still passes.
+- **W3.** A new account's History and Runs show, until it has its own, the latest fills on xorr read from Envio's index —
+  labelled as everyone's, not theirs, addresses shortened — and Monad's blocks going final. Nothing invented; once the
+  account has a fill, its own record replaces the preview.
+- **W4.** `/judges`: each bounty in SUBMISSION with its stated requirement, the screen that meets it (a link that
+  opens), a live reading where one exists, and its evidence. e2e opens every link with no error.
+- **W5.** The Runs screen leads with the wallet's recent fills as a speed history: each one's time to executed, the
+  median, and the gas declared against used. Real rows from the executor; absent with no fills.
+
+Same rules as wave 1: real data, unit and e2e tests, console and network clean, before and after at 1440 and 390 in
+`docs/screens/wave2/`, one commit each, pushed, CI green.
+
 ## Status
 
-Tracked in `PLAN.md` (phase P-I) as each lands. F1–F4 done (7 Oct), with the Monad-native items above; F5 next.
+Tracked in `PLAN.md` (phases P-I and P-J) as each lands. Wave 1 (F1–F5) and the Monad-native items done 7–8 Oct; wave 2 under way.
