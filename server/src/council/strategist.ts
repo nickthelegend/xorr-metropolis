@@ -100,9 +100,55 @@ type Fetch = (url: string, init: RequestInit) => Promise<Response>;
  * The Strategist's ballot for this round, or null when the seat is not configured (no key): it does not sit. Never throws:
  * a failure to answer is an abstention that says what failed.
  */
-export async function strategistBallot(ctx: StrategistContext, opts: { env?: NodeJS.ProcessEnv; fetchImpl?: Fetch } = {}): Promise<Ballot | null> {
+/*
+ * The Moonshot credit is $10 (12 Oct): every call is the user's money. So the seat is asked only when its answer can
+ * matter and not twice for the same question:
+ *   - a round a desk vetoed is decided by the veto, so Kimi is not asked;
+ *   - its ballot is cached for 30 minutes by what it weighs — the proposal and the desks' votes — not by the exact
+ *     prices in the prompt, which differ every round and would never hit;
+ *   - at most KIMI_DAILY_CALLS calls a day (default 30); past that it abstains and says why.
+ */
+const KIMI_CACHE_MS = 30 * 60_000;
+const kimiCache = new Map<string, { at: number; ballot: Ballot }>();
+let kimiDay = { day: '', calls: 0 };
+
+/** What the Strategist's answer depends on: the trade and how each desk voted. */
+export function strategistKey(ctx: Pick<StrategistContext, 'proposal' | 'ballots'>): string {
+  const p = ctx.proposal;
+  return `${p.side}:${p.symbol}:${p.usd}|${[...ctx.ballots].map((b) => `${b.persona}=${b.vote}`).sort().join(',')}`;
+}
+
+/** Test seam: forget the cache and the day's count. */
+export function resetStrategistBudget(): void {
+  kimiCache.clear();
+  kimiDay = { day: '', calls: 0 };
+}
+
+export async function strategistBallot(ctx: StrategistContext, opts: { env?: NodeJS.ProcessEnv; fetchImpl?: Fetch; now?: () => number } = {}): Promise<Ballot | null> {
   const env = opts.env ?? process.env;
   if (!kimiConfigured(env)) return null;
+  const now = (opts.now ?? Date.now)();
+  const model0 = env.KIMI_MODEL ?? KIMI_MODEL;
+  if (ctx.ballots.some((b) => b.vote === 'veto')) {
+    return { persona: 'strategist', vote: 'abstain', confidence: 0, reason: 'A desk vetoed this round, so the Strategist was not asked.', cites: [`kimi:${model0}`] };
+  }
+  const key = strategistKey(ctx);
+  const hit = kimiCache.get(key);
+  if (hit && now - hit.at < KIMI_CACHE_MS) return { ...hit.ballot, cites: [...hit.ballot.cites.filter((c) => c !== 'cached'), 'cached'] };
+  const today = new Date(now).toISOString().slice(0, 10);
+  if (kimiDay.day !== today) kimiDay = { day: today, calls: 0 };
+  const cap = Number(env.KIMI_DAILY_CALLS ?? 30);
+  if (kimiDay.calls >= cap) {
+    return { persona: 'strategist', vote: 'abstain', confidence: 0, reason: `Today's ${cap} calls to Kimi are spent, so the Strategist abstains.`, cites: [`kimi:${model0}`] };
+  }
+  kimiDay.calls += 1;
+  const b = await askKimi(ctx, env, opts.fetchImpl);
+  // Only a real answer is kept: an abstention for a failed call should not stand in for the next half hour.
+  if (b.vote !== 'abstain' || !/did not answer|was refused/.test(b.reason)) kimiCache.set(key, { at: now, ballot: b });
+  return b;
+}
+
+async function askKimi(ctx: StrategistContext, env: NodeJS.ProcessEnv, fetchImpl?: Fetch): Promise<Ballot> {
   const messages = strategistMessages(ctx);
   const yes = ctx.ballots.filter((b) => b.vote === 'yes').length;
   const no = ctx.ballots.filter((b) => b.vote === 'no' || b.vote === 'veto').length;
@@ -113,10 +159,11 @@ export async function strategistBallot(ctx: StrategistContext, opts: { env?: Nod
 
   let raw: string;
   try {
-    const res = await (opts.fetchImpl ?? fetch)(`${env.MOONSHOT_BASE_URL ?? KIMI_BASE_URL}/chat/completions`, {
+    const res = await (fetchImpl ?? fetch)(`${env.MOONSHOT_BASE_URL ?? KIMI_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${env.MOONSHOT_API_KEY}` },
-      body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 400, response_format: { type: 'json_object' } }),
+      // kimi-k2.6 accepts only temperature 1 (HTTP 400 otherwise, 12 Oct); the JSON format and the reason check keep it on task.
+      body: JSON.stringify({ model, messages, temperature: 1, max_tokens: 400, response_format: { type: 'json_object' } }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) return seat('abstain', 0, `Kimi did not answer (HTTP ${res.status}), so the Strategist abstains.`, [`kimi:${model}`]);

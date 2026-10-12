@@ -2,9 +2,11 @@
  * Kimi's seat decides real rounds, so what it may say is pinned: a vote it may cast, a confidence, and a reason whose
  * every number some desk reported. Without a key it does not sit.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Ballot } from './personas.js';
-import { kimiConfigured, numbersIn, parseStrategist, strategistBallot, strategistMessages } from './strategist.js';
+import { kimiConfigured, numbersIn, parseStrategist, resetStrategistBudget, strategistBallot, strategistMessages } from './strategist.js';
+
+beforeEach(() => resetStrategistBudget());
 
 const ballots: Ballot[] = [
   { persona: 'session-desk', vote: 'yes', confidence: 0.8, reason: 'Prices agree: Chainlink $0.02393 (1 min old), fill $0.02409, 66.9 bps apart (limit 150).', cites: ['price'] },
@@ -70,5 +72,38 @@ describe('the seat', () => {
       throw new Error('ECONNRESET');
     });
     expect((await strategistBallot(ctx, { env: LIVE, fetchImpl: throwing }))?.vote).toBe('abstain');
+  });
+});
+
+describe('the $10 of credit', () => {
+  const answer = '{"vote":"no","confidence":0.65,"reason":"The Perps Desk outweighs a flat trend."}';
+  it('asks once for the same trade and the same votes, then answers from the cache', async () => {
+    const f = kimi(answer);
+    await strategistBallot(ctx, { env: LIVE, fetchImpl: f, now: () => 0 });
+    const again = await strategistBallot(ctx, { env: LIVE, fetchImpl: f, now: () => 60_000 });
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(again?.cites).toContain('cached');
+    await strategistBallot(ctx, { env: LIVE, fetchImpl: f, now: () => 31 * 60_000 });
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+  it('a failed call is not cached', async () => {
+    const f = kimi('', 500);
+    await strategistBallot(ctx, { env: LIVE, fetchImpl: f, now: () => 0 });
+    await strategistBallot(ctx, { env: LIVE, fetchImpl: f, now: () => 1 });
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+  it('a vetoed round is not sent to Kimi', async () => {
+    const f = kimi(answer);
+    const vetoed = { ...ctx, ballots: [...ctx.ballots, { persona: 'risk-keeper', vote: 'veto', confidence: 1, reason: 'x', cites: [] } as Ballot] };
+    expect((await strategistBallot(vetoed, { env: LIVE, fetchImpl: f }))?.reason).toMatch(/vetoed/);
+    expect(f).not.toHaveBeenCalled();
+  });
+  it('stops at the day’s cap and says so', async () => {
+    const f = kimi(answer);
+    const env = { ...LIVE, KIMI_DAILY_CALLS: '1' } as NodeJS.ProcessEnv;
+    await strategistBallot(ctx, { env, fetchImpl: f, now: () => 0 });
+    const other = { ...ctx, proposal: { side: 'buy', symbol: 'ETH', usd: 50 } };
+    expect((await strategistBallot(other as never, { env, fetchImpl: f, now: () => 1 }))?.reason).toMatch(/calls to Kimi are spent/);
+    expect(f).toHaveBeenCalledTimes(1);
   });
 });
