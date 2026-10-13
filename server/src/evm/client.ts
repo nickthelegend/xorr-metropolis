@@ -93,7 +93,8 @@ export function agentPrivateKey(agentId: string): Hex {
 // Monad testnet's public RPC answers 15 requests a second, and a council round reads a desk, a feed and a venue at once:
 // past the limit a read failed and the risk seat vetoed for "no readable permission". Reads there fall back to Monad's
 // other public testnet RPCs; the primary stays first, so a read follows the same node as the write unless it refuses.
-const TESTNET_READ_FALLBACKS = ['https://rpc-testnet.monadinfra.com', 'https://monad-testnet.drpc.org'];
+// drpc's free tier refuses some eth_calls ("method does not exist"), so it is last.
+const TESTNET_READ_FALLBACKS = ['https://rpc-testnet.monadinfra.com', 'https://rpc.ankr.com/monad_testnet', 'https://monad-testnet.drpc.org'];
 const readTransport =
   CHAIN_KEY === 'monad-testnet' ? fallback([rpcUrl, ...TESTNET_READ_FALLBACKS.filter((u) => u !== rpcUrl)].map((u) => http(u))) : http(rpcUrl);
 
