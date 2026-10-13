@@ -90,11 +90,16 @@ for (let i = 1; i <= SEEDS; i++) {
     if ((await ausdOf(st.desk!)) < 150_000_000n) await wait(await ow.writeContract({ address: net.collateral, abi: erc20Abi, functionName: 'transfer', args: [st.desk!, 150_000_000n], gas: 80_000n, ...fees }), 'AUSD.transfer(desk, 150)');
     await wait(await ow.writeContract({ address: st.desk!, abi: DESK_ABI, functionName: 'createAccount', args: [150_000_000n], gas: 600_000n, ...fees }), 'desk.createAccount(150 AUSD)');
   }
+  // A desk made before Perpl's current execOrder does not let the operator call it; the owner enables it (one tx).
+  for (const m of (await deskState(owner.address)).allowlistMissing) {
+    const fees = await monadFees(publicClient, chain.id);
+    await wait(await ow.writeContract({ address: st.desk!, abi: DESK_ABI, functionName: 'setOperatorAllowlist', args: [m.selector, true], gas: 120_000n, ...fees }), `desk.setOperatorAllowlist(${m.name})`);
+  }
   await setCaps(owner.address, { maxOrderUsd: 100, maxDayUsd: 300, maxLeverage: 2 });
   say('  limits: $100 an order, $300 a day, 2x');
 
   // The council, then the trade it decides.
-  const round = await convene({ walletId: w.id, owner: owner.address, proposal: { side: 'buy', symbol: ['MON', 'ETH', 'BTC'][(i - 1) % 3]!, usd: 50 }, convenedBy: 'team-seed' });
+  const round = await convene({ walletId: w.id, owner: owner.address, proposal: { side: 'buy', symbol: 'BTC', usd: 50 }, convenedBy: 'team-seed' });
   say(`  council round ${round.id}: ${round.summary} → ${round.outcome}${round.txHash ? ` ${round.txHash}` : ''}${round.outcomeDetail ? ` (${round.outcomeDetail})` : ''}`);
 }
 

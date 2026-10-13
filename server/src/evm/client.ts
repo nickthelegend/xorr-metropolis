@@ -9,7 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { createPublicClient, createWalletClient, http, type Hex } from 'viem';
+import { createPublicClient, createWalletClient, fallback, http, type Hex } from 'viem';
 import { privateKeyToAccount, generatePrivateKey } from 'viem/accounts';
 import { concat, keccak256, toHex } from 'viem';
 import { chain, rpcUrl, CHAIN_KEY } from './chains.js';
@@ -90,7 +90,14 @@ export function agentPrivateKey(agentId: string): Hex {
  * check that were each already a round trip. Nothing this executor reads is worth being stale:
  * not the policy, not the balances it sizes a trade from, not the gas it decides it can afford.
  */
-export const publicClient = createPublicClient({ chain, transport: http(rpcUrl), cacheTime: 0 });
+// Monad testnet's public RPC answers 15 requests a second, and a council round reads a desk, a feed and a venue at once:
+// past the limit a read failed and the risk seat vetoed for "no readable permission". Reads there fall back to Monad's
+// other public testnet RPCs; the primary stays first, so a read follows the same node as the write unless it refuses.
+const TESTNET_READ_FALLBACKS = ['https://rpc-testnet.monadinfra.com', 'https://monad-testnet.drpc.org'];
+const readTransport =
+  CHAIN_KEY === 'monad-testnet' ? fallback([rpcUrl, ...TESTNET_READ_FALLBACKS.filter((u) => u !== rpcUrl)].map((u) => http(u))) : http(rpcUrl);
+
+export const publicClient = createPublicClient({ chain, transport: readTransport, cacheTime: 0 });
 
 export const walletClient = createWalletClient({
   account: delegateAccount,
