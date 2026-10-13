@@ -1,0 +1,204 @@
+1
+00:00:00,500 --> 00:00:02,824
+Trading bots ask for a lot of trust.
+
+2
+00:00:02,854 --> 00:00:05,285
+Most want your keys, or a balance they can
+
+3
+00:00:05,315 --> 00:00:06,748
+move however they like.
+
+4
+00:00:06,778 --> 00:00:09,404
+And when one goes wrong, there's no brake.
+
+5
+00:00:09,434 --> 00:00:12,411
+XORR is a council of AI agents that trades for
+
+6
+00:00:12,441 --> 00:00:14,849
+you, inside a limit you sign and the chain
+
+7
+00:00:14,879 --> 00:00:16,263
+enforces.
+
+8
+00:00:16,293 --> 00:00:18,756
+One hold stops every agent, on chain.
+
+9
+00:00:18,786 --> 00:00:21,844
+And it's built on Monad, because a council
+
+10
+00:00:21,874 --> 00:00:23,946
+that votes, trades and settles in about a
+
+11
+00:00:23,976 --> 00:00:26,105
+second needs a chain that's final in half of
+
+12
+00:00:26,135 --> 00:00:26,981
+one.
+
+13
+00:00:35,700 --> 00:00:38,027
+This is the live app on Monad testnet, in a
+
+14
+00:00:38,057 --> 00:00:40,883
+browser. A passkey makes the account, and
+
+15
+00:00:40,913 --> 00:00:43,012
+nothing that can sign is stored.
+
+16
+00:00:44,312 --> 00:00:47,010
+Built on Monad shows what XORR reads from the
+
+17
+00:00:47,040 --> 00:00:49,402
+chain itself, live.
+
+18
+00:00:49,432 --> 00:00:50,366
+Every new block:
+
+19
+00:00:50,396 --> 00:00:52,766
+proposed, voted, final.
+
+20
+00:00:52,796 --> 00:00:54,984
+Voted in about three hundred milliseconds, and
+
+21
+00:00:55,014 --> 00:00:57,024
+final in about half a second.
+
+22
+00:00:57,054 --> 00:01:00,774
+Monad's txpool, the P256 precompile that
+
+23
+00:01:00,804 --> 00:01:03,224
+checks your passkey, native staking.
+
+24
+00:01:03,254 --> 00:01:05,105
+Each one read now, and each saying where it
+
+25
+00:01:05,135 --> 00:01:06,038
+runs.
+
+26
+00:01:07,338 --> 00:01:09,409
+Here's a real round from tonight.
+
+27
+00:01:09,439 --> 00:01:11,882
+A wallet we seeded ourselves, and labelled as
+
+28
+00:01:11,912 --> 00:01:14,460
+team-seeded, put fifty dollars of bitcoin to
+
+29
+00:01:14,490 --> 00:01:15,746
+the council.
+
+30
+00:01:15,776 --> 00:01:18,056
+The Price desk checks Chainlink on Monad
+
+31
+00:01:18,086 --> 00:01:19,717
+against Perpl's order book.
+
+32
+00:01:19,747 --> 00:01:21,446
+Risk reads the owner's limits.
+
+33
+00:01:21,476 --> 00:01:23,673
+Trend and Perps read the market.
+
+34
+00:01:23,703 --> 00:01:26,232
+And Kimi weighs the desks, and says why.
+
+35
+00:01:27,532 --> 00:01:29,685
+Approved, four to nothing.
+
+36
+00:01:29,715 --> 00:01:31,519
+The order went to Perpl through the owner's
+
+37
+00:01:31,549 --> 00:01:34,259
+own desk: an account the agent can trade, but
+
+38
+00:01:34,289 --> 00:01:35,893
+never withdraw from.
+
+39
+00:01:35,923 --> 00:01:38,545
+Here's that fill, on Monad testnet.
+
+40
+00:01:39,845 --> 00:01:42,717
+The agents only run strategies that survived.
+
+41
+00:01:42,747 --> 00:01:45,295
+Three hundred and thirteen were backtested.
+
+42
+00:01:45,325 --> 00:01:47,652
+Ten got through four tests on data they never
+
+43
+00:01:47,682 --> 00:01:48,643
+saw.
+
+44
+00:01:49,944 --> 00:01:52,108
+And when you've had enough, one hold removes
+
+45
+00:01:52,138 --> 00:01:55,318
+XORR's key from your desk, on chain.
+
+46
+00:01:55,714 --> 00:01:57,751
+After that, no agent can trade, whatever any
+
+47
+00:01:57,781 --> 00:01:59,234
+server says.
+
+48
+00:01:59,264 --> 00:02:01,092
+This is that removal, from our testnet proof
+
+49
+00:02:01,122 --> 00:02:01,932
+run.
+
+50
+00:02:03,232 --> 00:02:06,789
+XORR. A council of AI agents trades for you on
+
+51
+00:02:06,819 --> 00:02:09,037
+Monad, and one hold stops it on chain.
+

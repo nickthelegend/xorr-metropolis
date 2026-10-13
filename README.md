@@ -11,7 +11,9 @@ vote shown beside the transaction it produced, and none of it able to touch more
 enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 300 ms and are final two
 blocks later, about 600 ms.
 
-**Demo — the full tour (2:38, 8 Oct):** [`docs/demo/flows/00-full-tour.mp4`](docs/demo/flows/00-full-tour.mp4), recorded live
+**Demo video, live on Monad testnet (2:13, 13 Oct):** [`docs/demo/xorr-metropolis.mp4`](docs/demo/xorr-metropolis.mp4) ([captions](docs/demo/xorr-metropolis.srt)). The hosted app, signed out, with a real council round and its fill from a team-seeded wallet, labelled as such ([evidence](docs/evidence/seed-13oct.md)).
+
+**The full tour on a fork (2:38, 8 Oct):** [`docs/demo/flows/00-full-tour.mp4`](docs/demo/flows/00-full-tour.mp4), recorded live
 on a fork of Monad mainnet by `npm run demo:record`, captioned, waits cut. And each flow on its own, cut from the same run:
 [onboarding and the passkey](docs/demo/flows/01-onboarding-passkey.mp4) ·
 [funding](docs/demo/flows/02-funding.mp4) ·

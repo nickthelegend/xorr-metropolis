@@ -60,3 +60,17 @@ Rounds 1–7 were the same three wallets, and every one was vetoed:
   proposals. The seeds then proposed BTC instead.
 
 The vetoed rounds stay in the record. The council refusing to trade blind is the system working.
+
+## Round 11: the demo video's round
+
+The container was redeployed between runs, which cleared its seed keys, so this is a fourth team-seeded wallet.
+
+- Wallet: 0x8cb267fD134BcE6EF8d49DfeFB47af3e3D8496eD
+- Desk: 0x7264D34Ab3a7ce72A7D7e31081F6025513b0DE5a, created by [0xfac4cc03…](https://testnet.monadexplorer.com/tx/0xfac4cc039bd37dc5aa231b896982c69c8292578ab47cd1daa0c0896bc9456d8c)
+- Account opened: createAccount(150 AUSD), [0x0fdda18b…](https://testnet.monadexplorer.com/tx/0x0fdda18bb741680b085ffa4ebf21b5f03529fdeeae38f75a8478135a86384efd)
+- Funding:
+  - MON: [0xa48c18d4…](https://testnet.monadexplorer.com/tx/0xa48c18d47f46ff4e34fbe12743cb70920a73771333e21fc329f6af02f907378e), [0xecc1e9a8…](https://testnet.monadexplorer.com/tx/0xecc1e9a8b82e2dd6a865884252a23f7be6d21c3befe4c2a5831f3a79b083c5bc)
+  - AUSD: [0x4bcfbc92…](https://testnet.monadexplorer.com/tx/0x4bcfbc9259762dd79979a31bea970548aaaea0e129288fcd4bf3824a16db1260), [0xd427e4a5…](https://testnet.monadexplorer.com/tx/0xd427e4a5b47366a01ef2495326c1b81b8ad2299beb1cac87f007dc5b6b22ca1d)
+  - AUSD to the desk: [0x3300985b…](https://testnet.monadexplorer.com/tx/0x3300985b08c86a8f21765e1d0d06e549e7e40f3a5fb06c6107ad686913af0a10)
+- Round 11: "buy $50 of BTC", approved 4–0. Kimi voted yes and gave its reason; Trend abstained.
+- Trade: a 1x long of 0.0006 BTC on Perpl, [0x47e37f0c…](https://testnet.monadexplorer.com/tx/0x47e37f0c1702d8d5ca5351a61a3814966bd636b225cd7e09e80f23b43baea21e)

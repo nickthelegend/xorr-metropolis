@@ -1,0 +1,41 @@
+{
+  "voice": "cjVigY5qzO86Huf0OWal",
+  "voiceName": "Eric (ElevenLabs)",
+  "model": "eleven_multilingual_v2",
+  "scenes": [
+    { "id": "intro", "kind": "graphic", "lines": [
+      "Trading bots ask for a lot of trust.",
+      "Most want your keys, or a balance they can move however they like. And when one goes wrong, there's no brake.",
+      "XORR is a council of AI agents that trades for you, inside a limit you sign and the chain enforces.",
+      "One hold stops every agent, on chain.",
+      "And it's built on Monad, because a council that votes, trades and settles in about a second needs a chain that's final in half of one."
+    ]},
+    { "id": "welcome", "kind": "live", "label": "The app", "lines": [
+      "This is the live app on Monad testnet, in a browser. A passkey makes the account, and nothing that can sign is stored."
+    ]},
+    { "id": "monad", "kind": "live", "label": "Built on Monad", "lines": [
+      "Built on Monad shows what XORR reads from the chain itself, live. Every new block: proposed, voted, final.",
+      "Voted in about three hundred milliseconds, and final in about half a second.",
+      "Monad's txpool, the P256 precompile that checks your passkey, native staking. Each one read now, and each saying where it runs."
+    ]},
+    { "id": "council", "kind": "live", "label": "The council", "lines": [
+      "Here's a real round from tonight. A wallet we seeded ourselves, and labelled as team-seeded, put fifty dollars of bitcoin to the council.",
+      "The Price desk checks Chainlink on Monad against Perpl's order book. Risk reads the owner's limits. Trend and Perps read the market.",
+      "And Kimi weighs the desks, and says why."
+    ]},
+    { "id": "trade", "kind": "live", "label": "The trade", "lines": [
+      "Approved, four to nothing. The order went to Perpl through the owner's own desk: an account the agent can trade, but never withdraw from.",
+      "Here's that fill, on Monad testnet."
+    ]},
+    { "id": "gauntlet", "kind": "live", "label": "The gauntlet", "lines": [
+      "The agents only run strategies that survived. Three hundred and thirteen were backtested. Ten got through four tests on data they never saw."
+    ]},
+    { "id": "stop", "kind": "live", "label": "The stop", "lines": [
+      "And when you've had enough, one hold removes XORR's key from your desk, on chain. After that, no agent can trade, whatever any server says.",
+      "This is that removal, from our testnet proof run."
+    ]},
+    { "id": "outro", "kind": "graphic", "lines": [
+      "XORR. A council of AI agents trades for you on Monad, and one hold stops it on chain."
+    ]}
+  ]
+}

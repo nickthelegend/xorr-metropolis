@@ -70,3 +70,7 @@ dist/
 dist-web/
 docs/demo/.loom-state.json
 docs/demo/.loom/
+
+# demo video scratch (frames, renders)
+video/work/
+video/hf/node_modules/
