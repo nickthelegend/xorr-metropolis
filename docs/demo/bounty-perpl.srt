@@ -1,0 +1,120 @@
+1
+00:00:03,350 --> 00:00:06,014
+XORR's agents trade Perpl through each
+
+2
+00:00:06,044 --> 00:00:07,465
+owner's own desk:
+
+3
+00:00:07,495 --> 00:00:10,089
+Perpl's delegated account, created from the
+
+4
+00:00:10,119 --> 00:00:11,440
+owner's signature.
+
+5
+00:00:11,883 --> 00:00:15,081
+XORR's key can place orders on it, but never
+
+6
+00:00:15,111 --> 00:00:16,282
+withdraw.
+
+7
+00:00:16,782 --> 00:00:19,527
+Here a long on MON goes in as an
+
+8
+00:00:19,557 --> 00:00:22,151
+immediate-or-cancel order, priced from
+
+9
+00:00:22,181 --> 00:00:23,978
+Perpl's on-chain book.
+
+10
+00:00:24,317 --> 00:00:26,295
+The position shows its distance to
+
+11
+00:00:26,325 --> 00:00:28,908
+liquidation, and an exit guard checks it
+
+12
+00:00:28,938 --> 00:00:30,638
+every thirty seconds.
+
+13
+00:00:30,668 --> 00:00:33,354
+Then it's closed, and the margin is back in
+
+14
+00:00:33,384 --> 00:00:34,497
+the desk.
+
+15
+00:00:34,997 --> 00:00:36,941
+Agents don't trade alone.
+
+16
+00:00:36,971 --> 00:00:39,425
+The council votes first, and an approved
+
+17
+00:00:39,455 --> 00:00:41,938
+round fills through the desk.
+
+18
+00:00:42,438 --> 00:00:45,694
+On Monad testnet, team-seeded round eleven
+
+19
+00:00:45,724 --> 00:00:48,341
+was approved four to nothing, and filled on
+
+20
+00:00:48,371 --> 00:00:49,379
+Perpl.
+
+21
+00:00:49,878 --> 00:00:53,018
+That fill: execOrder from XORR's operator
+
+22
+00:00:53,048 --> 00:00:55,379
+key, through the owner's desk.
+
+23
+00:00:55,880 --> 00:00:57,963
+And the exit guard on its own:
+
+24
+00:00:57,993 --> 00:01:00,552
+the long was thirty-seven point six percent
+
+25
+00:01:00,582 --> 00:01:02,967
+from liquidation, inside the owner's
+
+26
+00:01:02,997 --> 00:01:05,777
+thirty-nine percent buffer, so it was closed
+
+27
+00:01:05,807 --> 00:01:07,976
+before Perpl could liquidate it.
+
+28
+00:01:08,476 --> 00:01:11,580
+One hold removes XORR's key from the desk.
+
+29
+00:01:11,610 --> 00:01:14,116
+Any order after that reverts.
+
+30
+00:01:14,616 --> 00:01:16,456
+XORR, on Perpl.
+
