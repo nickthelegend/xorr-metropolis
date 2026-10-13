@@ -19,3 +19,11 @@
 .tagtl .in { flex-direction: column; align-items: flex-start; gap: 10px; }
 .pill { white-space: nowrap; }
 .label .pill.seed { margin-top: 18px; }
+
+/* kinetic type (the pitch) */
+.kcoin { position: absolute; right: -120px; top: 140px; width: 820px; height: 820px; border-radius: 50%; opacity: 0.35; -webkit-mask-image: radial-gradient(circle, #000 50%, transparent 70%); }
+.kk { position: absolute; left: 160px; top: 230px; }
+.kin { position: absolute; left: 160px; top: 290px; width: 1400px; perspective: 800px; }
+.kl { font-weight: 800; font-size: 104px; line-height: 1.08; letter-spacing: -0.03em; }
+.kw { display: inline-block; }
+.kw.hi { color: var(--lime); }

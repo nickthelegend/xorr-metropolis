@@ -26,7 +26,7 @@ on every trade, inside limits you set; one hold stops everything on chain. Passk
 **Track:** 01 — Onchain Finance & Trading
 
 **Repo:** https://github.com/nickthelegend/xorr-metropolis (MIT) · **Live:** https://xorr-metropolis.vercel.app
-· **Demo video:** `docs/demo/xorr-demo.mp4` (2:56) · **Pitch:** `docs/demo/xorr-pitch.mp4` (1:33) · **Full walkthrough:** `docs/demo/xorr-walkthrough.mp4` (4:04); captions as `.srt` beside each
+· **Demo video:** `docs/demo/xorr-demo.mp4` (2:56) · **Pitch:** `docs/demo/xorr-pitch.mp4` (1:24) · **Full walkthrough:** `docs/demo/xorr-walkthrough.mp4` (4:04); captions as `.srt` beside each
 
 **Contracts (Monad testnet, 10143):**
 All three are exact matches on public Sourcify (https://repo.sourcify.dev/10143/<address>) and on MonadVision's Sourcify.

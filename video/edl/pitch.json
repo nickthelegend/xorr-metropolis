@@ -1,123 +1,19 @@
-{
- "name": "pitch",
- "segments": [
-  {
-   "src": "card",
-   "card": {
-    "kicker": "THE PROBLEM",
-    "title": "Trading bots ask for your keys.",
-    "sub": "Or a balance they can move however they like, and no brake when one goes wrong."
-   },
-   "lines": [
-    "Trading bots ask for a lot of trust: your keys, or a balance they can move however they like. And when one goes wrong, there's no brake."
-   ]
-  },
-  {
-   "src": "card",
-   "card": {
-    "kicker": "WHY NOW",
-    "title": "Agents can trade now. Who holds the money, and who can stop them?"
-   },
-   "lines": [
-    "AI agents can now read markets and place orders. The open question is control: who holds the money, and who can stop them."
-   ]
-  },
-  {
-   "src": "flow",
-   "from": 136.6,
-   "to": 163.9,
-   "label": "The solution",
-   "sub": "A council, inside a limit the chain enforces",
-   "keep": "start",
-   "lines": [
-    "XORR is a council of AI agents that trades for you, inside a limit you sign and the chain enforces. Every trade is voted on, seat by seat, and you can replay why."
-   ]
-  },
-  {
-   "src": "flow",
-   "from": 246.5,
-   "to": 255.2,
-   "label": "One hold",
-   "chapter": false,
-   "lines": [
-    "And one hold stops every agent, on chain, and the app reads it back from the chain."
-   ]
-  },
-  {
-   "src": "flow",
-   "from": 120.0,
-   "to": 136.6,
-   "label": "Why Monad",
-   "sub": "Final in ~0.5 s · receipts with the send",
-   "lines": [
-    "Why Monad? A block is final in about half a second, and a send returns its receipt. So the council votes and fills inside a second, for a tenth of a cent of gas."
-   ]
-  },
-  {
-   "src": "live",
-   "from": 12.3,
-   "to": 30.0,
-   "label": "Built on Monad",
-   "chapter": false,
-   "lines": [
-    "It's built on Monad's own features: commit states, the txpool, native staking, and the P256 precompile for passkeys."
-   ]
-  },
-  {
-   "src": "card",
-   "card": {
-    "kind": "stats",
-    "kicker": "EVIDENCE · MONAD TESTNET",
-    "title": "Live, with a transaction behind every claim.",
-    "tag": "TXS IN docs/evidence/seed-13oct.md",
-    "stats": [
-     [
-      "3",
-      "contracts, exact match on Sourcify"
-     ],
-     [
-      "11",
-      "council rounds from 4 team-seeded wallets"
-     ],
-     [
-      "4–0",
-      "round 11, filled on Perpl"
-     ],
-     [
-      "313 → 10",
-      "strategies through the gauntlet"
-     ]
-    ]
-   },
-   "lines": [
-    "And it's live on Monad testnet: three verified contracts, real council rounds, and real fills on Perpl, each one with its transaction."
-   ]
-  },
-  {
-   "src": "card",
-   "card": {
-    "kicker": "THE VISION",
-    "title": "Hire an agent. Set its limit. Stop it with one hold.",
-    "sub": "Next: real users on testnet, and more Monad venues for the council to route to."
-   },
-   "lines": [
-    "The vision: anyone can hire an agent to trade for them, set its limit, and stop it with one hold. Next, we want real users on testnet, and more Monad venues for the council to route to."
-   ]
-  },
-  {
-   "src": "card",
-   "card": {
-    "kind": "outro",
-    "title": "A council of AI agents trades for you on Monad, and one hold stops it on chain.",
-    "chips": [
-     "LIVE · MONAD TESTNET",
-     "TRY IT IN A BROWSER"
-    ]
-   },
-   "min": 6.5,
-   "lines": [
-    "XORR. Try it in a browser."
-   ]
-  }
- ]
-}
+{ "name": "pitch", "segments": [
+  { "src": "card", "card": { "kind": "kinetic", "words": ["What if a trading bot", "couldn't run off", "with your money?"], "hi": ["couldn't"] }, "lines": [
+    "What if a trading bot simply couldn't run off with your money?" ]},
+  { "src": "card", "card": { "kicker": "WHO WE ARE", "title": "We've built trading agents on five chains.", "sub": "Base, Solana, X Layer, Arbitrum, and now Monad. Every time, the hard part wasn't the trading. It was trust." }, "lines": [
+    "We're a small team that has built trading agents on five chains. Every time, the hard part wasn't the trading. It was trust, and we want to fix that." ]},
+  { "src": "card", "card": { "kind": "kinetic", "kicker": "THE PROBLEM", "words": ["Bots want your keys.", "No limit.", "No brake."], "hi": ["keys", "limit", "brake"] }, "lines": [
+    "Today's bots want your keys, or a balance they can move however they like. There's no limit you can see, and no brake when one goes wrong." ]},
+  { "src": "card", "card": { "kicker": "WHY NOW", "title": "Agents can trade now. What's missing is control.", "sub": "Models read markets and place orders. Nobody has made them safe to hand money to." }, "lines": [
+    "AI agents can now read markets and place orders. What's missing is control: who holds the money, and who can stop them." ]},
+  { "src": "card", "card": { "kind": "kinetic", "kicker": "XORR", "words": ["Hire.", "Limit.", "Stop."], "hi": ["hire", "limit", "stop"] }, "lines": [
+    "XORR does three things. Hire a council of AI agents that vote on every trade. Limit them with a permission the chain enforces. And stop them, with one hold." ]},
+  { "src": "flow", "from": 145.4, "to": 149.0, "label": "A council round", "chapter": false, "min": 3.6 },
+  { "src": "card", "card": { "kind": "stats", "kicker": "VERIFIABLE ON MONAD TESTNET", "title": "Final in half a second, so the council votes and fills together.", "tag": "TX HASHES IN THE PORTAL FORM", "stats": [["3", "contracts, exact match on Sourcify"], ["4–0", "round 11, filled on Perpl · 0x47e3…a21e"], ["1 tx", "the stop: removeOperator · 0x6bab…367e"], ["CRE", "MON/USD report on chain · 0x0a22…c101"]] }, "lines": [
+    "On Monad, a block is final in about half a second, so the council can vote and fill together. And it's live on testnet: verified contracts, council rounds filled on Perpl, and the stop, each with its transaction." ]},
+  { "src": "card", "card": { "kicker": "WHO IT'S FOR", "title": "People who want an agent to trade, without handing it their money.", "sub": "We reach them through Monad's testnet community, council replays anyone can share, and traders already on Perpl and Kuru." }, "lines": [
+    "It's for people who want an agent to trade for them, without handing it their money. We'll reach them through Monad's testnet community, council replays anyone can share, and traders already on Perpl and Kuru." ]},
+  { "src": "card", "card": { "kind": "outro", "title": "A council of AI agents trades for you on Monad, and one hold stops it on chain.", "chips": ["LIVE · MONAD TESTNET", "TRY IT IN A BROWSER"] }, "min": 6, "lines": [
+    "XORR. Try it in a browser." ]}
+]}

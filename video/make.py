@@ -230,7 +230,8 @@ for sg in segs:
         c = clip("tagtl", a, d, 2, TAG[sg["src"]]); fade(c, a, d, rise=-8)
         if sg.get("label"):
             if sg.get("chapter", True): chapter += 1
-            c = clip("label", a, d, 3, f'<div class="lnum">{chapter:02d}</div><div class="ltitle">{E(sg["label"])}</div>'
+            num = f'<div class="lnum">{chapter:02d}</div>' if sg.get("chapter", True) else ""
+            c = clip("label", a, d, 3, f'{num}<div class="ltitle">{E(sg["label"])}</div>'
                      + (f'<div class="lsub">{E(sg["sub"])}</div>' if sg.get("sub") else "")
                      + (f'<div class="pill seed">{E(sg["chip"])}</div>' if sg.get("chip") else ""))
             fade(c, a, d)
@@ -252,6 +253,15 @@ for sg in segs:
                 + '<div class="stats">' + "".join(f'<div class="st"><div class="sv">{E(v)}</div><div class="sk">{E(k)}</div></div>' for v, k in cd["stats"]) + '</div>'
                 + (f'<div class="tsub">{E(cd["sub"])}</div>' if cd.get("sub") else "") + '</div>')
         tag = f'<span class="pill ex">{E(cd["tag"])}</span>' if cd.get("tag") else ""
+    elif kind == "kinetic":
+        # Kinetic type over the brand's coin: each line's words rise in turn; `hi` words are lit in the accent colour.
+        hi = set(cd.get("hi", []))
+        rows = "".join('<div class="kl">' + " ".join(f'<span class="kw{" hi" if w.strip(".,").lower() in hi else ""}">{E(w)}</span>' for w in line.split()) + '</div>'
+                       for line in cd["words"])
+        body = (f'<img class="kcoin" src="assets/coin.png" alt="">'
+                + (f'<div class="rkick kk">{E(cd["kicker"])}</div>' if cd.get("kicker") else "")
+                + f'<div class="kin">{rows}</div>')
+        tag = ""
     elif kind == "outro":
         body = ('<img class="coin" src="assets/coin.png" alt=""><img class="wm6" src="assets/wordmark.png" alt="XORR">'
                 f'<div class="tag6">{E(cd["title"])}</div><div class="ourl">xorr-metropolis.vercel.app</div>'
@@ -267,6 +277,10 @@ for sg in segs:
     tw.append(f'tl.fromTo("#{c}i",{{opacity:0}},{{opacity:1,duration:0.3}},{a:.3f});')
     tw.append(f'tl.fromTo("#{c}i .rcard, #{c}i .tcard, #{c}i .coin",{{y:30,opacity:0}},{{y:0,opacity:1,duration:0.5,ease:"power3.out"}},{a + 0.05:.3f});')
     tw.append(f'tl.fromTo("#{c}i .rr, #{c}i .st, #{c}i .chip",{{opacity:0,y:10}},{{opacity:1,y:0,duration:0.3,stagger:0.1}},{a + 0.35:.3f});')
+    if kind == "kinetic":
+        per = max(0.12, min(0.32, (d - 1.2) / max(1, sum(len(l.split()) for l in cd["words"]))))
+        tw.append(f'tl.fromTo("#{c}i .kw",{{opacity:0,y:60,rotationX:-40}},{{opacity:1,y:0,rotationX:0,duration:0.45,stagger:{per:.3f},ease:"power3.out"}},{a + 0.15:.3f});')
+        tw.append(f'tl.fromTo("#{c}i .kcoin",{{scale:1.08,rotation:-6}},{{scale:1,rotation:4,duration:{d:.2f},ease:"none"}},{a:.3f});')
     if b < TOTAL - 0.05: tw.append(f'tl.to("#{c}i",{{opacity:0,duration:0.25}},{b - 0.25:.3f});')
     if tag:
         c2 = clip("tagtl", a, d, 2, tag); fade(c2, a, d, rise=-8)

@@ -8,7 +8,7 @@ render and mix, with Daniel's voice throughout.
 | Video | File |
 |---|---|
 | Submission cut, 2:56 | `docs/demo/xorr-demo.mp4` |
-| Pitch, 1:33 | `docs/demo/xorr-pitch.mp4` |
+| Pitch, 1:24 | `docs/demo/xorr-pitch.mp4` |
 | Full walkthrough, 4:04 | `docs/demo/xorr-walkthrough.mp4` |
 
 The footage comes from two real takes:

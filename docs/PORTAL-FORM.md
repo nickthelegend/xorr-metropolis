@@ -102,7 +102,8 @@ https://xorr-metropolis.vercel.app
 ## 10. Pitch video (≤ 2:00)
 
 - **Upload:** `/Volumes/Extreme SSD/Projects/xorr-metropolis/docs/demo/xorr-pitch.mp4` (1:33, captions in `xorr-pitch.srt`).
-- **What it covers:** the problem, why now, the solution, why Monad, evidence on testnet, and the vision.
+- **What it covers:** the hook, who we are (no names), the problem, why now, the product in three verbs (hire, limit, stop), one card of facts verifiable on Monad testnet, who it's for and how we reach them, and a close.
+- **Style:** kinetic type over the brand's art, with one 4-second glimpse of the app.
 - **Link:** [user fills in, after uploading]
 
 Team: [user fills in]
