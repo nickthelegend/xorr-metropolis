@@ -59,5 +59,20 @@ desk, where removing the operator is the stop (tx 2 below).
 | **Envio — Best Use of Envio** | HyperIndex powers History (`indexer/`): grants, revocations, Perpl desks and audit anchors, hosted on Railway with HyperSync on Monad testnet. Spot fills (`/indexed/recent`) are indexed on the mainnet fork; testnet has no spot venue, so that feed is empty there. |
 | **Kimi** | Kimi sits on the council as the Strategist (`server/src/council/strategist.ts`), weighs the desks and breaks ties; cached, capped per day. |
 
+## Bounty article links
+
+One published article per bounty, which is the portal's required field for each:
+
+- **Perpl — Best use of the API:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/PERPL.md
+- **Perpl — Best Analytics / Risk Tool:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/PERPL.md
+- **Agora — Best Mobile Trading App:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/AGORA.md
+- **Kuru — Next Consumer Trading App:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/KURU.md
+- **MetaMask — Best Agent Wallet Plugin:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/METAMASK.md
+- **Mera — Best Mera-Powered UX:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/MERA.md
+- **Mera — One Passkey, Many Keys:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/MERA.md
+- **Chainlink — Best workflow with CRE:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/CHAINLINK-CRE.md
+- **Envio — Best Use of Envio:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/ENVIO.md
+- **Kimi (Moonshot):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/KIMI.md
+
 **Team:** nickthelegend. **Pre-existing code:** yes — earlier xorr builds (Base, Solana, X Layer, Arbitrum); the Monad
 work is listed in README → "Disclosures". **AI tools:** Claude Code (Anthropic), credited as co-author on its commits.

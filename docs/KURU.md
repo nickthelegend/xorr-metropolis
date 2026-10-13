@@ -87,3 +87,18 @@ per week; the share of fills Kuru wins and the dollars it saved; revokes and the
 3. **More books:** MON/AUSD once it has resting liquidity (empty when read on 24 Sep), then KuruFlow for pairs without a
    direct book.
 4. **The phone build:** the Expo app with Mera passkeys on device (needs a passkey domain and a development build).
+
+## Latest proof: the demo recording (14 Oct)
+
+The demo video [`docs/demo/xorr-demo.mp4`](demo/xorr-demo.mp4) was recorded on a local fork of Monad mainnet and is
+tagged that way on screen. In it, a $20 MON buy measured both venues on chain:
+
+| Venue | Would deliver |
+|---|---|
+| Kuru | 816.39 WMON |
+| Uniswap v3 | 813.88 WMON |
+
+The order filled on Kuru, 0.31% better. It executed in 510 ms, with its receipt returned by the send, and its gas cost
+$0.0011. The run page shows both venues and the routing difference.
+
+**Testnet:** Monad testnet has no Kuru spot market, so this remains fork-only.

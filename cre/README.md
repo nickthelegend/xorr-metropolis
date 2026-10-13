@@ -30,7 +30,13 @@ the receiver's first report, the gate reads Chainlink's mainnet feed as before.
 | `project.yaml` | RPCs for `monad-testnet` and `monad-mainnet` |
 | `../contracts/src/XorrPriceReceiver.sol` | The consumer; `forge test --match-contract XorrPriceReceiverTest` (7 tests) |
 
-## Status (2026-10-05)
+## Status (2026-10-13)
+
+- The receiver is deployed on Monad testnet (`0x5309e806fA530426c0ad72F22D15E473F9b7aD42`, exact match on Sourcify).
+- One report was written by `cre workflow simulate … --broadcast` through CRE's simulation forwarder. The workflow is not
+  deployed on a schedule, so the stored price ages out; see `docs/CHAINLINK-CRE.md`.
+
+## Status (2026-10-05, superseded)
 
 - Built and tested: the workflow typechecks, its 7 tests pass, and it compiles to WASM locally
   (`npx cre-compile main.ts out.wasm`, 2.7 MB). The receiver's 7 forge tests pass; the executor's gate has 4 tests on the

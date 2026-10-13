@@ -64,7 +64,7 @@ WHAT'S LIVE (Monad testnet, 10143)
 - A Chainlink CRE report writes MON/USD on chain.
 - TEAM-SEEDED ACTIVITY, labelled as such: on 13 Oct we created four team wallets ourselves. Each signed a Perpl desk permission and had council rounds convened.
   - Rounds 8–11 were approved and filled on Perpl.
-  - Rounds 1–7 were vetoed, while the public RPC rate-limited reads and testnet's MON feed was stale. We kept them in the record.
+  - Rounds 1–7 were vetoed, while the public RPC rate-limited reads and the MON/USD CRE report on testnet had aged past its heartbeat. We kept them in the record.
   - The team-seeded rounds are viewable without signing in at /council/sample, and are labelled "team-seeded" in the app.
   - Every transaction is in docs/evidence/seed-13oct.md.
 
@@ -142,6 +142,7 @@ Testnet explorer base: https://testnet.monadvision.com/tx/
 
 ### Perpl: Best use of the API
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/PERPL.md
 - **What:** a trading bot on Perpl. Agents trade through each owner's Perpl DelegatedAccount (the desk), with xorr's per-owner operator key.
 - **Safeguards:**
   - caps are checked before signing;
@@ -159,6 +160,7 @@ Testnet explorer base: https://testnet.monadvision.com/tx/
 
 ### Perpl: Best Analytics / Risk Tool
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/PERPL.md
 - **What:** /perpl lists every market with:
   - funding paid by longs or shorts, and its yearly pace;
   - price move and open interest;
@@ -168,6 +170,7 @@ Testnet explorer base: https://testnet.monadvision.com/tx/
 
 ### Agora: Best Mobile Trading App
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/AGORA.md
 - **Auth:** Mera passkeys (`src/auth/mera/`).
 - **AUSD:** the balance appears on Home, Perps and Deposit, with its Chainlink peg.
 - **Perpl trade:** through the desk; txs as above.
@@ -175,34 +178,40 @@ Testnet explorer base: https://testnet.monadvision.com/tx/
 
 ### Kuru: Next Consumer Trading App
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/KURU.md
 - **What:** every spot order measures Kuru's on-chain order book against Uniswap v3 and fills on the better one. The run shows what routing was worth.
 - **Code:** `contracts/src/KuruVenue.sol`, `docs/KURU.md`
 - **Where it runs:** proven on a fork of Monad mainnet, because testnet has no Kuru spot market. In the demo video, Kuru beat Uniswap by 0.31% on a $20 buy, executed in 510 ms.
 
 ### Mera: Best Mera-Powered UX
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/MERA.md
 - **What:** passkeys are the account layer. You sign up with one passkey, and a signing session means no popups.
 - **The stateless test:** wipe browser storage, sign in with the passkey alone, and the same account comes back. It is shown in the walkthrough.
 
 ### Mera: One Passkey, Many Keys
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/MERA.md
 - A second PRF-derived key seals private notes.
 - The passkey's own signature is verified by Monad's P256 precompile on /monad.
 
 ### Chainlink: Best workflow with CRE
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/CHAINLINK-CRE.md
 - **What:** `cre/mon-price` writes MON/USD (and a halt) to XorrPriceReceiver on Monad testnet.
 - **Receiver:** 0x5309e806fA530426c0ad72F22D15E473F9b7aD42
 - **Report tx:** 0x0a228a1365c0873ca5c5f8d02b96fb818bd809a4ede68f3a1fb4977fe49fc101
 
 ### Envio: Best Use of Envio
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/ENVIO.md
 - **What:** HyperIndex powers History (`indexer/`): grants, revocations, Perpl desks and audit anchors.
 - **Hosting:** Railway, with HyperSync on Monad testnet.
 - **Spot fills:** indexed on the mainnet fork, shown in the demo video's History step.
 
 ### MetaMask: Best Agent Wallet Plugin
 
+- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/METAMASK.md
 `mm-plugin-perpl/`: Perpl markets, risk, account, and open and close, for the MetaMask Agent Wallet (mm 7).
 
 ### Kimi (Moonshot)

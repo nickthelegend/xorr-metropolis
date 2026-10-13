@@ -56,8 +56,9 @@ Rounds 1–7 were the same three wallets, and every one was vetoed:
 
 - The risk seat could not read the desk. Monad testnet's public RPC answers 15 requests a second, and a round reads a lot
   at once. Reads now fall back to Monad's other public testnet RPCs (`server/src/evm/client.ts`).
-- MON's Chainlink feed on testnet was 226 minutes old, past its 60-minute heartbeat, so the price seat vetoed the MON
-  proposals. The seeds then proposed BTC instead.
+- The MON/USD price on testnet was 226 minutes old, past its 60-minute heartbeat, so the price seat vetoed the MON
+  proposals. That price is xorr's own Chainlink CRE report in XorrPriceReceiver, written once by a simulate-and-broadcast
+  run rather than a recurring workflow (docs/CHAINLINK-CRE.md). The seeds then proposed BTC, whose Chainlink BTC/USD feed was fresh.
 
 The vetoed rounds stay in the record. The council refusing to trade blind is the system working.
 
