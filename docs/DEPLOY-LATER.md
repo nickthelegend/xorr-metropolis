@@ -1,7 +1,12 @@
 # Deploy later — from the owner's "go" to live in under an hour
 
-The ordered runbook for when the owner funds the testnet keys and says go. **Nothing here has been run for this build
-yet**; each step names the command that already ran in an earlier step of this project where there is one. Until "go":
+**Ran on 13 Oct (the owner's go):** §3 receiver `0x5309…aD42` (Sourcify), §4 Railway project `xorr-metropolis` (executor
+https://executor-monad-testnet-production.up.railway.app), §5 indexer (`ENVIO_CONFIG=config.testnet.yaml`, HyperSync; in
+production Envio also needs `HASURA_GRAPHQL_ENDPOINT`/`_ROLE`/`_ADMIN_SECRET`, `ENVIO_PG_SSL_MODE=false` and the two
+`ENVIO_THROTTLE_*` values set), §6 https://xorr-metropolis.vercel.app, §7 the CRE report, §8 `prove-perpl-desk` passed.
+The browser pass of §8 on the hosted app is the owner's (a new passkey account on a public origin).
+
+The ordered runbook for when the owner funds the testnet keys and says go. Before 13 Oct nothing here had been run for this build; each step names the command that already ran in an earlier step of this project where there is one. Until "go":
 no Monad testnet or mainnet transactions and no hosting (coordinator, 6 Oct).
 
 **What goes live.** The executor on Monad testnet (real Monad transactions — Perpl, AUSD, Mera, the council), the web app

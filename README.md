@@ -40,7 +40,7 @@ every desk read ([`/council/<id>`](app/council/[id].tsx)); and **Built on Monad*
 Monad-native integration and sponsor read live, each saying where it runs. Before/after shots in
 [`docs/screens/wave/`](docs/screens/wave/); the plan and the review behind them in [`docs/ROADMAP-WIN.md`](docs/ROADMAP-WIN.md).
 
-**Try it in one command** (needs Node 20+, Node 22 for the indexer, Foundry, Postgres):
+**Live on Monad testnet:** https://xorr-metropolis.vercel.app (13 Oct). **Or run it locally in one command** (needs Node 20+, Node 22 for the indexer, Foundry, Postgres):
 
 ```bash
 sh infra/monad-fork/local-stack.sh refork   # fork Monad mainnet, deploy, grant, Perpl keeper, executor, Envio, web → http://localhost:8092

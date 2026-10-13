@@ -27,8 +27,8 @@ go through Perpl's own DelegatedAccount: the agent can trade there but never wit
 | Repository | https://github.com/nickthelegend/xorr-metropolis (public, MIT) |
 | Demo video (≤ 3 min) | [`docs/demo/flows/00-full-tour.mp4`](demo/flows/00-full-tour.mp4) (2:38, 8 Oct, the current product on a fork of Monad mainnet: the explainer with Monad's blocks going final live, the speed receipt, the council replay, the gauntlet, Built on Monad), with each flow on its own in [`docs/demo/flows/`](demo/flows/); [`docs/demo/xorr-monad-demo.mp4`](demo/xorr-monad-demo.mp4) (2:59, 24 Sep, with Perpl on Monad testnet); the final cut on testnet follows the go ([script below](#3-minute-demo-script)) |
 | Every screen | [`docs/screens/`](screens/) — 103 screens at phone and desktop size, scored in [`screens/REVIEW.md`](screens/REVIEW.md), contact sheets in [`screens/sheets/`](screens/sheets/); `index.html` there is the gallery from a checkout |
-| Live app | after the go (DEPLOY-LATER §6); locally: `sh infra/monad-fork/local-stack.sh refork` |
-| Contracts (Monad testnet, 10143) | `XorrDelegation` [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) (Sourcify-verified) · `XorrAuditAnchor` [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
+| Live app | **https://xorr-metropolis.vercel.app** on Monad testnet (executor https://executor-monad-testnet-production.up.railway.app, Envio indexer on HyperSync; 13 Oct); locally: `sh infra/monad-fork/local-stack.sh refork` |
+| Contracts (Monad testnet, 10143) | `XorrPriceReceiver` (CRE) [`0x5309e806fA530426c0ad72F22D15E473F9b7aD42`](https://testnet.monadvision.com/address/0x5309e806fA530426c0ad72F22D15E473F9b7aD42) (Sourcify exact match, 13 Oct) · `XorrDelegation` [`0x5995925de0169574365cc7f6b65f765275b0bd4b`](https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b) (Sourcify-verified) · `XorrAuditAnchor` [`0x5a717b204c77bfba8805ffe1f382b074a3d26203`](https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203) |
 | Transactions (Monad testnet) | the table under [Evidence on Monad testnet](#evidence-on-monad-testnet) |
 | Why Monad | 300 ms blocks, final two blocks later (~600 ms), let the council deliberate and still fill at the price it voted on; Kuru is a real on-chain order book to route against; Perpl's DelegatedAccount is the agent permission built in; gas is cheap enough to check the cap on chain on every spend. README → "Why Monad" |
 | Monad-native | All eight of Monad's own: commit states live (`monadNewHeads`), receipts with the send (`eth_sendRawTransactionSync`), `txpool_statusByHash`, the passkey checked by P256VERIFY `0x0100`, staking at `0x1000`, gas billed on the limit and the 10 MON reserve, x402 through Monad's facilitator, the canonical contracts — each on the app's Built on Monad screen, read live, saying where it runs. [Below](#monad-native) |
@@ -48,9 +48,14 @@ go through Perpl's own DelegatedAccount: the agent can trade there but never wit
 | Agent closes it | [`0x3f0b0aa6…ac44`](https://testnet.monadvision.com/tx/0x3f0b0aa66e0ced670b028f51fc912fb3df94eacc02708a405f12023f569cac44) |
 | Owner removes the operator | [`0x506bbe9e…3738`](https://testnet.monadvision.com/tx/0x506bbe9ececbfe4a8018f94c4e2728169c5e1a9f6af8eff2f04cf6a78d133738) |
 | A raw operator order after that, mined as a revert | [`0x963b290a…76d0`](https://testnet.monadvision.com/tx/0x963b290a5fa35d1ac400dd2fce4fcbff9b99952936a8c0fdabdf23716e2476d0) |
+| **13 Oct:** CRE receiver deployed | [`0x11847c1d…b05c`](https://testnet.monadvision.com/tx/0x11847c1d661bb75230ea78e75fbb59e1342d95a71de31abf41137a7dfb92b05c) |
+| **13 Oct:** CRE workflow report broadcast (MON/USD 0.023975, not halted) | [`0x0a228a13…c101`](https://testnet.monadvision.com/tx/0x0a228a1365c0873ca5c5f8d02b96fb818bd809a4ede68f3a1fb4977fe49fc101) |
+| **13 Oct:** agent closes a long through the desk | [`0x1d530ae2…6e4f`](https://testnet.monadvision.com/tx/0x1d530ae29ffc2b64798851d832826ba017ffb280852a6b254a5456f3e50e6e4f) |
+| **13 Oct:** the exit guard closes a position on its own | [`0x54a880a1…3ee4`](https://testnet.monadvision.com/tx/0x54a880a1620e74216b3f782b57426988ce48b53b1e3d0cfcc284fd28c53e3ee4) |
+| **13 Oct:** owner removes the operator; a raw operator order then reverts | [`0x6babda2c…367e`](https://testnet.monadvision.com/tx/0x6babda2cd2223fff91024027e3bc60c8fd72962185a87f8c7e90e9bf1bfd367e) · [`0xd9e94a3d…aaac`](https://testnet.monadvision.com/tx/0xd9e94a3d06845f125326ae206bc63720b067d866767dd6067925c7286365aaac) |
 | Owner withdraws 149.32 AUSD | [`0x42185571…b531`](https://testnet.monadvision.com/tx/0x421855713c3116469e1b18e1c51143055e2b7cbfd6e4267f137158f825abb531) |
 
-Full log: [`evidence/prove-perpl-desk-testnet-2026-09-24.txt`](evidence/prove-perpl-desk-testnet-2026-09-24.txt).
+Full logs: [`evidence/prove-perpl-desk-testnet-2026-09-24.txt`](evidence/prove-perpl-desk-testnet-2026-09-24.txt), [`evidence/prove-perpl-desk-testnet-2026-10-13.txt`](evidence/prove-perpl-desk-testnet-2026-10-13.txt).
 Fork transactions are real signed transactions on a local chain, so they have no public explorer; their logs are in
 [`evidence/`](evidence/).
 
