@@ -16,10 +16,10 @@ on every trade; a contract holds the daily limit; one hold stops everything. Pas
   refuses anything past the limit, perps run through Perpl's own DelegatedAccount (the agent can trade, never withdraw),
   and one hold revokes everything on chain.
 - **Why Monad.** 300 ms blocks, final in ~600 ms: the council can deliberate and still fill at the price it voted on.
-  xorr uses Monad itself, not just the EVM: commit states live (`monadNewHeads`), receipts with the send
-  (`eth_sendRawTransactionSync`), `txpool_statusByHash`, the passkey checked by the P256 precompile `0x0100`, staking
-  reads at `0x1000`, gas billed on the declared limit (10% head-room, the 10 MON reserve), x402 through Monad's
-  facilitator, and the canonical contracts.
+  xorr uses Monad itself, not just the EVM. **Live:** commit states from `monadNewHeads`, the passkey checked by the P256
+  precompile `0x0100`, staking reads at `0x1000`, `txpool_statusByHash`, the x402 paywall (a 402 from Monad's
+  facilitator). **On the fork / at settlement:** receipts with the send (`eth_sendRawTransactionSync`), gas billed on the
+  declared limit (10% head-room, the 10 MON reserve). The app's Built on Monad screen labels each one.
 - **What's live.** https://xorr-metropolis.vercel.app on Monad testnet (executor on Railway, Envio indexer on
   HyperSync), the CRE receiver with a broadcast report, and the Perpl desk proven end to end on 13 Oct.
 
@@ -29,9 +29,15 @@ on every trade; a contract holds the daily limit; one hold stops everything. Pas
 · **Demo video:** `docs/demo/flows/00-full-tour.mp4` (2:38)
 
 **Contracts (Monad testnet, 10143):**
-- XorrDelegation — https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b (Sourcify)
+All three are exact matches on public Sourcify (https://repo.sourcify.dev/10143/<address>) and on MonadVision's Sourcify.
+- XorrDelegation — https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b
 - XorrAuditAnchor — https://testnet.monadvision.com/address/0x5a717b204c77bfba8805ffe1f382b074a3d26203
-- XorrPriceReceiver (CRE) — https://testnet.monadvision.com/address/0x5309e806fA530426c0ad72F22D15E473F9b7aD42 (Sourcify)
+- XorrPriceReceiver (CRE) — https://testnet.monadvision.com/address/0x5309e806fA530426c0ad72F22D15E473F9b7aD42
+
+**The limit, enforced by the contract:** a spend over the day's cap is mined as a revert —
+`DailyCapExceeded(60000000, 50000000)` on a fork of Monad mainnet (`docs/evidence/prove-monad-fork-2026-09-24-final.txt`),
+and `forge test` covers the cap, the end date and the venue list. On testnet the agents trade perps through Perpl's own
+desk, where removing the operator is the stop (tx 2 below).
 
 **Best 3 transactions:**
 1. Perpl exit guard closes a position on its own — https://testnet.monadvision.com/tx/0x54a880a1620e74216b3f782b57426988ce48b53b1e3d0cfcc284fd28c53e3ee4
@@ -47,10 +53,10 @@ on every trade; a contract holds the daily limit; one hold stops everything. Pas
 | **Perpl — Best Analytics / Risk Tool** | `/perpl`: every market's funding (paid by longs, APR), price move, open interest, spread, staleness. Code: `server/src/monad/perpl-risk.ts`. |
 | **Kuru — Next Consumer Trading App** | Every spot order measures Kuru's book against Uniswap v3 and fills on the better (`contracts/src/KuruVenue.sol`, `docs/KURU.md`); proven on a fork of Monad mainnet (testnet has no Kuru spot market). |
 | **MetaMask — Best Agent Wallet Plugin** | `mm-plugin-perpl/`: Perpl markets, risk, account, open and close for the MetaMask Agent Wallet (mm 7). |
-| **Mera — Best Mera-Powered UX** | Mera is the whole account layer: passkey sign-up, a signing session (no popups), the stateless test (wipe storage, same account). |
+| **Mera — Best Mera-Powered UX** | Mera passkeys are the account layer: passkey sign-up, a signing session (no popups), the stateless test (wipe storage, same account). Privy email sign-in remains as a second way in. |
 | **Mera — One Passkey, Many Keys** | A second PRF key seals private notes; the passkey's own signature checked by Monad's P256 precompile (`/monad`). |
 | **Chainlink — Best workflow with CRE** | `cre/mon-price`: a workflow that writes MON/USD (and a halt) to `XorrPriceReceiver`; the council's price desk reads it. Broadcast tx above. |
-| **Envio — Best Use of Envio** | HyperIndex powers History (`indexer/`), hosted on Railway with HyperSync on Monad testnet; `/indexed/recent` shows everyone's latest fills. |
+| **Envio — Best Use of Envio** | HyperIndex powers History (`indexer/`): grants, revocations, Perpl desks and audit anchors, hosted on Railway with HyperSync on Monad testnet. Spot fills (`/indexed/recent`) are indexed on the mainnet fork; testnet has no spot venue, so that feed is empty there. |
 | **Kimi** | Kimi sits on the council as the Strategist (`server/src/council/strategist.ts`), weighs the desks and breaks ties; cached, capped per day. |
 
 **Team:** nickthelegend. **Pre-existing code:** yes — earlier xorr builds (Base, Solana, X Layer, Arbitrum); the Monad

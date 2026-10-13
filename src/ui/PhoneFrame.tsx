@@ -60,7 +60,8 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
    * slots, so React keeps every component where it was.
    */
   return (
-    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', backgroundColor: colors.bg }}>
+    // Clipped: the second aurora sits past the right edge, and unclipped it made the page 1728 px wide in 1440 (judge, 13 Oct).
+    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', backgroundColor: colors.bg, overflow: 'hidden' }}>
       {/* The room's light: violet behind the app, blue rising from the far corner. */}
       {constrain ? <Glow color={colors.aurora1} strength={0.32} style={{ top: '-30%', bottom: '10%', left: '15%', right: '15%' }} /> : null}
       {constrain ? <Glow color={colors.aurora2} strength={0.18} style={{ top: '-40%', bottom: '40%', left: '55%', right: '-20%' }} /> : null}

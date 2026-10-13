@@ -16,6 +16,7 @@ import { AgentOrb, Button, Fill, Glow, Press, Screen, SheetCard, Text, colors, g
 import { Rise } from '@/ui/Rise';
 import { Icon, type IconName } from '@/design/Icon';
 import { useStore } from '@/state/store';
+import { CHAIN_KEY } from '@/chain';
 import { useMonadPulse } from '@/speed/SpeedReceipt';
 import { CommitStrip } from '@/speed/CommitStrip';
 
@@ -30,7 +31,8 @@ const SEATS = [
 const LIMITS: readonly { icon: IconName; text: string }[] = [
   { icon: 'check', text: 'A daily limit you choose' },
   { icon: 'activity', text: 'An end date, after which it lapses on its own' },
-  { icon: 'swapH', text: 'Only the venues you allow — Kuru and Uniswap' },
+  // On Monad testnet the agents trade perps on the owner's Perpl desk; Kuru and Uniswap are the spot venues on mainnet.
+  { icon: 'swapH', text: CHAIN_KEY === 'monad-testnet' ? 'Only your own Perpl desk — never a withdrawal from it' : 'Only the venues you allow — Kuru and Uniswap' },
   { icon: 'shield', text: 'Never a withdrawal. Your money stays in your wallet' },
 ];
 
