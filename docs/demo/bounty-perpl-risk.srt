@@ -1,0 +1,68 @@
+1
+00:00:03,350 --> 00:00:05,897
+Perpl risk is a live view of every Perpl
+
+2
+00:00:05,927 --> 00:00:09,299
+market: funding paid by longs or shorts and
+
+3
+00:00:09,329 --> 00:00:12,515
+its yearly pace, open interest, spread, and
+
+4
+00:00:12,545 --> 00:00:14,769
+how fresh each market is.
+
+5
+00:00:14,799 --> 00:00:17,056
+It flags what deserves a look, like a
+
+6
+00:00:17,086 --> 00:00:20,254
+crowded side or a market gone stale.
+
+7
+00:00:20,754 --> 00:00:23,185
+The wallet view is your own desk:
+
+8
+00:00:23,215 --> 00:00:25,751
+each position's entry, mark and distance to
+
+9
+00:00:25,781 --> 00:00:28,514
+liquidation, the margin it draws, and the
+
+10
+00:00:28,544 --> 00:00:31,457
+exits that watch it every thirty seconds.
+
+11
+00:00:31,957 --> 00:00:34,319
+The same readings feed the council's Perps
+
+12
+00:00:34,349 --> 00:00:36,617
+desk, so the agents act on what the
+
+13
+00:00:36,647 --> 00:00:38,062
+dashboard shows.
+
+14
+00:00:38,401 --> 00:00:41,378
+On Monad testnet, the Perps desk read
+
+15
+00:00:41,408 --> 00:00:45,464
+funding on MON, ETH and BTC before round
+
+16
+00:00:45,494 --> 00:00:47,164
+eleven was approved.
+
+17
+00:00:47,664 --> 00:00:51,454
+XORR. Perpl risk, live at slash perpl.
+
