@@ -1,0 +1,23 @@
+App: https://xorr-metropolis.vercel.app · Network: Monad testnet (chain 10143). Works in any desktop or phone browser.
+
+NO LOGIN NEEDED (start here)
+1. Welcome → "For judges: each bounty, and where it is met" (/judges) maps every bounty to its screen and its evidence.
+2. /monad ("Built on Monad"): Monad mainnet's blocks going Proposed → Voted → Final, live, plus txpool, P256, staking, gas and x402. Each row says where it runs.
+3. /council/sample: a team-seeded council round (labelled), replayed seat by seat with what each desk read, then the verdict and the transaction.
+4. /perpl: every Perpl market's funding, open interest, spread and staleness, live.
+5. /gauntlet: 313 strategies backtested, and the 10 that survived out-of-sample tests.
+
+THE FULL FLOW (needs a passkey, about 3 minutes)
+1. Welcome → Get started → Create my account → Create a passkey (Chrome with Google Password Manager works best, since it supports PRF).
+2. Continue → Get test funds (xorr's faucet sends test AUSD and gas).
+3. Continue → set the limits → Sign this permission (a daily limit and an end date, no wallet popup).
+4. Home → Perps → Open my Perpl desk → Long MON ($50, 2x). See the position, its liquidation distance and its standing exits; /perpl now shows your positions too.
+5. Home → Council → Put $50 to the council → watch the vote chips → Replay.
+6. Safety → hold "Hold to stop all trading": the permission is revoked and the desk operator removed, on chain.
+
+NOTES AND CAPS
+- Kuru and Uniswap spot routing is mainnet-only, so it's shown on a local fork of Monad mainnet in the demo video; testnet has no Kuru spot market.
+- Kimi (the Strategist) is capped at 30 calls a day and cached for 30 minutes per proposal. Past the cap, the four desks decide and the round says so.
+- If "Get test funds" is slow, Agora's AUSD faucet is rate-limiting: wait 30 seconds and tap again.
+- A round can vote no or veto: the council is the brake as well as the trigger.
+- Evidence and tx hashes: docs/evidence/seed-13oct.md, docs/evidence/prove-perpl-desk-testnet-2026-10-13.txt, and one article per bounty in docs/.

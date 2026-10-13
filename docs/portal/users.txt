@@ -1,0 +1,12 @@
+FIRST USERS
+- People who already trade crypto and perps and want an agent to do it overnight, but won't hand a bot their keys or an unbounded balance.
+- Small-ticket traders ($10 to a few thousand dollars an order): that's where Kuru's book beat Uniswap's best pool in our mainnet measurement, so routing is money they keep.
+- Perpl traders who want standing exits and a bot they can stop with one hold.
+- People new to on-chain trading on a phone: passkey sign-in with no seed phrase, and every agent vote shown beside its transaction.
+
+HOW WE REACH THEM?
+- Monad's testnet community: the app runs in any browser with a passkey, no install, and test funds come from xorr's own faucet.
+- Shareable council replays: any round opens by link with no sign-in, so a single trade's reasoning, votes and transaction can be posted on X and in Monad, Perpl and Kuru community channels.
+- Perpl's and Kuru's communities: xorr sends order flow to Kuru's book and trades through Perpl's own desk contract, so their users get a safer agent on venues they already use.
+- Retention that earns the next visit: every fill reports itself with the council's reasons, the cap renews daily, alerts only for fills, refusals and revocations, and leaving is one hold.
+- Next: invite a small group of testnet users, measure 7- and 30-day retention and fills per wallet, and add more Monad venues for the council to route to.

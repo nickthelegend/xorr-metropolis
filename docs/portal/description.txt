@@ -1,0 +1,22 @@
+PROBLEM
+Trading bots ask for a lot of trust. Most want your keys, or a balance they can move however they like, and when one goes wrong there is no brake. Nobody can watch a market all night, but handing an agent everything is the wrong answer.
+
+SOLUTION
+xorr lets a council of AI agents trade crypto and perps for you without ever holding your money.
+- One passkey (Mera) makes the account: no seed phrase, and nothing that can sign is stored.
+- You sign one permission: a daily limit, an end date, the venues. The XorrDelegation contract refuses anything past it.
+- Every trade goes to a council of five seats voting on Monad's own numbers: Price (Chainlink on Monad against Kuru's book), Risk (your limit), Trend (price history), Perps (Perpl funding), and Kimi as the Strategist, who weighs the four and explains its vote. Every vote is kept beside the transaction it produced and can be replayed seat by seat.
+- Spot buys measure Kuru's on-chain book against Uniswap v3 and fill on the better one.
+- Perps run on Perpl through Perpl's own DelegatedAccount: the agent can trade it, never withdraw. Exits are checked every 30 seconds.
+- One hold stops everything: the permission is revoked and the desk operator removed, on chain, then read back from the chain.
+
+WHY MONAD
+A council has to deliberate and still fill at the price it voted on. On Monad a block is final in about half a second (the app reads ~300 ms voted, ~560–580 ms final, live), and a send returns its receipt (eth_sendRawTransactionSync). In our recorded run, a council round went from vote to fill in 0.2 s, and a routed buy executed in 510 ms for $0.0011 of gas. xorr also uses Monad itself, read live on the "Built on Monad" screen: commit states (monadNewHeads), the passkey checked by the P256 precompile at 0x0100, native staking at 0x1000, txpool_statusByHash, gas billed on the declared limit, and x402 for agents buying the council's read.
+
+WHAT'S LIVE (Monad testnet)
+- App: https://xorr-metropolis.vercel.app (the executor runs on Railway, with an Envio HyperIndex indexer on HyperSync).
+- Three contracts, exact match on Sourcify: XorrDelegation 0x5995925de0169574365cc7f6b65f765275b0bd4b, XorrAuditAnchor 0x5a717b204c77bfba8805ffe1f382b074a3d26203, XorrPriceReceiver (Chainlink CRE) 0x5309e806fA530426c0ad72F22D15E473F9b7aD42.
+- The Perpl desk proven end to end on 13 Oct: open, exit guard, close, operator removed, and a raw order reverting after the stop.
+- A Chainlink CRE report writing MON/USD on chain.
+- TEAM-SEEDED ACTIVITY, labelled as such: on 13 Oct we created four team wallets ourselves. Each signed a Perpl desk permission and had council rounds convened. Rounds 8–11 were approved and filled on Perpl; rounds 1–7 were vetoed (the public RPC rate-limited reads, and the MON/USD CRE report had aged out) and stay in the record. The team-seeded rounds are viewable without signing in at /council/sample and are labelled in the app. Transactions: docs/evidence/seed-13oct.md.
+- Kuru and Uniswap spot markets exist only on Monad mainnet, so the signed-in journey in the demo video is recorded on a local fork of Monad mainnet and tagged that way on screen.

@@ -1,0 +1,1 @@
+A council of AI agents trades for you on Monad, inside a limit you sign and the chain enforces, and one hold stops it on chain.
