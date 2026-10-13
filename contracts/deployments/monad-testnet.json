@@ -7,6 +7,7 @@
   "contracts": {
     
     "XorrDelegation": { "address": "0x5995925de0169574365cc7f6b65f765275b0bd4b", "deployTx": "0x808687beb5699fc3a07353f65780e4e89f83d52452795b6871fb6b0c148d764e", "blockNumber": 65123156, "constructorArgs": { "settlementToken": "0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC" } },
+    "XorrPriceReceiver": { "address": "0x5309e806fA530426c0ad72F22D15E473F9b7aD42", "deployTx": "0x11847c1d661bb75230ea78e75fbb59e1342d95a71de31abf41137a7dfb92b05c", "constructorArgs": { "forwarder": "0xB9F79d863261869B234c481D1f9A7af84AeAd192" }, "deployedAt": "2026-10-13" },
     "XorrAuditAnchor": { "address": "0x5a717b204c77bfba8805ffe1f382b074a3d26203", "deployTx": "0xeb90b3ebded116e7195da07942baade60e7bc21e763159469111f634107ce2fe", "blockNumber": 65123188 }
   },
   "explorer": "https://testnet.monadvision.com/address/0x5995925de0169574365cc7f6b65f765275b0bd4b",
