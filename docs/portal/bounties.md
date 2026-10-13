@@ -63,7 +63,8 @@ docs/demo/bounty-cre.mp4 → upload, paste the link
 - The council's Price desk gates on it (server/src/council/monad-inputs.ts).
 
 **Evidence**
-- Report tx: https://testnet.monadvision.com/tx/0x0a228a1365c0873ca5c5f8d02b96fb818bd809a4ede68f3a1fb4977fe49fc101
+- Report tx, 14 Oct, the run shown in the video (MON/USD 0.02439 from Perpl, Kuru and Chainlink; 12 bps spread; 5 bps gap; halt false): https://testnet.monadvision.com/tx/0xbc53d1bc8a9049db723a5d2f3bb71a93cb6ba82d732b795838c2025183753d93
+- First report, 13 Oct: https://testnet.monadvision.com/tx/0x0a228a1365c0873ca5c5f8d02b96fb818bd809a4ede68f3a1fb4977fe49fc101
 - Article: https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/CHAINLINK-CRE.md
 
 ### Best Builds Powered by KIMI   (Kimi)

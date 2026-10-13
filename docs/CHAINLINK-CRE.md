@@ -179,3 +179,24 @@ mainnet)"*, at $0.023975, updated 12:20 UTC.
 **Data Feeds in every round.** The Trend Reader in the same round cites "Chainlink MON/USD
 0xBcD78f76005B7515837af6b50c7C52BCf73822fb on Monad mainnet, 8 rounds". The BTC rounds that filled (8–11) were priced
 against Chainlink's BTC/USD feed on Monad mainnet.
+
+## Update, 14 Oct
+
+A second run, `cre workflow simulate ./mon-price --target staging-settings --trigger-index 0 --broadcast`, is the one
+recorded in the bounty video (`docs/demo/bounty-cre.mp4`).
+
+**The report it wrote:**
+
+| Field | Value |
+|---|---|
+| MON/USD | 0.02439 |
+| Sources | Perpl 0.024401, Kuru 0.024365 / 0.024395, Chainlink 0.02439 |
+| Spread | 12 bps |
+| Gap to Chainlink | 5 bps |
+| Halt | false |
+
+**The transaction:** it went through CRE's simulation forwarder to XorrPriceReceiver on Monad testnet:
+https://testnet.monadvision.com/tx/0xbc53d1bc8a9049db723a5d2f3bb71a93cb6ba82d732b795838c2025183753d93
+
+This refreshed the stored price that had aged out on 13 Oct. The CLI's own output is kept at
+`video/cre-run-2026-10-14.json`.
