@@ -47,6 +47,8 @@ export const council = {
   rounds: () => api.get<{ rounds: CouncilRound[] }>('/council/rounds').then((r) => r.rounds),
   /** One of this wallet's rounds, with the inputs its votes rest on (the replay, ROADMAP-WIN F3). */
   round: (id: string) => api.get<{ round: CouncilRound }>(`/council/rounds/${encodeURIComponent(id)}`).then((r) => r.round),
+  /** A team-seeded round anyone can replay: the newest, or one by id (`sample` = the newest). */
+  publicRound: (id: string) => api.get<{ round: CouncilRound }>(id === 'sample' ? '/council/public' : `/council/public/${encodeURIComponent(id)}`).then((r) => r.round),
   convene: (p: { side: 'buy' | 'sell'; symbol: string; usd: number }) =>
     api.post<{ round: CouncilRound }>('/council/convene', p).then((r) => r.round),
 };

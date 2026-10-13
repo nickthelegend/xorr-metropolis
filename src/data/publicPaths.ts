@@ -69,7 +69,7 @@ export const PUBLIC_PATHS: readonly string[] = [
   '/deposit/moonpay/webhook',
 ];
 
-export const PUBLIC_PREFIXES: readonly string[] = ['/perp/', '/strategies/library', '/monad/feed/', '/monad/txpool/', '/x402'];
+export const PUBLIC_PREFIXES: readonly string[] = ['/perp/', '/strategies/library', '/monad/feed/', '/monad/txpool/', '/x402', '/council/public'];
 
 /** Does this path need a session? Query strings are ignored; the server routes on the path. */
 export function isPublicPath(path: string): boolean {

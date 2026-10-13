@@ -172,6 +172,24 @@ export async function roundById(id: string, walletId: string): Promise<CouncilRo
   return toRound(r, votes);
 }
 
+/**
+ * A team-seeded round, for anyone (judge round 2: "a council you can't watch without signing up"). Only rounds the team
+ * convened from its own seed wallets (`convened_by = 'team-seed'`, `server/src/seed-activity.ts`) are served; a user's
+ * round never is.
+ */
+export async function publicRound(id?: string): Promise<CouncilRound | undefined> {
+  if (id !== undefined && !/^\d+$/.test(id)) return undefined;
+  const r = await one<RoundRow>(
+    `SELECT * FROM council_rounds WHERE convened_by = 'team-seed' AND chain = ${THIS_CHAIN} ${id !== undefined ? 'AND id = $1' : ''} ORDER BY (outcome = 'executed') DESC, created_at DESC LIMIT 1`,
+    id !== undefined ? [id] : [],
+  );
+  if (!r) return undefined;
+  const votes = await query<VoteRow>(`SELECT * FROM council_votes WHERE round_id = $1 ORDER BY persona`, [r.id]);
+  const round = toRound(r, votes);
+  // The owner's address and wallet are the team's, but a public answer carries no wallet ids.
+  return { ...round, walletId: '' };
+}
+
 export async function roundsFor(walletId: string, limit = 50): Promise<CouncilRound[]> {
   const rows = await query<RoundRow>(`SELECT * FROM council_rounds WHERE wallet_id = $1 AND chain = ${THIS_CHAIN} ORDER BY created_at DESC LIMIT $2`, [
     walletId,

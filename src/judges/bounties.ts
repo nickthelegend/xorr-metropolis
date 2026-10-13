@@ -31,7 +31,7 @@ export const BOUNTIES: readonly Bounty[] = [
     asks: 'A product on Monad, judged on product quality, technical excellence, Monad integration, track fit and innovation.',
     screens: [
       { label: 'Built on Monad', route: '/monad' },
-      { label: 'The council', route: '/council' },
+      { label: 'A council round, replayed', route: '/council/sample' },
       { label: 'The gauntlet', route: '/gauntlet' },
       { label: 'How xorr works', route: '/how' },
     ],

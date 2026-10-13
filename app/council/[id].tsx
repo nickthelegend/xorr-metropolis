@@ -12,6 +12,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
+import { useSignedOut } from '@/auth/useSignedOut';
 import {
   AgentOrb,
   Button,
@@ -282,13 +283,15 @@ function Replay({ round }: { round: CouncilRound }) {
 export default function CouncilReplay() {
   const goBack = useGoBack();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const r = useAsync(() => council.round(String(id)), [id]);
+  // Signed out (or "sample"), a team-seeded round, which anyone may replay; signed in, the wallet's own.
+  const signedOut = useSignedOut();
+  const r = useAsync(() => (signedOut || id === 'sample' ? council.publicRound(String(id)) : council.round(String(id))), [id, signedOut]);
   return (
     <Screen gutter="none">
       <View style={{ paddingHorizontal: space.gutter }}>
         <HeaderBar onBack={goBack} title={<Text variant="screenTitle">Replay</Text>} />
         <Text variant="secondary" color={colors.ink55} style={{ marginTop: space.s6 }}>
-          {r.data ? `Round ${r.data.id}, seat by seat, as it was decided.` : 'A council round, seat by seat, as it was decided.'}
+          {r.data ? `Round ${r.data.id}${r.data.convenedBy === 'team-seed' ? ' · team-seeded' : ''}, seat by seat.` : 'A council round, seat by seat.'}
         </Text>
       </View>
       {r.error ? (

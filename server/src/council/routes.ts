@@ -14,7 +14,7 @@ import { requireWallet } from '../routes/wallet-context.js';
 import { IS_MONAD } from '../evm/chains.js';
 import { MONAD_SEATS, SEATS } from './personas.js';
 import { MONAD_COUNCIL_SYMBOLS } from './monad-inputs.js';
-import { convene, roundById, roundsFor } from './convene.js';
+import { convene, publicRound, roundById, roundsFor } from './convene.js';
 
 export const councilRoutes = new Hono();
 
@@ -32,6 +32,16 @@ councilRoutes.get('/council/rounds', async (c) => {
   const w = await requireWallet(c);
   const limit = Number(c.req.query('limit') ?? 50);
   return c.json({ rounds: await roundsFor(w.id, Number.isFinite(limit) ? limit : 50) });
+});
+
+// A team-seeded round, public: the newest (executed first), or one by id. Never a user's round.
+councilRoutes.get('/council/public', async (c) => {
+  const round = await publicRound();
+  return round ? c.json({ round }) : c.json({ error: 'not_found', message: 'No team-seeded round yet.' }, 404);
+});
+councilRoutes.get('/council/public/:id', async (c) => {
+  const round = await publicRound(c.req.param('id'));
+  return round ? c.json({ round }) : c.json({ error: 'not_found', message: 'No such team-seeded round.' }, 404);
 });
 
 councilRoutes.get('/council/rounds/:id', async (c) => {

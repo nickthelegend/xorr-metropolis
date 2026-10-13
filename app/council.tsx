@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoBack } from '@/nav/useGoBack';
+import { useSignedOut } from '@/auth/useSignedOut';
 import { Rise } from '@/ui/Rise';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -247,6 +248,8 @@ function RoundCard({ round, roster, latest = false }: { round: CouncilRound; ros
 
 export default function Council() {
   const goBack = useGoBack();
+  const router = useRouter();
+  const signedOut = useSignedOut();
   const { data, loading, error, reload } = useAsync(() => council.rounds(), []);
   const strategist = useAsync(() => council.strategist(), []);
   // Names and wallets for the rounds an agent proposed. A roster that cannot be read leaves the stored tag, not a guess.
@@ -283,6 +286,14 @@ export default function Council() {
             : 'Four desks vote on every trade first.'}
         </Text>
         <Bench strategistOff={strategist.data ? !strategist.data.configured : false} />
+        {signedOut ? (
+          // Signed out there are no rounds of one's own; a team-seeded round can be replayed by anyone (judge round 2).
+          <Press onPress={() => router.push('/council/sample')} accessibilityRole="link" hitHeight={size.hit} testID="council-sample" style={{ marginTop: space.s10 }}>
+            <Text variant="control" color={colors.accentHi}>
+              Replay a team-seeded round ›
+            </Text>
+          </Press>
+        ) : null}
         {strategist.data && !strategist.data.configured ? (
           // Kimi sits only with a key; without one the four desks decide, and the screen says so rather than standing one in.
           <Text variant="footnote" color={colors.ink40} style={{ marginTop: space.s10 }} testID="council-strategist-off">
