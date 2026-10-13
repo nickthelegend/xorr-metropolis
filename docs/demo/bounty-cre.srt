@@ -1,0 +1,68 @@
+1
+00:00:03,350 --> 00:00:06,234
+This is a real run of XORR's workflow with
+
+2
+00:00:06,264 --> 00:00:08,231
+the CRE command line:
+
+3
+00:00:08,261 --> 00:00:11,366
+cre workflow simulate, broadcasting to Monad
+
+4
+00:00:11,396 --> 00:00:12,494
+testnet.
+
+5
+00:00:12,524 --> 00:00:15,791
+It reads MON from Perpl, Kuru and Chainlink,
+
+6
+00:00:15,821 --> 00:00:18,380
+checks how far apart they are and the gap to
+
+7
+00:00:18,410 --> 00:00:21,027
+Chainlink, and writes one report, with a
+
+8
+00:00:21,057 --> 00:00:23,830
+halt flag, to XorrPriceReceiver.
+
+9
+00:00:24,330 --> 00:00:27,063
+Here's that report on Monad testnet, through
+
+10
+00:00:27,093 --> 00:00:29,785
+CRE's forwarder into the receiver.
+
+11
+00:00:30,285 --> 00:00:32,484
+The council's Price desk reads this
+
+12
+00:00:32,514 --> 00:00:35,131
+receiver. When the report is stale or
+
+13
+00:00:35,161 --> 00:00:38,359
+halted, the desk vetoes, so nothing trades
+
+14
+00:00:38,389 --> 00:00:40,906
+on a price the workflow didn't vouch for.
+
+15
+00:00:41,245 --> 00:00:43,281
+The workflow isn't deployed on a schedule
+
+16
+00:00:43,311 --> 00:00:46,978
+yet, so runs like this one keep it fresh.
+
+17
+00:00:47,478 --> 00:00:50,339
+XORR, with Chainlink CRE.
+
