@@ -1,0 +1,124 @@
+1
+00:00:00,350 --> 00:00:02,572
+What if a trading bot simply couldn't run
+
+2
+00:00:02,602 --> 00:00:04,133
+off with your money?
+
+3
+00:00:04,633 --> 00:00:06,762
+We're a small team that has built trading
+
+4
+00:00:06,792 --> 00:00:08,875
+agents on five chains.
+
+5
+00:00:08,905 --> 00:00:11,534
+Every time, the hard part wasn't the
+
+6
+00:00:11,564 --> 00:00:14,379
+trading. It was trust, and we want to fix
+
+7
+00:00:14,409 --> 00:00:15,243
+that.
+
+8
+00:00:15,743 --> 00:00:18,604
+Today's bots want your keys, or a balance
+
+9
+00:00:18,634 --> 00:00:20,485
+they can move however they like.
+
+10
+00:00:20,515 --> 00:00:23,306
+There's no limit you can see, and no brake
+
+11
+00:00:23,336 --> 00:00:25,099
+when one goes wrong.
+
+12
+00:00:25,598 --> 00:00:28,215
+AI agents can now read markets and place
+
+13
+00:00:28,245 --> 00:00:31,001
+orders. What's missing is control:
+
+14
+00:00:31,031 --> 00:00:33,979
+who holds the money, and who can stop them.
+
+15
+00:00:34,479 --> 00:00:36,411
+XORR does three things.
+
+16
+00:00:36,441 --> 00:00:38,710
+Hire a council of AI agents that vote on
+
+17
+00:00:38,740 --> 00:00:41,032
+every trade. Limit them with a permission
+
+18
+00:00:41,062 --> 00:00:42,355
+the chain enforces.
+
+19
+00:00:42,385 --> 00:00:44,671
+And stop them, with one hold.
+
+20
+00:00:48,771 --> 00:00:51,655
+On Monad, a block is final in about half a
+
+21
+00:00:51,685 --> 00:00:54,465
+second, so the council can vote and fill
+
+22
+00:00:54,495 --> 00:00:57,414
+together. And it's live on testnet:
+
+23
+00:00:57,444 --> 00:01:00,293
+verified contracts, council rounds filled on
+
+24
+00:01:00,323 --> 00:01:02,998
+Perpl, and the stop, each with its
+
+25
+00:01:03,028 --> 00:01:04,350
+transaction.
+
+26
+00:01:04,849 --> 00:01:06,897
+It's for people who want an agent to trade
+
+27
+00:01:06,927 --> 00:01:09,451
+for them, without handing it their money.
+
+28
+00:01:09,481 --> 00:01:11,437
+We'll reach them through Monad's testnet
+
+29
+00:01:11,467 --> 00:01:14,571
+community, council replays anyone can share,
+
+30
+00:01:14,601 --> 00:01:17,688
+and traders already on Perpl and Kuru.
+
+31
+00:01:18,188 --> 00:01:20,864
+XORR. Try it in a browser.
+
