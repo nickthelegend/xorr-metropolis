@@ -33,7 +33,7 @@ const LIMITS: readonly { icon: IconName; text: string }[] = [
   { icon: 'activity', text: 'An end date, after which it lapses on its own' },
   // On Monad testnet the agents trade perps on the owner's Perpl desk; Kuru and Uniswap are the spot venues on mainnet.
   { icon: 'swapH', text: CHAIN_KEY === 'monad-testnet' ? 'Only your own Perpl desk — never a withdrawal from it' : 'Only the venues you allow — Kuru and Uniswap' },
-  { icon: 'shield', text: 'Never a withdrawal. Your money stays in your wallet' },
+  { icon: 'shield', text: CHAIN_KEY === 'monad-testnet' ? 'Only you can withdraw from your desk' : 'Never a withdrawal. Your money stays in your wallet' },
 ];
 
 function Step({ step }: { step: number }) {
@@ -89,12 +89,15 @@ function Step({ step }: { step: number }) {
           </SheetCard>
         </Rise>
         <Rise index={1}>
+          {/* Said as it is on each chain (judge round 2): on testnet the agent trades your Perpl desk, which only you can
+              withdraw from and one hold takes back; on mainnet the delegation contract mines a spend over the cap as a revert. */}
           <Text variant="onboardingTitle" style={{ marginTop: space.s22 }}>
-            Inside a limit the chain enforces
+            {CHAIN_KEY === 'monad-testnet' ? 'Inside limits you set, stopped on chain' : 'Inside a limit the chain enforces'}
           </Text>
           <Text variant="body" color={colors.ink65} style={{ marginTop: space.s10 }}>
-            You sign one permission, with your passkey. The contract refuses anything past it — a spend over your limit is
-            mined as a revert, even when it comes from xorr’s own server.
+            {CHAIN_KEY === 'monad-testnet'
+              ? 'You sign once, with your passkey. The agent trades your Perpl desk within your daily and per-order limits, can never withdraw from it, and one hold removes it on chain.'
+              : 'You sign one permission, with your passkey. The contract refuses anything past it — a spend over your limit is mined as a revert, even when it comes from xorr’s own server.'}
           </Text>
         </Rise>
       </>

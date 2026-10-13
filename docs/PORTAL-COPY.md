@@ -2,11 +2,11 @@
 
 **Project name:** xorr
 
-**Tagline (≤ 80):** A council of AI agents trades for you on Monad, inside a limit the chain enforces
+**Tagline (≤ 80):** A council of AI agents trades for you on Monad, and one hold stops it on chain
 
 **Short description (≤ 280):**
 xorr lets a council of AI agents trade for you on Monad. Four desks read Chainlink, Kuru, Uniswap and Perpl funding and vote
-on every trade; a contract holds the daily limit; one hold stops everything. Passkey accounts (Mera), perps on Perpl.
+on every trade, inside limits you set; one hold stops everything on chain. Passkey accounts (Mera), perps on Perpl.
 
 **Full description:**
 - **Problem.** Nobody can watch a market all night, and handing a bot your keys means trusting it with everything.

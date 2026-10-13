@@ -83,3 +83,38 @@ The one thing this project fully proves on Monad testnet is a solid Perpl desk w
 - **Envio and Mera:** the copy says what the testnet index holds, and that Privy email remains a second way in.
 - **The app:** the explainer's venue line matches the chain (Perpl desk on testnet); the desktop page no longer
   overflows sideways.
+
+## Round 2 verdict (a fresh judge, same prompt, after the fixes)
+
+**Main track: 7.5 / 10** (round 1: 7.4). Product quality 7, technical excellence 7.5, Monad integration 8 (round 1: 7),
+track fit 8, innovation 7.
+
+| Bounty | Round 1 | Round 2 |
+|---|---|---|
+| Perpl: Best use of the API | 8.3 | 7.7 |
+| Mera: One Passkey, Many Keys | 6.4 | 6.8 |
+| Chainlink CRE | 6.6 | 6.5 |
+| Mera: Best UX | 5.4 | 6.3 |
+| Perpl: Analytics / Risk | 7.3 | 6.3 |
+| Agora: Mobile Trading App | 6.1 | 6.1 |
+| Envio | 5.0 | 5.8 |
+| Kimi | 5.5 | 5.6 |
+| Kuru | 5.5 | 5.5 |
+| MetaMask plugin | 5.3 | 5.5 |
+
+What it verified this time: all three contracts `exact_match` on public Sourcify; every transaction in the copy,
+including the `OnlyOwnerOrOperator` revert; the CRE report read back (round 1, $0.023975, not halted); the fork
+evidence's `DailyCapExceeded`; no console errors or failed requests at 1440 or 390 px; the desktop page no longer
+overflows.
+
+Its remaining reasons to vote no, verbatim in substance: on testnet the live agent trades through Perpl's
+DelegatedAccount, where the on-chain control is removing the operator; the daily cap there is an executor check, and
+XorrDelegation's cap revert is proven on a mainnet fork; the council cannot be watched without signing up; `/monad`
+reads like an engineering checklist; `/perpl` shows two different funding APRs side by side.
+
+## Fixes after round 2 (13 Oct)
+
+- The explainer's step 2 now says what testnet does: limits you set, the agent never withdraws from your desk, one hold
+  removes it on chain (the contract-revert sentence stays for mainnet and the fork).
+- "Awaiting testnet go" on `/monad` is now "Not live yet".
+- The portal tagline and short description promise the stop proven on chain, not the cap.

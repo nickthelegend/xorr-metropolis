@@ -30,7 +30,7 @@ const WHERE: Record<Where, { label: string; fg: string; bg: string }> = {
   mainnet: { label: 'Live · Monad mainnet', fg: colors.up, bg: colors.upBg },
   testnet: { label: 'Live read · Monad testnet', fg: colors.up, bg: colors.upBg },
   fork: { label: 'Local fork', fg: colors.accentHi, bg: colors.accentSoft },
-  awaiting: { label: 'Awaiting testnet go', fg: colors.ink70, bg: colors.neutralBg },
+  awaiting: { label: 'Not live yet', fg: colors.ink70, bg: colors.neutralBg },
   app: { label: 'In the app', fg: colors.ink70, bg: colors.neutralBg },
 };
 
