@@ -75,7 +75,9 @@ export type Parsed = { ok: true; vote: Exclude<Vote, 'veto'>; confidence: number
  * shown (`shown`, the serialised context).
  */
 export function parseStrategist(raw: string, shown: string): Parsed {
-  const body = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
+  const fenced = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
+  // A thinking model may put words around the object: take the outermost {…} when the whole is not JSON.
+  const body = /^\s*\{[\s\S]*\}\s*$/.test(fenced) ? fenced : (fenced.match(/\{[\s\S]*\}/)?.[0] ?? fenced);
   let v: { vote?: unknown; confidence?: unknown; reason?: unknown };
   try {
     v = JSON.parse(body);
@@ -193,8 +195,10 @@ async function askKimi(ctx: StrategistContext, env: NodeJS.ProcessEnv, fetchImpl
     const res = await (fetchImpl ?? fetch)(`${env.MOONSHOT_BASE_URL ?? KIMI_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${env.MOONSHOT_API_KEY}` },
-      // kimi-k2.6 accepts only temperature 1 (HTTP 400 otherwise, 12 Oct); the JSON format and the reason check keep it on task.
-      body: JSON.stringify({ model, messages, temperature: 1, max_tokens: 400, response_format: { type: 'json_object' } }),
+      // kimi-k2.6 thinks by default: it ran past 400 tokens with an empty answer, and past the 25 s timeout with more (13 Oct).
+      // A council seat needs a vote, not a chain of thought, so thinking is off, which this model pairs with temperature 0.6
+      // (it refuses any other). One short JSON answer in a few seconds, ~400 tokens at most.
+      body: JSON.stringify({ model, messages, thinking: { type: 'disabled' }, temperature: 0.6, max_tokens: 400, response_format: { type: 'json_object' } }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) return seat('abstain', 0, `Kimi did not answer (HTTP ${res.status}), so the Strategist abstains.`, [`kimi:${model}`]);

@@ -60,7 +60,7 @@ describe('the seat', () => {
     const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://api.moonshot.ai/v1/chat/completions');
     expect((init.headers as Record<string, string>).authorization).toBe('Bearer test-key');
-    expect(JSON.parse(init.body as string)).toMatchObject({ model: 'kimi-k2.6', response_format: { type: 'json_object' } });
+    expect(JSON.parse(init.body as string)).toMatchObject({ model: 'kimi-k2.6', thinking: { type: 'disabled' }, temperature: 0.6, response_format: { type: 'json_object' } });
   });
 
   it('abstains, saying why, when Kimi invents a number or does not answer', async () => {

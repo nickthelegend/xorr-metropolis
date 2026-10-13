@@ -12,7 +12,7 @@ In the app: **For judges** (`/judges`) and **Built on Monad** (`/monad`) show ea
 | **Envio** | working, hosted | HyperIndex on Railway (HyperSync on Monad testnet) powers History; `/indexed/recent` | `indexer/config.testnet.yaml`; `/monad` shows the indexed block |
 | **Mera** | working (web) | passkey accounts, the stateless test, PRF-sealed notes, the passkey checked by Monad's P256 precompile | `e2e:fork`, `e2e:monad`; the native path awaits a device |
 | **Kuru** | working on a fork of Monad mainnet | every buy measures Kuru's book against Uniswap v3 and fills on the better (`KuruVenue`) | fork fills in `evidence/`; testnet has no Kuru spot market |
-| **Kimi** | configured, capped | the Strategist seat (`council/strategist.ts`): cached, a persisted daily cap, skipped on a veto | a live vote is still to be seen (Moonshot answered 429 on 13 Oct) |
+| **Kimi** | working, capped | the Strategist seat (`council/strategist.ts`): thinking off, cached, a persisted daily cap, skipped on a veto | 13 Oct live vote: "no — the Trend Reader and Macro Desk both vote no: falling price at -0.80% and crowded longs paying 0.0056%/h…" (`strategist.live.test.ts`) |
 | **MetaMask** | built | `mm-plugin-perpl/`: markets and risk ran in mm 7.0.0 | wallet commands wait for the owner's `mm login` (doitlater.md) |
 
 Monad-native items: `docs/ROADMAP-WIN.md` "Monad-native coverage".
