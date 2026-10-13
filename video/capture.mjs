@@ -9,6 +9,7 @@ import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Buffer } from 'node:buffer';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WEB = 'https://xorr-metropolis.vercel.app';
