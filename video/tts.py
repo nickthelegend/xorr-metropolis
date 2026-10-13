@@ -20,13 +20,13 @@ for sc in spec["scenes"]:
         lid = f"{sc['id']}_{i + 1:02d}"
         wav = os.path.join(OUT, lid + ".wav")
         old = prev.get(lid)
-        if old and old["text"] == text and old["voice"] == spec["voice"] and os.path.exists(wav):
+        if old and old["text"] == text and old["voice"] == spec["voice"] and old.get("speed", 1.0) == spec.get("speed", 1.0) and os.path.exists(wav):
             out.append(old)
             continue
         req = urllib.request.Request(
             f"https://api.elevenlabs.io/v1/text-to-speech/{spec['voice']}/with-timestamps?output_format=mp3_44100_128",
             data=json.dumps({"text": text, "model_id": spec["model"],
-                             "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "style": 0.15}}).encode(),
+                             "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "style": 0.15, "speed": spec.get("speed", 1.0)}}).encode(),
             headers={"xi-api-key": key, "content-type": "application/json"})
         d = json.load(urllib.request.urlopen(req, timeout=120))
         mp3 = os.path.join(OUT, lid + ".mp3")
@@ -35,7 +35,7 @@ for sc in spec["scenes"]:
         secs = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", wav],
                                     capture_output=True, text=True).stdout)
         a = d["alignment"]
-        out.append({"id": lid, "scene": sc["id"], "text": text, "voice": spec["voice"], "file": wav, "seconds": round(secs, 3),
+        out.append({"id": lid, "scene": sc["id"], "text": text, "voice": spec["voice"], "speed": spec.get("speed", 1.0), "file": wav, "seconds": round(secs, 3),
                     "chars": a["characters"], "starts": a["character_start_times_seconds"], "ends": a["character_end_times_seconds"]})
         print(f"{lid} {secs:6.2f}s  {text[:70]}", flush=True)
 json.dump(out, open(manifest, "w"))

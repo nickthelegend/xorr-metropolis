@@ -1,9 +1,40 @@
-# The Metropolis demo video
+# The Metropolis videos
 
-The output is [`docs/demo/xorr-metropolis.mp4`](../docs/demo/xorr-metropolis.mp4), with captions in
+## The three videos (14 Oct)
+
+They are made from one edit list each (`edl/`) by `make.py`. The steps are narration, timeline, footage bed, overlay,
+render and mix, with Daniel's voice throughout.
+
+| Video | File |
+|---|---|
+| Submission cut, 2:56 | `docs/demo/xorr-demo.mp4` |
+| Pitch, 1:33 | `docs/demo/xorr-pitch.mp4` |
+| Full walkthrough, 4:32 | `docs/demo/xorr-walkthrough.mp4` |
+
+The footage comes from two real takes:
+
+- `record-flow.mjs`: the whole signed-in journey on the local fork of Monad mainnet, at 1080p with an eased cursor;
+- `capture.mjs`: the hosted app on Monad testnet.
+
+Footage is never re-ordered or faked:
+
+- Chain waits are cut.
+- Speed-ups past 1.15× are tagged on screen.
+- Fork footage is tagged "REAL APP · LOCAL FORK OF MONAD MAINNET" and testnet footage "LIVE · MONAD TESTNET".
+
+`qa.py <name> t…` composites overlay stills over the bed for frame QA before a render.
+
+```bash
+node record-flow.mjs          # with the local stack up (infra/monad-fork/local-stack.sh up)
+python3 make.py edl/submission.json   # also edl/pitch.json, edl/walkthrough.json
+```
+
+## The first cut (13 Oct)
+
+The first cut was [`docs/demo/xorr-metropolis.mp4`](../docs/demo/xorr-metropolis.mp4), with captions in
 [`.srt`](../docs/demo/xorr-metropolis.srt).
 
-- Length 2:13, 1920×1080.
+- Length 2:28, 1920×1080.
 - H.264 video, AAC audio at −16 LUFS.
 - Captions are burned in and also ship as the `.srt`.
 
@@ -11,7 +42,8 @@ The output is [`docs/demo/xorr-metropolis.mp4`](../docs/demo/xorr-metropolis.mp4
 
 **0:00–0:35, intro.** Motion graphics in xorr's own look: black, violet glow, the green X coin, Inter.
 
-- The narration is ElevenLabs "Eric". "Daniel" was auditioned on the same line and took 8.8 s against Eric's 6.1 s.
+- The narration is ElevenLabs "Daniel", at ElevenLabs' speed 1.1. Each project has its own voice
+  (`metropolis-funding/VOICES.md`), and "Eric", the first cut's voice, belongs to another project.
 - The block chips in the intro are an illustration.
 - The ~0.3 s voted and ~0.5 s final figures are what the app's live Built on Monad page read that night.
 
@@ -20,6 +52,8 @@ The output is [`docs/demo/xorr-metropolis.mp4`](../docs/demo/xorr-metropolis.mp4
 - It is driven by Playwright at 1920×1080 with an injected, eased cursor (`capture.mjs`).
 - Frames come from Chrome's screencast, so the text stays sharp.
 - Every app shot is tagged "LIVE · MONAD TESTNET".
+- Where the voice runs longer than a scene's take, the take plays a little slower (the council at 0.89×) and then
+  holds, rather than running into the next scene.
 
 The live scenes, in order:
 

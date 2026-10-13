@@ -1,0 +1,135 @@
+{
+ "name": "demo",
+ "segments": [
+  {
+   "src": "flow",
+   "from": 14.5,
+   "to": 35.5,
+   "label": "The problem",
+   "sub": "For people who want an agent to trade for them",
+   "lines": [
+    "Trading bots want your keys, or a balance they can move however they like. XORR is for people who want an agent to trade crypto and perps for them, without handing it the money.",
+    "A council of AI agents votes on every trade, inside a limit the chain enforces. On Monad, a block is final in about half a second, so the vote and the fill happen together."
+   ]
+  },
+  {
+   "src": "flow",
+   "from": 35.5,
+   "to": 61.0,
+   "label": "Sign up, sign the limit",
+   "sub": "Mera passkey · on-chain permission",
+   "lines": [
+    "One passkey makes the account. No seed phrase, and nothing that can sign is stored.",
+    "Test funds land, then the permission: a daily limit, an end date, the venues. It's signed without a wallet popup, and confirmed on chain ten seconds after the app opened."
+   ]
+  },
+  {
+   "src": "flow",
+   "from": 76.6,
+   "to": 136.6,
+   "label": "A buy, routed",
+   "sub": "Kuru's order book vs Uniswap v3 · Chainlink-checked",
+   "lines": [
+    "Buy twenty dollars of MON. Every order measures Kuru's on-chain order book against Uniswap v3, and fills on the better one. Here, Kuru beat Uniswap by a third of a percent.",
+    "Two timers: executed in five hundred and ten milliseconds, with the receipt returned by the send itself. The gas cost a tenth of a cent, two hundred and twenty times less than on Ethereum."
+   ]
+  },
+  {
+   "src": "flow",
+   "from": 136.6,
+   "to": 163.9,
+   "label": "The council",
+   "sub": "Price · Risk · Trend · Perps · Kimi",
+   "lines": [
+    "Now put fifty dollars of MON to the council. Price checks Chainlink against Kuru's book, Risk reads your limit, Trend and Perps read the market, and Kimi weighs them.",
+    "Approved five to nothing, and filled: vote to fill in two tenths of a second. The replay shows what every seat read when it voted."
+   ]
+  },
+  {
+   "src": "flow",
+   "from": 163.9,
+   "to": 201.5,
+   "label": "Perps on Perpl",
+   "sub": "AUSD margin · a desk the agent can't withdraw from",
+   "lines": [
+    "Perps run on Perpl, with AUSD as margin, through a desk that is Perpl's own delegated account. The agent can trade it. It can never withdraw.",
+    "A long on MON, with its entry, mark and distance to liquidation, and standing exits checked every thirty seconds. Then it's closed, and the margin is back in the desk."
+   ]
+  },
+  {
+   "src": "flow",
+   "from": 214.7,
+   "to": 221.2,
+   "label": "History, by Envio",
+   "lines": [
+    "Every grant, spend and desk is indexed by Envio's HyperIndex as the blocks arrive."
+   ]
+  },
+  {
+   "src": "flow",
+   "from": 227.0,
+   "to": 244.1,
+   "label": "Built on Monad",
+   "sub": "Commit states · txpool · staking · P256",
+   "lines": [
+    "Built on Monad reads the chain itself: commit states, the txpool, native staking, and Monad's P256 precompile, which checks this passkey's signature right here."
+   ]
+  },
+  {
+   "src": "flow",
+   "from": 244.1,
+   "to": 255.2,
+   "label": "One hold stops it",
+   "lines": [
+    "And one hold stops everything. The permission is revoked and the desk's operator removed, on chain, and read back from the chain."
+   ]
+  },
+  {
+   "src": "live",
+   "from": 42.5,
+   "to": 63.9,
+   "label": "Live on Monad testnet",
+   "chip": "TEAM-SEEDED WALLET · LABELLED IN THE APP",
+   "lines": [
+    "It's live on Monad testnet too. Here's a round from tonight, from a wallet we seeded and labelled: approved four to nothing, with Kimi's reasoning on screen.",
+    "Each seat shows exactly what it read: Chainlink's price on Monad, the desk's limit, and Perpl's funding."
+   ]
+  },
+  {
+   "src": "card",
+   "card": {
+    "kind": "receipt",
+    "which": "fill",
+    "kicker": "THE FILL · ROUND 11 · MONAD TESTNET",
+    "title": "execOrder on Perpl, through the owner's desk",
+    "fromWho": "xorr's operator key",
+    "toWho": "the owner's Perpl desk",
+    "method": "execOrder"
+   },
+   "lines": [
+    "And its fill, through the owner's Perpl desk, on Monad testnet."
+   ]
+  },
+  {
+   "src": "card",
+   "card": {
+    "kind": "outro",
+    "title": "A council of AI agents trades for you on Monad, and one hold stops it on chain.",
+    "chips": [
+     "LIVE · MONAD TESTNET",
+     "PERPL",
+     "KURU",
+     "UNISWAP",
+     "CHAINLINK",
+     "ENVIO",
+     "KIMI",
+     "AUSD"
+    ]
+   },
+   "min": 7.5,
+   "lines": [
+    "XORR. A council of AI agents trades for you on Monad, and one hold stops it on chain."
+   ]
+  }
+ ]
+}

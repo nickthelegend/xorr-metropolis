@@ -11,7 +11,14 @@ vote shown beside the transaction it produced, and none of it able to touch more
 enforces the limit. On Monad a council can deliberate and still fill at the price it voted on: blocks land every 300 ms and are final two
 blocks later, about 600 ms.
 
-**Demo video, live on Monad testnet (2:13, 13 Oct):** [`docs/demo/xorr-metropolis.mp4`](docs/demo/xorr-metropolis.mp4) ([captions](docs/demo/xorr-metropolis.srt)). The hosted app, signed out, with a real council round and its fill from a team-seeded wallet, labelled as such ([evidence](docs/evidence/seed-13oct.md)).
+**The problem and who it is for.** Trading bots ask for your keys, or for a balance they can move however they like, and there is no brake when one goes wrong. xorr is for people who want an agent to trade crypto and perps for them without handing over their money: the agents act only inside a limit the owner signs, and one hold stops them on chain.
+
+**Videos (14 Oct, narrated, captions as `.srt` beside each):**
+
+- **Demo, the submission cut (2:56):** [`docs/demo/xorr-demo.mp4`](docs/demo/xorr-demo.mp4). The whole journey in the real app: passkey, permission, a buy routed Kuru vs Uniswap with its speed receipt, the council, the Perpl desk, History from Envio, Built on Monad, the stop. Then the same product live on Monad testnet: a team-seeded round (labelled) and its Perpl fill. The signed-in journey is recorded on a local fork of Monad mainnet (Kuru and Uniswap exist there) and is tagged that way on screen.
+- **Pitch (1:33):** [`docs/demo/xorr-pitch.mp4`](docs/demo/xorr-pitch.mp4).
+- **Full walkthrough (4:32):** [`docs/demo/xorr-walkthrough.mp4`](docs/demo/xorr-walkthrough.mp4). Every screen, then the testnet deployment and the operator's side.
+- How they were made, and an honest critique of the first cut: [`video/README.md`](video/README.md), [`docs/demo/VIDEO-CRITIQUE.md`](docs/demo/VIDEO-CRITIQUE.md).
 
 **The full tour on a fork (2:38, 8 Oct):** [`docs/demo/flows/00-full-tour.mp4`](docs/demo/flows/00-full-tour.mp4), recorded live
 on a fork of Monad mainnet by `npm run demo:record`, captioned, waits cut. And each flow on its own, cut from the same run:

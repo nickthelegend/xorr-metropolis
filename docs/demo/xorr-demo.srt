@@ -1,0 +1,268 @@
+1
+00:00:00,350 --> 00:00:02,932
+Trading bots want your keys, or a balance
+
+2
+00:00:02,962 --> 00:00:05,155
+they can move however they like.
+
+3
+00:00:05,493 --> 00:00:08,215
+XORR is for people who want an agent to
+
+4
+00:00:08,245 --> 00:00:11,082
+trade crypto and perps for them, without
+
+5
+00:00:11,112 --> 00:00:12,652
+handing it the money.
+
+6
+00:00:12,682 --> 00:00:15,972
+A council of AI agents votes on every trade,
+
+7
+00:00:16,002 --> 00:00:19,200
+inside a limit the chain enforces.
+
+8
+00:00:19,230 --> 00:00:21,568
+On Monad, a block is final in about half a
+
+9
+00:00:21,598 --> 00:00:24,354
+second, so the vote and the fill happen
+
+10
+00:00:24,384 --> 00:00:25,380
+together.
+
+11
+00:00:25,881 --> 00:00:27,790
+One passkey makes the account.
+
+12
+00:00:27,820 --> 00:00:30,658
+No seed phrase, and nothing that can sign is
+
+13
+00:00:30,688 --> 00:00:31,774
+stored.
+
+14
+00:00:31,804 --> 00:00:34,200
+Test funds land, then the permission:
+
+15
+00:00:34,230 --> 00:00:37,498
+a daily limit, an end date, the venues.
+
+16
+00:00:37,528 --> 00:00:39,855
+It's signed without a wallet popup, and
+
+17
+00:00:39,885 --> 00:00:42,780
+confirmed on chain ten seconds after the app
+
+18
+00:00:42,810 --> 00:00:43,760
+opened.
+
+19
+00:00:44,260 --> 00:00:46,459
+Buy twenty dollars of MON.
+
+20
+00:00:46,489 --> 00:00:48,839
+Every order measures Kuru's on-chain order
+
+21
+00:00:48,869 --> 00:00:51,695
+book against Uniswap v3, and fills on the
+
+22
+00:00:51,725 --> 00:00:55,318
+better one. Here, Kuru beat Uniswap by a
+
+23
+00:00:55,348 --> 00:00:57,119
+third of a percent.
+
+24
+00:00:57,149 --> 00:01:00,242
+Two timers: executed in five hundred and ten
+
+25
+00:01:00,272 --> 00:01:02,611
+milliseconds, with the receipt returned by
+
+26
+00:01:02,641 --> 00:01:03,934
+the send itself.
+
+27
+00:01:03,964 --> 00:01:06,860
+The gas cost a tenth of a cent, two hundred
+
+28
+00:01:06,890 --> 00:01:09,523
+and twenty times less than on Ethereum.
+
+29
+00:01:10,023 --> 00:01:13,174
+Now put fifty dollars of MON to the council.
+
+30
+00:01:13,204 --> 00:01:15,926
+Price checks Chainlink against Kuru's book,
+
+31
+00:01:15,956 --> 00:01:18,735
+Risk reads your limit, Trend and Perps read
+
+32
+00:01:18,765 --> 00:01:21,396
+the market, and Kimi weighs them.
+
+33
+00:01:21,426 --> 00:01:24,357
+Approved five to nothing, and filled:
+
+34
+00:01:24,387 --> 00:01:26,957
+vote to fill in two tenths of a second.
+
+35
+00:01:26,987 --> 00:01:29,593
+The replay shows what every seat read when
+
+36
+00:01:29,623 --> 00:01:30,782
+it voted.
+
+37
+00:01:31,282 --> 00:01:35,130
+Perps run on Perpl, with AUSD as margin,
+
+38
+00:01:35,160 --> 00:01:37,846
+through a desk that is Perpl's own delegated
+
+39
+00:01:37,876 --> 00:01:40,621
+account. The agent can trade it.
+
+40
+00:01:40,651 --> 00:01:42,515
+It can never withdraw.
+
+41
+00:01:42,545 --> 00:01:45,197
+A long on MON, with its entry, mark and
+
+42
+00:01:45,227 --> 00:01:48,123
+distance to liquidation, and standing exits
+
+43
+00:01:48,153 --> 00:01:50,503
+checked every thirty seconds.
+
+44
+00:01:50,533 --> 00:01:53,045
+Then it's closed, and the margin is back in
+
+45
+00:01:53,075 --> 00:01:54,176
+the desk.
+
+46
+00:01:54,677 --> 00:01:57,468
+Every grant, spend and desk is indexed by
+
+47
+00:01:57,498 --> 00:02:00,875
+Envio's HyperIndex as the blocks arrive.
+
+48
+00:02:01,374 --> 00:02:04,386
+Built on Monad reads the chain itself:
+
+49
+00:02:04,416 --> 00:02:07,625
+commit states, the txpool, native staking,
+
+50
+00:02:07,655 --> 00:02:11,131
+and Monad's P256 precompile, which checks
+
+51
+00:02:11,161 --> 00:02:14,027
+this passkey's signature right here.
+
+52
+00:02:14,528 --> 00:02:16,878
+And one hold stops everything.
+
+53
+00:02:16,908 --> 00:02:19,061
+The permission is revoked and the desk's
+
+54
+00:02:19,091 --> 00:02:22,520
+operator removed, on chain, and read back
+
+55
+00:02:22,550 --> 00:02:23,884
+from the chain.
+
+56
+00:02:24,383 --> 00:02:26,687
+It's live on Monad testnet too.
+
+57
+00:02:26,717 --> 00:02:29,078
+Here's a round from tonight, from a wallet
+
+58
+00:02:29,108 --> 00:02:30,738
+we seeded and labelled:
+
+59
+00:02:30,768 --> 00:02:33,060
+approved four to nothing, with Kimi's
+
+60
+00:02:33,090 --> 00:02:34,874
+reasoning on screen.
+
+61
+00:02:34,904 --> 00:02:37,335
+Each seat shows exactly what it read:
+
+62
+00:02:37,365 --> 00:02:39,820
+Chainlink's price on Monad, the desk's
+
+63
+00:02:39,850 --> 00:02:42,124
+limit, and Perpl's funding.
+
+64
+00:02:42,623 --> 00:02:44,729
+And its fill, through the owner's Perpl
+
+65
+00:02:44,759 --> 00:02:47,195
+desk, on Monad testnet.
+
+66
+00:02:47,696 --> 00:02:51,648
+XORR. A council of AI agents trades for you
+
+67
+00:02:51,678 --> 00:02:55,523
+on Monad, and one hold stops it on chain.
+

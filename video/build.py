@@ -29,6 +29,16 @@ spans = []   # (final start, final end, source start, source cap)
 for s in timing["scenes"]:
     if s["kind"] != "live" or s["id"] == "stop": continue
     spans.append((s["start"], s["end"], mk[s["id"]], mk[s["id"]] + HOLD.get(s["id"], 1e9)))
+# The take a scene may use ends where the next scene's starts. A scene the voice made longer than that plays its take a
+# little slower (not under 0.8×) and then holds, rather than running into the next scene's footage.
+order = [m["id"] for m in json.load(open(os.path.join(cap, "markers.json")))["markers"] if m["id"] != "trade-explorer"]
+nxt = {a: mk[b] for a, b in zip(order, order[1:])}
+rate = {}
+for i, (a, b, s0, c) in enumerate(spans):
+    sid = next(k for k, v in mk.items() if v == s0)
+    avail = min(c, nxt.get(sid, c)) - 0.15 - s0
+    rate[s0] = max(0.8, min(1.0, avail / (b - a)))
+    spans[i] = (a, b, s0, s0 + avail)
 receipts = [[round(xs, 3), S["trade"]["end"], "fill"], [S["stop"]["start"], S["stop"]["end"], "stop"]]
 json.dump({"receipts": receipts, "spans": spans}, open(os.path.join(W, "cut.json"), "w"), indent=1)
 
@@ -39,7 +49,7 @@ for k in range(int(round(total * FPS))):
     src = None
     for a, b, s0, cap_ in spans:
         if a <= t < b:
-            st = min(s0 + (t - a), cap_)
+            st = min(s0 + (t - a) * rate[s0], cap_)
             i = bisect.bisect_right(ft, st) - 1
             src = os.path.join(cap, "frames", frames[max(0, i)]["name"])
             break
@@ -51,5 +61,5 @@ with open(os.path.join(W, "frames.txt"), "w") as f:
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", os.path.join(W, "frames.txt"),
                 "-vf", f"scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps={FPS},format=yuv420p",
                 "-c:v", "libx264", "-preset", "medium", "-crf", "16", "-r", str(FPS), os.path.join(W, "base.mp4")], check=True)
-for a, b, s0, _ in spans: print(f"  {a:7.2f}-{b:7.2f}  from take +{s0 - mk['welcome']:.2f}s")
+for a, b, s0, c in spans: print(f"  {a:7.2f}-{b:7.2f}  from take +{s0 - mk['welcome']:.2f}s, {c - s0:.1f}s of take at {rate[s0]:.2f}x")
 print("base:", os.path.join(W, "base.mp4"), f"{len(lst)} frames")
