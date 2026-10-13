@@ -72,7 +72,7 @@ One published article per bounty, which is the portal's required field for each:
 - **Mera — One Passkey, Many Keys:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/MERA.md
 - **Chainlink — Best workflow with CRE:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/CHAINLINK-CRE.md
 - **Envio — Best Use of Envio:** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/ENVIO.md
-- **Kimi (Moonshot):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/KIMI.md
+- **Kimi (Moonshot):** https://xorr-metropolis.vercel.app/blog/kimi (also docs/articles/kimi.md and docs/KIMI.md)
 
 **Team:** nickthelegend. **Pre-existing code:** yes — earlier xorr builds (Base, Solana, X Layer, Arbitrum); the Monad
 work is listed in README → "Disclosures". **AI tools:** Claude Code (Anthropic), credited as co-author on its commits.

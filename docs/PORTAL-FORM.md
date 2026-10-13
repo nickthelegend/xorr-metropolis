@@ -216,7 +216,7 @@ Testnet explorer base: https://testnet.monadvision.com/tx/
 
 ### Kimi (Moonshot)
 
-- **Published article (required field):** https://github.com/nickthelegend/xorr-metropolis/blob/main/docs/KIMI.md
+- **Published article (required field):** https://xorr-metropolis.vercel.app/blog/kimi
 - **What:** Kimi sits on the council as the Strategist (`server/src/council/strategist.ts`). It weighs the four desks, votes, and explains why.
 - **Limits:** cached and capped per day.
 - **On testnet:** in team-seeded round 11, Kimi voted yes with its reason on screen. That round's fill is above.
