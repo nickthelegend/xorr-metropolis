@@ -1,0 +1,64 @@
+1
+00:00:03,350 --> 00:00:06,838
+XORR is a mobile-first trading app.
+
+2
+00:00:06,868 --> 00:00:08,765
+Sign in with one passkey:
+
+3
+00:00:08,795 --> 00:00:11,714
+no seed phrase, and nothing that can sign is
+
+4
+00:00:11,744 --> 00:00:15,446
+stored. Test funds land at your own address.
+
+5
+00:00:15,946 --> 00:00:19,434
+On the Perps screen, your AUSD balance is
+
+6
+00:00:19,464 --> 00:00:21,442
+the margin in your Perpl desk:
+
+7
+00:00:21,472 --> 00:00:23,904
+an account the agent can trade, but never
+
+8
+00:00:23,934 --> 00:00:25,302
+withdraw from.
+
+9
+00:00:25,802 --> 00:00:27,827
+Then a trade on Perpl:
+
+10
+00:00:27,857 --> 00:00:30,312
+a long on MON, with its distance to
+
+11
+00:00:30,342 --> 00:00:33,562
+liquidation and its exits, then closed, with
+
+12
+00:00:33,592 --> 00:00:35,761
+the margin back in the desk.
+
+13
+00:00:36,261 --> 00:00:39,691
+On Monad testnet, a team-seeded desk funded
+
+14
+00:00:39,721 --> 00:00:42,349
+with a hundred and fifty AUSD filled its
+
+15
+00:00:42,379 --> 00:00:44,177
+trade on Perpl.
+
+16
+00:00:44,677 --> 00:00:48,978
+XORR. Trade with AUSD, on your phone.
+
