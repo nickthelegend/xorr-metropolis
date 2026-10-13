@@ -4,7 +4,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Ballot } from './personas.js';
-import { kimiConfigured, numbersIn, parseStrategist, resetStrategistBudget, strategistBallot, strategistMessages } from './strategist.js';
+import { kimiConfigured, numbersIn, parseStrategist, resetStrategistBudget, strategistBallot, strategistMessages, takeKimiCall } from './strategist.js';
 
 beforeEach(() => resetStrategistBudget());
 
@@ -103,7 +103,17 @@ describe('the $10 of credit', () => {
     const env = { ...LIVE, KIMI_DAILY_CALLS: '1' } as NodeJS.ProcessEnv;
     await strategistBallot(ctx, { env, fetchImpl: f, now: () => 0 });
     const other = { ...ctx, proposal: { side: 'buy', symbol: 'ETH', usd: 50 } };
-    expect((await strategistBallot(other as never, { env, fetchImpl: f, now: () => 1 }))?.reason).toMatch(/calls to Kimi are spent/);
+    expect((await strategistBallot(other as never, { env, fetchImpl: f, now: () => 1 }))?.reason).toMatch(/daily capacity is reached/);
     expect(f).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the persisted daily budget', () => {
+  it('allows calls up to the cap and refuses past it', async () => {
+    expect(await takeKimiCall('2026-10-13', 2, async () => 2)).toBe(true);
+    expect(await takeKimiCall('2026-10-13', 2, async () => 3)).toBe(false);
+  });
+  it('fails closed when the count cannot be read', async () => {
+    expect(await takeKimiCall('2026-10-13', 100, async () => Promise.reject(new Error('db down')))).toBe(false);
   });
 });

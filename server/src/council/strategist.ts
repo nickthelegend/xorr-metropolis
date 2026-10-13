@@ -17,6 +17,7 @@
  * production mocks).
  */
 import type { Ballot, Vote } from './personas.js';
+import { one } from '../db/index.js';
 
 export const KIMI_BASE_URL = process.env.MOONSHOT_BASE_URL ?? 'https://api.moonshot.ai/v1';
 export const KIMI_MODEL = process.env.KIMI_MODEL ?? 'kimi-k2.6';
@@ -112,6 +113,32 @@ const KIMI_CACHE_MS = 30 * 60_000;
 const kimiCache = new Map<string, { at: number; ballot: Ballot }>();
 let kimiDay = { day: '', calls: 0 };
 
+/**
+ * One call taken from today's budget, counted in Postgres (app_config, key `kimi_calls:<UTC day>`) so a restart or a second
+ * executor cannot reset it: the hosted app is public, and anyone with free testnet funds can convene rounds. The count
+ * is taken atomically; true when this call is within the cap. If the database cannot be asked, the call is refused —
+ * the budget fails closed. Tests pass `count` to stay off the database.
+ */
+export async function takeKimiCall(day: string, cap: number, count?: (day: string) => Promise<number>): Promise<boolean> {
+  try {
+    const n = count
+      ? await count(day)
+      : Number(
+          (
+            await one<{ value: string }>(
+              `INSERT INTO app_config (key, value) VALUES ($1, '1')
+               ON CONFLICT (key) DO UPDATE SET value = (app_config.value::int + 1)::text
+               RETURNING value`,
+              [`kimi_calls:${day}`],
+            )
+          )?.value ?? NaN,
+        );
+    return Number.isFinite(n) && n <= cap;
+  } catch {
+    return false;
+  }
+}
+
 /** What the Strategist's answer depends on: the trade and how each desk voted. */
 export function strategistKey(ctx: Pick<StrategistContext, 'proposal' | 'ballots'>): string {
   const p = ctx.proposal;
@@ -124,7 +151,10 @@ export function resetStrategistBudget(): void {
   kimiDay = { day: '', calls: 0 };
 }
 
-export async function strategistBallot(ctx: StrategistContext, opts: { env?: NodeJS.ProcessEnv; fetchImpl?: Fetch; now?: () => number } = {}): Promise<Ballot | null> {
+export async function strategistBallot(
+  ctx: StrategistContext,
+  opts: { env?: NodeJS.ProcessEnv; fetchImpl?: Fetch; now?: () => number; count?: (day: string) => Promise<number> } = {},
+): Promise<Ballot | null> {
   const env = opts.env ?? process.env;
   if (!kimiConfigured(env)) return null;
   const now = (opts.now ?? Date.now)();
@@ -137,11 +167,12 @@ export async function strategistBallot(ctx: StrategistContext, opts: { env?: Nod
   if (hit && now - hit.at < KIMI_CACHE_MS) return { ...hit.ballot, cites: [...hit.ballot.cites.filter((c) => c !== 'cached'), 'cached'] };
   const today = new Date(now).toISOString().slice(0, 10);
   if (kimiDay.day !== today) kimiDay = { day: today, calls: 0 };
+  // KIMI_DAILY_CALLS overrides the cap (e.g. for a demo recording); the default keeps $10 of credit lasting.
   const cap = Number(env.KIMI_DAILY_CALLS ?? 30);
-  if (kimiDay.calls >= cap) {
-    return { persona: 'strategist', vote: 'abstain', confidence: 0, reason: `Today's ${cap} calls to Kimi are spent, so the Strategist abstains.`, cites: [`kimi:${model0}`] };
+  const counted = opts.count ?? (env === process.env ? undefined : async () => ++kimiDay.calls);
+  if (!(await takeKimiCall(today, cap, counted))) {
+    return { persona: 'strategist', vote: 'abstain', confidence: 0, reason: `Kimi's daily capacity is reached (${cap} calls), so the Strategist sits this round out.`, cites: [`kimi:${model0}`] };
   }
-  kimiDay.calls += 1;
   const b = await askKimi(ctx, env, opts.fetchImpl);
   // Only a real answer is kept: an abstention for a failed call should not stand in for the next half hour.
   if (b.vote !== 'abstain' || !/did not answer|was refused/.test(b.reason)) kimiCache.set(key, { at: now, ballot: b });
