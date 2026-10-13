@@ -1,0 +1,47 @@
+xorr Perpl desk proof on monad-testnet (Perpl testnet) — Exchange 0x1964C32f0bE608E7D29302AFF5E61268E72080cc, factory 0xf42548Ccb3300Bc76c35dc2D347416db2E8d7209
+
+1. Fresh owner 0x2ea15b8B0E0864122704FF4BA3dc5EAbbf46B32e
+   0.00927000000009 test MON for gas: success 0x197c66df3ac790d58eb63fdf6b637d305e59f93614b847ef9e1375a6e8333573
+   owner already holds 349.320731 AUSD
+   owner holds 349.320731 AUSD (Agora) and 0.08 MON
+
+2. Owner signs Perpl's Create; xorr's operator consents; the executor submits createWithSignature
+   desk exists: 0xa21Fa8708008890565817c9d73538Cabc3d098b5 (created 0x568e79751adaa3f94b352a0ba7798eb55a17cb44cf007f268d4d069d70e5b231)
+   desk 0xa21Fa8708008890565817c9d73538Cabc3d098b5 — owner 0x2ea15b8B0E0864122704FF4BA3dc5EAbbf46B32e, operator active: false
+
+3. Owner funds the desk with 150 AUSD and opens its Perpl account
+   account already open
+   Perpl account #692: balance 148.902346 AUSD, operator active false
+   xorr's operator was removed by an earlier run — the owner adds it back (resume)
+   desk.addOperator(operator, consent): success 0x554119a53c05d7e0b410ce70ee4d34efa68fe534c4a89ce55adb3d293dcdd536
+   operator active: true
+
+4. The agent opens a $100 MON long at 2x through the desk (placePerpOrder)
+   execOrder via desk: filled           0x2db7fc2922467c6d14f6cb7da5d768f0ac70430c7550a7fc6eaecc94656d9c88
+   position: long 4130 MON, entry $0.02421, mark $0.02419, margin 50.07625 AUSD, liquidation $0.015106 (37.6% away)
+
+5. An order over the $250 per-order cap is refused before signing
+   refused (order_cap): $300 is over your $250 per-order limit for agents on Perpl.
+
+6. The agent closes the long
+   execOrder CloseLong via desk: filled 0x1d530ae29ffc2b64798851d832826ba017ffb280852a6b254a5456f3e50e6e4f
+   flat. Perpl balance 148.626925 AUSD
+
+6b. The exit guard closes a position on its own (the desk's standing exits, perpl-exits.ts)
+   execOrder via desk: filled           0x6fcb9568c98c0c6b28a1066fb5fab3a668fbe0de7adab4522b9ce7762f2eb69f
+   position 37.6% from liquidation; the owner's buffer set to 39%
+[perpl-exits] 0x2ea15b8B0E0864122704FF4BA3dc5EAbbf46B32e MON: liquidation → filled 0x54a880a1620e74216b3f782b57426988ce48b53b1e3d0cfcc284fd28c53e3ee4
+   exit guard close: filled             0x54a880a1620e74216b3f782b57426988ce48b53b1e3d0cfcc284fd28c53e3ee4
+   why, as Activity shows it: The MON long was 37.6% from liquidation (your buffer: 39%), so it was closed before Perpl liquidated it.
+
+7. The owner removes xorr's operator — the one-tap stop
+   desk.removeOperator(operator): success 0x6babda2cd2223fff91024027e3bc60c8fd72962185a87f8c7e90e9bf1bfd367e
+   executor refused (operator_removed): You removed xorr from this desk on chain, so no agent can trade it. Add it back to resume.
+   raw operator order, mined: reverted  0xd9e94a3d06845f125326ae206bc63720b067d866767dd6067925c7286365aaac
+   Perpl's DelegatedAccount refused it on chain (OnlyOwnerOrOperator)
+
+8. The owner withdraws everything: it can only go to the owner
+   desk.withdrawCollateral(148.427218): success 0xec19b9ee5bfc70ccce4e3dd969cfb8c6b34841ead1d686a7dc438555d499bc3c
+   owner AUSD 349.320731 → 497.747949 (+148.427218)
+
+PROOF PASSED on monad-testnet: desk 0xa21Fa8708008890565817c9d73538Cabc3d098b5, owner 0x2ea15b8B0E0864122704FF4BA3dc5EAbbf46B32e.

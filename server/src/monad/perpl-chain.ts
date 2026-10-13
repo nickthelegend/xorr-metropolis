@@ -71,6 +71,8 @@ export const DESK_ABI = parseAbi([
   'function isOperator(address) view returns (bool)',
   'function accountId() view returns (uint256)',
   'function createAccount(uint256 amount)',
+  // Puts more margin into the desk's existing Perpl account (DelegatedAccount implementation 0xD2A2…Ed39, testnet).
+  'function depositCollateral(uint256 amount)',
   'function withdrawCollateral(uint256 amount)',
   'function removeOperator(address _operator)',
   'function addOperator(address _operator, uint256 _deadline, bytes _sig)',

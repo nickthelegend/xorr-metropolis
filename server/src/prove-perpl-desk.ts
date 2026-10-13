@@ -79,7 +79,8 @@ async function send(label: string, p: { to: Address; data?: Hex; value?: bigint;
   }
   const gas = await publicClient.estimateGas({ account: owner, to: p.to, data, value: p.value });
   const fees = await monadFees(publicClient, chain.id);
-  const hash = await sendWhenSpendable(() => ownerWallet.sendTransaction({ account: owner, chain, to: p.to, data, value: p.value, gas: (gas * 110n) / 100n, ...fees }));
+  // 90 s, not 40: on 13 Oct an owner topped up minutes earlier was still "insufficient balance" to the node at 40 s.
+  const hash = await sendWhenSpendable(() => ownerWallet.sendTransaction({ account: owner, chain, to: p.to, data, value: p.value, gas: (gas * 110n) / 100n, ...fees }), { attempts: 45 });
   const r = await publicClient.waitForTransactionReceipt({ hash, timeout: 90_000 });
   tx(`${label}: ${r.status}`, hash);
   if (r.status !== 'success') fail(`${label} reverted`);
@@ -103,8 +104,9 @@ try {
   } else {
   if (!faucet) fail('FAUCET_PRIVATE_KEY is not set');
   const fw = createWalletClient({ account: faucet, chain, transport: http(rpcUrl) });
-  // Enough for the owner's own transactions still to come (allowlist, removeOperator, withdraw): ~0.03 MON on testnet.
-  const OWNER_GAS = parseEther('0.04');
+  // Enough for the owner's own transactions still to come (re-funding an emptied account, the allowlist, removeOperator,
+  // withdraw): ~0.06 MON on testnet at 102 gwei on the declared limits. 0.04 ran out at removeOperator on 13 Oct.
+  const OWNER_GAS = parseEther('0.08');
   const have = await publicClient.getBalance({ address: owner.address });
   if (have < OWNER_GAS) {
     const gasHash = await sendWhenSpendable(() => fw.sendTransaction({ account: faucet, chain, to: owner.address, value: OWNER_GAS - have, gas: 21000n }));
@@ -171,6 +173,14 @@ try {
     line('   account already open');
   }
   let st = await deskState(owner.address);
+  // An account a previous run withdrew from is open and empty: the owner puts the margin back, the same way it went in.
+  if (Number(st.balance) < 100) {
+    if ((await ausdOf(made.desk)) < 150_000_000n) {
+      await send('AUSD.transfer(desk, 150)', { to: net.collateral, abi: erc20Abi, functionName: 'transfer', args: [made.desk, 150_000_000n] });
+    }
+    await send('desk.depositCollateral(150 AUSD)', { to: made.desk, abi: DESK_ABI, functionName: 'depositCollateral', args: [150_000_000n] });
+    st = await deskState(owner.address);
+  }
   line(`   Perpl account #${st.accountId}: balance ${st.balance} AUSD, operator active ${st.operatorActive}`);
   if (!st.operatorActive) {
     line("   xorr's operator was removed by an earlier run — the owner adds it back (resume)");
