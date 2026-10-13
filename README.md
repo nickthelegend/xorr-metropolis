@@ -15,9 +15,9 @@ blocks later, about 600 ms.
 
 **Videos (14 Oct, narrated, captions as `.srt` beside each):**
 
-- **Demo, the submission cut (2:56):** [`docs/demo/xorr-demo.mp4`](docs/demo/xorr-demo.mp4). The whole journey in the real app: passkey, permission, a buy routed Kuru vs Uniswap with its speed receipt, the council, the Perpl desk, History from Envio, Built on Monad, the stop. Then the same product live on Monad testnet: a team-seeded round (labelled) and its Perpl fill. The signed-in journey is recorded on a local fork of Monad mainnet (Kuru and Uniswap exist there) and is tagged that way on screen.
+- **Demo, the submission cut (2:56):** [`docs/demo/xorr-demo.mp4`](docs/demo/xorr-demo.mp4). The whole journey in the real app: passkey, permission, a buy routed Kuru vs Uniswap with its speed receipt, the council, the Perpl desk, History from Envio, Built on Monad, the stop. Then the same product live on Monad testnet: a team-seeded round (labelled) and its Perpl fill. The signed-in journey is recorded on a local fork of Monad mainnet (Kuru and Uniswap exist there) and is tagged that way on screen; waits are fast-forwarded with a "⏩ ×N" chip, never cut.
 - **Pitch (1:33):** [`docs/demo/xorr-pitch.mp4`](docs/demo/xorr-pitch.mp4).
-- **Full walkthrough (4:32):** [`docs/demo/xorr-walkthrough.mp4`](docs/demo/xorr-walkthrough.mp4). Every screen, then the testnet deployment and the operator's side.
+- **Full walkthrough (4:04):** [`docs/demo/xorr-walkthrough.mp4`](docs/demo/xorr-walkthrough.mp4). Every screen, then the testnet deployment and the operator's side.
 - How they were made, and an honest critique of the first cut: [`video/README.md`](video/README.md), [`docs/demo/VIDEO-CRITIQUE.md`](docs/demo/VIDEO-CRITIQUE.md).
 
 **The full tour on a fork (2:38, 8 Oct):** [`docs/demo/flows/00-full-tour.mp4`](docs/demo/flows/00-full-tour.mp4), recorded live

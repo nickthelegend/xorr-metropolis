@@ -19,7 +19,7 @@
     ]
    },
    "lines": [
-    "This is the full walkthrough of XORR, for people who want an agent to trade crypto and perps for them without handing over their money. First the whole journey on a local fork of Monad mainnet, then live on Monad testnet."
+    "The full walkthrough of XORR, for people who want an agent to trade without handing over their money: the whole journey on a local fork of Monad mainnet, then live on Monad testnet."
    ]
   },
   {
@@ -29,7 +29,7 @@
    "label": "Before sign-up",
    "sub": "Three screens, then Monad's blocks going final",
    "lines": [
-    "Before sign-up, three screens explain it: five seats vote on every trade, nothing trades outside your limit, and Monad's blocks go final in about half a second, shown live."
+    "Three screens before sign-up: five seats vote on every trade, only inside your limit, and Monad's blocks go final in about half a second, live."
    ]
   },
   {
@@ -49,7 +49,7 @@
    "label": "The permission",
    "sub": "XorrDelegation · signed, no popup",
    "lines": [
-    "The permission is the heart of it: a daily limit, an end date and the venues, written to XorrDelegation and signed without a popup. Confirmed on chain in under ten seconds."
+    "The permission is the heart of it: a daily limit, an end date and the venues, signed without a popup and confirmed on chain in under ten seconds."
    ]
   },
   {
@@ -58,7 +58,7 @@
    "to": 67.8,
    "label": "The stateless test",
    "lines": [
-    "Now wipe the browser's storage. Sign in with the passkey alone, and the same account comes back. Nothing about you lived in the browser."
+    "Wipe the browser's storage and sign in with the passkey alone: the same account comes back."
    ]
   },
   {
@@ -67,7 +67,7 @@
    "to": 76.6,
    "label": "Home and markets",
    "lines": [
-    "Home shows your balance and agents. Markets shows live prices, and every buy is checked against Chainlink."
+    "Home shows your balance and agents. Markets shows live prices, and each buy is checked against Chainlink."
    ]
   },
   {
@@ -77,8 +77,7 @@
    "label": "A buy, routed",
    "sub": "Kuru's order book vs Uniswap v3",
    "lines": [
-    "Buy twenty dollars of MON. XORR measures Kuru's on-chain order book against Uniswap v3, and fills on whichever delivers more.",
-    "The run shows what routing was worth: Kuru beat Uniswap by about a third of a percent."
+    "Buy twenty dollars of MON. XORR measures Kuru's on-chain order book against Uniswap v3 and fills on whichever delivers more: here Kuru, by about a third of a percent."
    ]
   },
   {
@@ -88,7 +87,7 @@
    "label": "The speed receipt",
    "sub": "eth_sendRawTransactionSync",
    "lines": [
-    "Every fill carries a speed receipt: executed in five hundred and ten milliseconds, its receipt returned by the send, for a tenth of a cent of gas."
+    "Every fill carries a speed receipt: executed in five hundred and ten milliseconds, for a tenth of a cent of gas."
    ]
   },
   {
@@ -98,7 +97,7 @@
    "label": "The council",
    "sub": "Five seats, one verdict",
    "lines": [
-    "Put fifty dollars of MON to the council. Price compares Chainlink with Kuru's book, Risk reads your limit, Trend the history, Perps the funding, and Kimi weighs the four.",
+    "Put fifty dollars of MON to the council. Price, Risk, Trend and Perps read Monad's own numbers, and Kimi weighs the four.",
     "Approved five to nothing: vote to fill in two tenths of a second."
    ]
   },
@@ -128,7 +127,7 @@
    "to": 201.5,
    "label": "Long, exits, close",
    "lines": [
-    "Open a long on MON, priced from Perpl's book. The position shows entry, mark and distance to liquidation, with exits checked every thirty seconds. Close it, and the margin is back in the desk."
+    "Open a long on MON, priced from Perpl's book, with its distance to liquidation and exits checked every thirty seconds. Close it, and the margin is back in the desk."
    ]
   },
   {
@@ -165,7 +164,7 @@
    "label": "Built on Monad",
    "sub": "Commit states · txpool · P256 · staking · x402",
    "lines": [
-    "Built on Monad reads the chain itself. Here, Monad's P256 precompile verifies the passkey's signature, and staking and x402 are read live too."
+    "Built on Monad reads the chain itself. Here, Monad's P256 precompile verifies the passkey's signature."
    ]
   },
   {
@@ -203,7 +202,7 @@
    "label": "A testnet round",
    "chip": "TEAM-SEEDED WALLET · LABELLED IN THE APP",
    "lines": [
-    "This round was convened tonight from a wallet we seeded and labelled, and anyone can open it. Approved four to nothing, with Kimi explaining its yes."
+    "A round convened tonight from a wallet we seeded and labelled, open to anyone: approved four to nothing, with Kimi explaining its yes."
    ]
   },
   {
@@ -233,7 +232,7 @@
     "method": "removeOperator"
    },
    "lines": [
-    "And the stop on testnet: the owner removing XORR's key from the desk. After this, no agent can trade it."
+    "And the stop on testnet: the owner removing XORR's key from the desk."
    ]
   },
   {

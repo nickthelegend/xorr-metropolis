@@ -9,7 +9,7 @@ render and mix, with Daniel's voice throughout.
 |---|---|
 | Submission cut, 2:56 | `docs/demo/xorr-demo.mp4` |
 | Pitch, 1:33 | `docs/demo/xorr-pitch.mp4` |
-| Full walkthrough, 4:32 | `docs/demo/xorr-walkthrough.mp4` |
+| Full walkthrough, 4:04 | `docs/demo/xorr-walkthrough.mp4` |
 
 The footage comes from two real takes:
 
@@ -18,8 +18,9 @@ The footage comes from two real takes:
 
 Footage is never re-ordered or faked:
 
-- Chain waits are cut.
-- Speed-ups past 1.15× are tagged on screen.
+- Nothing is cut. Chain waits, loads and the AI's thinking are fast-forwarded at ×2–×8.
+- Key moments play at ×1 where the narration allows.
+- Every sped-up stretch carries a "⏩ ×N" chip.
 - Fork footage is tagged "REAL APP · LOCAL FORK OF MONAD MAINNET" and testnet footage "LIVE · MONAD TESTNET".
 
 `qa.py <name> t…` composites overlay stills over the bed for frame QA before a render.

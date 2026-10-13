@@ -8,8 +8,8 @@ An edit list is a list of segments. Each is footage from one of two real takes, 
   live  the hosted app on Monad testnet (capture.mjs → work/capture): seconds since its first scene;
   card  a title, stats or receipt card (opaque).
 A segment lasts as long as its narration (or `min`). Footage is fitted to it honestly: the take's chain waits are cut
-(run.json), then it plays at 0.85×–2.5× (any speed-up past 1.15× is tagged on screen) and holds its last frame; nothing
-is re-ordered within a segment. Voice: ElevenLabs Daniel (metropolis-funding/VOICES.md), the same in every video.
+(run.json) are fast-forwarded at ×2–×8 and the rest plays at ×1 where it fits (×0.85–×2.5 otherwise); every sped-up
+stretch carries a \"⏩ ×N\" chip. Nothing is cut out or re-ordered within a segment. Voice: ElevenLabs Daniel (metropolis-funding/VOICES.md), the same in every video.
 """
 import base64, bisect, datetime, html, json, os, re, shutil, subprocess, sys, urllib.request
 import numpy as np, soundfile as sf
@@ -132,27 +132,65 @@ def kept(take, a, b):
     return runs
 
 
-frames_out = []
+def pieces_for(take, a, b, dout):
+    """Fit [a, b] of a take into dout seconds: chain waits fast-forwarded at ×2–×8, the rest at ×1 where it fits
+    (×0.85–×2.5 otherwise). Returns [(src_from, src_to, speed)] in order, and a skip from the start if it still overflows."""
+    parts, x = [], a
+    for ca, cb in take["cuts"]:
+        if cb <= x or ca >= b: continue
+        if ca > x: parts.append([x, ca, "n"])
+        parts.append([max(x, ca), min(b, cb), "w"]); x = min(b, cb)
+    if x < b: parts.append([x, b, "n"])
+    N = sum(q - p for p, q, k in parts if k == "n"); Wt = sum(q - p for p, q, k in parts if k == "w")
+    if Wt == 0:
+        r, w = min(2.5, max(0.85, N / dout)), 1
+    else:
+        r, w = 1.0, min(8.0, max(2.0, Wt / max(0.01, dout - N)))
+        if N + Wt / 8 > dout:   # even ×8 waits overflow: speed the rest too
+            w = 8.0; r = min(2.5, N / max(0.01, dout - Wt / 8))
+        elif dout - N > Wt / 2:  # time to spare: waits at ×2, the rest no slower than ×0.85
+            w = 2.0; r = max(0.85, N / (dout - Wt / 2))
+    out = [(p, q, (r if k == "n" else w)) for p, q, k in parts]
+    total = sum((q - p) / v for p, q, v in out)
+    return out, max(0.0, total - dout)
+
+
+def chip(v):
+    return f"⏩ ×{v:.0f}" if v >= 1.95 else f"⏩ ×{v:.1f}"
+
+
+frames_out, chips = [], []
 for sg in segs:
     n = int(round(sg["end"] * FPS)) - int(round(sg["start"] * FPS))
     if sg["src"] == "card":
         frames_out += [black] * n; sg["rate"] = None; continue
     tk = TAKES[sg["src"]]
-    runs = kept(tk, sg["from"], sg["to"])
-    df = sum(b - a for a, b in runs)
-    dout = n / FPS
-    r = min(2.5, max(0.85, df / dout))
-    skip = max(0.0, df - dout * r) if sg.get("keep") != "start" else 0.0
-    sg["rate"] = round(r, 2)
+    pcs, over = pieces_for(tk, sg["from"], sg["to"], n / FPS)
+    skip = over if sg.get("keep") != "start" else 0.0
+    sg["rate"] = round(max(v for _, _, v in pcs), 2)
+    # output time → source time, walking the pieces; record each sped-up stretch for its chip
+    ot = -skip
+    spans = []
+    for p_, q_, v in pcs:
+        d = (q_ - p_) / v
+        spans.append((ot, ot + d, p_, v)); ot += d
+    for (o1, o2, p_, v) in spans:
+        if v > 1.15 and o2 > 0 and o1 < n / FPS:
+            chips.append([sg["start"] + max(0, o1), sg["start"] + min(n / FPS, o2), chip(v)])
     for k in range(n):
-        c = min(df - 0.02, skip + k / FPS * r)
-        for a, b in runs:   # compressed time → source time
-            if c <= b - a: src = a + c; break
-            c -= b - a
-        else:
-            src = runs[-1][1]
+        o = k / FPS
+        src = None
+        for (o1, o2, p_, v) in spans:
+            if o1 <= o < o2: src = p_ + (o - o1) * v; break
+        if src is None: src = pcs[-1][1] - 0.02
         j = max(0, bisect.bisect_right(tk["t"], tk["t0"] + src) - 1)
         frames_out.append(os.path.join(tk["dir"], "frames", tk["frames"][j]["name"]))
+# merge touching chips with the same label; give each at least 0.6 s on screen
+merged = []
+for c in sorted(chips):
+    if merged and merged[-1][2] == c[2] and c[0] - merged[-1][1] < 0.3: merged[-1][1] = c[1]
+    else: merged.append(c)
+chips = [[a_, max(b_, a_ + 0.6), t_] for a_, b_, t_ in merged]
 with open(os.path.join(W, "frames.txt"), "w") as f:
     for p in frames_out:
         f.write(f"file '{p}'\nduration {1 / FPS:.6f}\n")
@@ -179,7 +217,7 @@ def fade(cid, a, d, rise=12, inn=0.3, outd=0.2):
     tw.append(f'tl.to("#{cid}i",{{opacity:0,duration:{outd},ease:"power1.in"}},{a + d - outd:.3f});')
 
 
-TAG = {"flow": '<span class="pill fork">REAL APP · LOCAL FORK OF MONAD MAINNET</span><span class="url">chain waits cut</span>',
+TAG = {"flow": '<span class="pill fork">REAL APP · LOCAL FORK OF MONAD MAINNET</span><span class="url">sped-up stretches marked ⏩</span>',
        "live": '<span class="pill live"><i class="ld"></i>LIVE · MONAD TESTNET</span><span class="url">xorr-metropolis.vercel.app</span>'}
 rc = json.load(open(os.path.join(HERE, "receipts.json")))
 short = lambda x: f"{x[:6]}…{x[-4:]}"
@@ -196,8 +234,6 @@ for sg in segs:
                      + (f'<div class="lsub">{E(sg["sub"])}</div>' if sg.get("sub") else "")
                      + (f'<div class="pill seed">{E(sg["chip"])}</div>' if sg.get("chip") else ""))
             fade(c, a, d)
-        if sg["rate"] and sg["rate"] > 1.15:
-            c = clip("speed", a, d, 4, f'<span class="pill spd">×{sg["rate"]:.1f}</span>'); fade(c, a, d, rise=0)
         continue
     cd = sg["card"]
     kind = cd.get("kind", "title")
@@ -234,6 +270,11 @@ for sg in segs:
     if b < TOTAL - 0.05: tw.append(f'tl.to("#{c}i",{{opacity:0,duration:0.25}},{b - 0.25:.3f});')
     if tag:
         c2 = clip("tagtl", a, d, 2, tag); fade(c2, a, d, rise=-8)
+
+for a, b, label in chips:
+    c = clip("speed", a, b - a, 4, f'<span class="pill spd">{E(label)}</span>')
+    tw.append(f'tl.fromTo("#{c}i",{{opacity:0,scale:0.85}},{{opacity:1,scale:1,duration:0.15}},{a:.3f});')
+    tw.append(f'tl.to("#{c}i",{{opacity:0,duration:0.12}},{b - 0.12:.3f});')
 
 for a, b, text in cues:
     side = any(x <= a < y for x, y in app_spans)

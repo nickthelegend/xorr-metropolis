@@ -1,0 +1,12 @@
+{ "name": "promo", "segments": [
+  { "src": "flow", "from": 140.0, "to": 150.6, "label": "A council of AI agents", "lines": [
+    "A council of AI agents trades for you, and every vote is on the record." ]},
+  { "src": "flow", "from": 120.0, "to": 136.6, "label": "Routed, timed", "chapter": false, "lines": [
+    "Kuru against Uniswap, filled in half a second." ]},
+  { "src": "flow", "from": 180.8, "to": 201.5, "label": "Perps on Perpl", "chapter": false, "lines": [
+    "Perps on Perpl, from a desk it can never withdraw from." ]},
+  { "src": "flow", "from": 246.5, "to": 255.2, "label": "One hold", "chapter": false, "lines": [
+    "And one hold stops it, on chain." ]},
+  { "src": "card", "card": { "kind": "outro", "title": "A council of AI agents trades for you on Monad, and one hold stops it on chain.", "chips": ["LIVE · MONAD TESTNET", "TRY IT IN A BROWSER"] }, "min": 5.5, "lines": [
+    "XORR. Live on Monad testnet." ]}
+]}
