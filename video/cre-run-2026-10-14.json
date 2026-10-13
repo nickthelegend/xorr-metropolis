@@ -1,0 +1,14 @@
+[
+ "$ cre workflow simulate ./mon-price --target staging-settings --trigger-index 0 --broadcast",
+ "Initializing...",
+ "Loading settings...",
+ "Checking RPC connectivity...",
+ "Compiling workflow...",
+ "\u2713 Workflow compiled",
+ "\u2713 Simulation limits enabled",
+ "2026-10-14T04:58:34Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0",
+ "2026-10-14T04:58:34Z [USER LOG] MON/USD 0.02439 from 3 sources (Perpl 0.024401, Kuru 0.024365/0.024395, Chainlink 0.02439); spread 12 bps, gap to Chainlink 5 bps; halt false",
+ "2026-10-14T04:58:36Z [USER LOG] Written to 0x5309e806fA530426c0ad72F22D15E473F9b7aD42 on monad-testnet: 0xbc53d1bc8a9049db723a5d2f3bb71a93cb6ba82d732b795838c2025183753d93",
+ "\u2713 Workflow Simulation Result:",
+ "\"0.02439 halt=false tx=0xbc53d1bc8a9049db723a5d2f3bb71a93cb6ba82d732b795838c2025183753d93\""
+]

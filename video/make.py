@@ -262,6 +262,13 @@ for sg in segs:
                 + (f'<div class="rkick kk">{E(cd["kicker"])}</div>' if cd.get("kicker") else "")
                 + f'<div class="kin">{rows}</div>')
         tag = ""
+    elif kind == "terminal":
+        # A real CLI run, line by line as it was printed (the lines come from the run's own output, file in `src`).
+        lines = json.load(open(os.path.join(HERE, cd["src"])))
+        body = ('<div class="term"><div class="tbar"><i></i><i></i><i></i><span>' + E(cd.get("title", "")) + '</span></div><div class="tbody">'
+                + "".join(f'<div class="tl{" tcmd" if x.startswith("$") else ""}{" tok" if x.startswith(("✓", chr(34))) else ""}{" tlog" if "USER LOG" in x else ""}">{E(x)}</div>' for x in lines)
+                + '</div></div>')
+        tag = f'<span class="pill ex">{E(cd["tag"])}</span>' if cd.get("tag") else ""
     elif kind == "outro":
         body = ('<img class="coin" src="assets/coin.png" alt=""><img class="wm6" src="assets/wordmark.png" alt="XORR">'
                 f'<div class="tag6">{E(cd["title"])}</div><div class="ourl">xorr-metropolis.vercel.app</div>'
@@ -277,6 +284,8 @@ for sg in segs:
     tw.append(f'tl.fromTo("#{c}i",{{opacity:0}},{{opacity:1,duration:0.3}},{a:.3f});')
     tw.append(f'tl.fromTo("#{c}i .rcard, #{c}i .tcard, #{c}i .coin",{{y:30,opacity:0}},{{y:0,opacity:1,duration:0.5,ease:"power3.out"}},{a + 0.05:.3f});')
     tw.append(f'tl.fromTo("#{c}i .rr, #{c}i .st, #{c}i .chip",{{opacity:0,y:10}},{{opacity:1,y:0,duration:0.3,stagger:0.1}},{a + 0.35:.3f});')
+    if kind == "terminal":
+        tw.append(f'tl.fromTo("#{c}i .tl",{{opacity:0}},{{opacity:1,duration:0.05,stagger:{max(0.25, min(1.2, (d - 3) / max(1, len(json.load(open(os.path.join(HERE, cd["src"])))))) ):.3f}}},{a + 0.4:.3f});')
     if kind == "kinetic":
         per = max(0.12, min(0.32, (d - 1.2) / max(1, sum(len(l.split()) for l in cd["words"]))))
         tw.append(f'tl.fromTo("#{c}i .kw",{{opacity:0,y:60,rotationX:-40}},{{opacity:1,y:0,rotationX:0,duration:0.45,stagger:{per:.3f},ease:"power3.out"}},{a + 0.15:.3f});')
@@ -327,7 +336,8 @@ expr = "0.10*sin(2*PI*110*t)+0.07*sin(2*PI*164.81*t)+0.06*sin(2*PI*220*t)+0.05*s
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", f"aevalsrc='({expr})*(0.75+0.25*sin(2*PI*t/9))':s=48000:d={TOTAL + 1:.1f}",
                 "-af", "lowpass=f=1400,aecho=0.8:0.7:180|340:0.35|0.22,volume=1.6", "-ac", "2", pad], check=True)
 DEMO = os.path.join(HERE, "..", "docs", "demo")
-final = os.path.join(DEMO, f"xorr-{NAME}.mp4")
+OUTNAME = NAME if NAME.startswith("bounty-") else f"xorr-{NAME}"
+final = os.path.join(DEMO, f"{OUTNAME}.mp4")
 fc = ";".join(["[0:v][1:v]overlay=0:0:format=auto,format=yuv420p[v]",
                f"[3:a]atrim=0:{TOTAL:.3f},asetpts=N/SR/TB,volume=0.14,afade=t=in:st=0:d=0.8,afade=t=out:st={TOTAL - 2:.3f}:d=2[bed]",
                "[2:a]aresample=48000,pan=stereo|c0=c0|c1=c0[vo]",
@@ -335,5 +345,5 @@ fc = ";".join(["[0:v][1:v]overlay=0:0:format=auto,format=yuv420p[v]",
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", os.path.join(W, "base.mp4"), "-i", overlay, "-i", os.path.join(W, "narration.wav"), "-i", pad,
                 "-filter_complex", fc, "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
                 "-r", "30", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", "-t", f"{TOTAL:.3f}", final], check=True)
-shutil.copy(SRT, os.path.join(DEMO, f"xorr-{NAME}.srt"))
+shutil.copy(SRT, os.path.join(DEMO, f"{OUTNAME}.srt"))
 print("final:", os.path.abspath(final))

@@ -27,3 +27,12 @@
 .kl { font-weight: 800; font-size: 104px; line-height: 1.08; letter-spacing: -0.03em; }
 .kw { display: inline-block; }
 .kw.hi { color: var(--lime); }
+
+/* a real CLI run */
+.term { position: absolute; left: 140px; right: 140px; top: 150px; border-radius: 18px; background: #0b0b10; border: 2px solid #2a2836; box-shadow: 0 30px 80px rgba(0,0,0,.6); overflow: hidden; }
+.tbar { height: 46px; background: #15141d; display: flex; align-items: center; gap: 9px; padding: 0 18px; }
+.tbar i { width: 13px; height: 13px; border-radius: 50%; background: #3a3850; display: inline-block; }
+.tbar span { margin-left: 14px; font-weight: 600; font-size: 20px; color: var(--dim); }
+.tbody { padding: 22px 28px 26px; font: 500 22px/1.55 "SF Mono", Menlo, monospace; color: #cfcde0; }
+.tl { white-space: pre-wrap; word-break: break-all; }
+.tl.tcmd { color: var(--ink); font-weight: 700; } .tl.tok { color: var(--green); } .tl.tlog { color: #c9b8ff; }

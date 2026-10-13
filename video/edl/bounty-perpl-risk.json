@@ -1,0 +1,11 @@
+{ "name": "bounty-perpl-risk", "segments": [
+  { "src": "card", "card": { "kicker": "PERPL BOUNTY · XORR", "title": "Best Analytics / Risk Tool" }, "min": 3 },
+  { "src": "flow", "from": 201.5, "to": 214.7, "label": "Protocol view", "sub": "Every Perpl market, live", "lines": [
+    "Perpl risk is a live view of every Perpl market: funding paid by longs or shorts and its yearly pace, open interest, spread, and how fresh each market is.",
+    "It flags what deserves a look, like a crowded side or a market gone stale." ]},
+  { "src": "flow", "from": 180.8, "to": 201.5, "label": "Wallet view", "sub": "Your desk's positions", "lines": [
+    "The wallet view is your own desk: each position's entry, mark and distance to liquidation, the margin it draws, and the exits that watch it every thirty seconds." ]},
+  { "src": "live", "from": 42.5, "to": 63.9, "label": "The agents act on it", "chip": "TEAM-SEEDED WALLET · LABELLED IN THE APP", "lines": [
+    "The same readings feed the council's Perps desk, so the agents act on what the dashboard shows. On Monad testnet, the Perps desk read funding on MON, ETH and BTC before round eleven was approved." ]},
+  { "src": "card", "card": { "kind": "outro", "title": "A council of AI agents trades for you on Monad, and one hold stops it on chain.", "chips": ["LIVE · MONAD TESTNET", "xorr-metropolis.vercel.app/perpl"] }, "min": 5, "lines": [ "XORR. Perpl risk, live at slash perpl." ]}
+]}

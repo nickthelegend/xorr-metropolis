@@ -20,5 +20,27 @@
   "logs": 1,
   "input": "0xac8a584a",
   "time": 1791894681
+ },
+ "cre": {
+  "hash": "0xbc53d1bc8a9049db723a5d2f3bb71a93cb6ba82d732b795838c2025183753d93",
+  "status": "0x1",
+  "block": 70811716,
+  "from": "0x5c1948d90570ba8547956b2be2d3179454d22938",
+  "to": "0xb9f79d863261869b234c481d1f9a7af84aead192",
+  "gasUsed": 300000,
+  "logs": 2,
+  "input": "0x11289565",
+  "time": 1791934115
+ },
+ "exit": {
+  "hash": "0x54a880a1620e74216b3f782b57426988ce48b53b1e3d0cfcc284fd28c53e3ee4",
+  "status": "0x1",
+  "block": 70682376,
+  "from": "0xb388dd3a8ffe2ff38229a3e9a63bc57d954d8fa6",
+  "to": "0xa21fa8708008890565817c9d73538cabc3d098b5",
+  "gasUsed": 349176,
+  "logs": 5,
+  "input": "0x4d8dc985",
+  "time": 1791894676
  }
 }

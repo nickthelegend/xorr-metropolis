@@ -1,0 +1,11 @@
+{ "name": "bounty-cre", "segments": [
+  { "src": "card", "card": { "kicker": "CHAINLINK BOUNTY · XORR", "title": "Best workflow with CRE" }, "min": 3 },
+  { "src": "card", "card": { "kind": "terminal", "src": "cre-run-2026-10-14.json", "title": "cre — xorr-metropolis/cre (14 Oct, 04:58 UTC)", "tag": "REAL CLI RUN · CRE CLI 1.36 · BROADCAST TO MONAD TESTNET" }, "lines": [
+    "This is a real run of XORR's workflow with the CRE command line: cre workflow simulate, broadcasting to Monad testnet.",
+    "It reads MON from Perpl, Kuru and Chainlink, checks how far apart they are and the gap to Chainlink, and writes one report, with a halt flag, to XorrPriceReceiver." ]},
+  { "src": "card", "card": { "kind": "receipt", "which": "cre", "kicker": "THE REPORT · MONAD TESTNET", "title": "MON/USD 0.02439, written through CRE's forwarder", "fromWho": "xorr's deployer key", "toWho": "CRE's simulation forwarder → XorrPriceReceiver", "method": "report" }, "lines": [
+    "Here's that report on Monad testnet, through CRE's forwarder into the receiver." ]},
+  { "src": "card", "card": { "kind": "stats", "kicker": "WHY IT MATTERS", "title": "The council's Price desk gates on it.", "tag": "server/src/council/monad-inputs.ts", "stats": [["0.02439", "MON/USD from 3 sources"], ["12 bps", "spread between them"], ["5 bps", "gap to Chainlink"], ["halt: false", "the flag the desk obeys"]] }, "lines": [
+    "The council's Price desk reads this receiver. When the report is stale or halted, the desk vetoes, so nothing trades on a price the workflow didn't vouch for. The workflow isn't deployed on a schedule yet, so runs like this one keep it fresh." ]},
+  { "src": "card", "card": { "kind": "outro", "title": "A council of AI agents trades for you on Monad, and one hold stops it on chain.", "chips": ["LIVE · MONAD TESTNET", "CHAINLINK CRE"] }, "min": 5, "lines": [ "XORR, with Chainlink CRE." ]}
+]}

@@ -1,0 +1,12 @@
+{ "name": "bounty-agora", "segments": [
+  { "src": "card", "card": { "kicker": "AGORA BOUNTY · XORR", "title": "Best Mobile Trading App" }, "min": 3 },
+  { "src": "flow", "from": 35.5, "to": 49.6, "label": "Passkey login", "sub": "Mera · no seed phrase", "lines": [
+    "XORR is a mobile-first trading app. Sign in with one passkey: no seed phrase, and nothing that can sign is stored. Test funds land at your own address." ]},
+  { "src": "flow", "from": 163.9, "to": 180.8, "label": "AUSD balance", "sub": "AUSD is the desk's margin", "lines": [
+    "On the Perps screen, your AUSD balance is the margin in your Perpl desk: an account the agent can trade, but never withdraw from." ]},
+  { "src": "flow", "from": 180.8, "to": 201.5, "label": "A trade on Perpl", "lines": [
+    "Then a trade on Perpl: a long on MON, with its distance to liquidation and its exits, then closed, with the margin back in the desk." ]},
+  { "src": "card", "card": { "kind": "receipt", "which": "fill", "kicker": "MONAD TESTNET · TEAM-SEEDED WALLET", "title": "An AUSD-margined desk, filled on Perpl", "fromWho": "xorr's operator key", "toWho": "the owner's Perpl desk", "method": "execOrder" }, "lines": [
+    "On Monad testnet, a team-seeded desk funded with a hundred and fifty AUSD filled its trade on Perpl." ]},
+  { "src": "card", "card": { "kind": "outro", "title": "A council of AI agents trades for you on Monad, and one hold stops it on chain.", "chips": ["LIVE · MONAD TESTNET", "AUSD"] }, "min": 5, "lines": [ "XORR. Trade with AUSD, on your phone." ]}
+]}

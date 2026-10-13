@@ -1,0 +1,18 @@
+{ "name": "bounty-perpl", "segments": [
+  { "src": "card", "card": { "kicker": "PERPL BOUNTY · XORR", "title": "Best use of Perpl's API" }, "min": 3 },
+  { "src": "flow", "from": 163.9, "to": 180.8, "label": "The desk", "sub": "Perpl's DelegatedAccount · operator can't withdraw", "lines": [
+    "XORR's agents trade Perpl through each owner's own desk: Perpl's delegated account, created from the owner's signature. XORR's key can place orders on it, but never withdraw." ]},
+  { "src": "flow", "from": 180.8, "to": 201.5, "label": "A long, its exits, the close", "lines": [
+    "Here a long on MON goes in as an immediate-or-cancel order, priced from Perpl's on-chain book. The position shows its distance to liquidation, and an exit guard checks it every thirty seconds. Then it's closed, and the margin is back in the desk." ]},
+  { "src": "flow", "from": 136.6, "to": 150.6, "label": "The council decides", "lines": [
+    "Agents don't trade alone. The council votes first, and an approved round fills through the desk." ]},
+  { "src": "live", "from": 42.5, "to": 63.9, "label": "Live on Monad testnet", "chip": "TEAM-SEEDED WALLET · LABELLED IN THE APP", "lines": [
+    "On Monad testnet, team-seeded round eleven was approved four to nothing, and filled on Perpl." ]},
+  { "src": "card", "card": { "kind": "receipt", "which": "fill", "kicker": "THE FILL · ROUND 11 · MONAD TESTNET", "title": "execOrder through the owner's desk", "fromWho": "xorr's operator key", "toWho": "the owner's Perpl desk", "method": "execOrder" }, "lines": [
+    "That fill: execOrder from XORR's operator key, through the owner's desk." ]},
+  { "src": "card", "card": { "kind": "receipt", "which": "exit", "kicker": "THE EXIT GUARD · TESTNET PROOF RUN, 13 OCT", "title": "A position closed before liquidation", "fromWho": "xorr's operator key", "toWho": "the owner's Perpl desk", "method": "execOrder" }, "lines": [
+    "And the exit guard on its own: the long was thirty-seven point six percent from liquidation, inside the owner's thirty-nine percent buffer, so it was closed before Perpl could liquidate it." ]},
+  { "src": "card", "card": { "kind": "receipt", "which": "stop", "kicker": "THE STOP · TESTNET PROOF RUN, 13 OCT", "title": "removeOperator: xorr's key taken off the desk", "fromWho": "the owner", "toWho": "the owner's Perpl desk", "method": "removeOperator" }, "lines": [
+    "One hold removes XORR's key from the desk. Any order after that reverts." ]},
+  { "src": "card", "card": { "kind": "outro", "title": "A council of AI agents trades for you on Monad, and one hold stops it on chain.", "chips": ["LIVE · MONAD TESTNET", "PERPL"] }, "min": 5, "lines": [ "XORR, on Perpl." ]}
+]}
